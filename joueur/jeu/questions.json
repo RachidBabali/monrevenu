@@ -1,0 +1,1304 @@
+[
+  {
+    "id": 1,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel sultan de Ngazidja conclut un accord stratégique avec les Français au XIXe siècle afin de consolider son pouvoir contre les autres sultanats ?",
+    "options": [
+      "Sultan Msa Fumu",
+      "Sultan Said Ali",
+      "Sultan Djoumbé Fatima",
+      "Sultan Ahmed Abdallah"
+    ],
+    "reponse_correcte": "Sultan Said Ali"
+  },
+  {
+    "id": 2,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "En quelle année Mayotte devint-elle officiellement une possession française après l’achat par la France ?",
+    "options": [
+      "1841",
+      "1886",
+      "1909",
+      "1866"
+    ],
+    "reponse_correcte": "1841"
+  },
+  {
+    "id": 3,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel explorateur portugais est souvent associé aux premières mentions européennes des Comores au XVIe siècle ?",
+    "options": [
+      "Vasco da Gama",
+      "Bartolomeu Dias",
+      "Pedro Álvares Cabral",
+      "Afonso de Albuquerque"
+    ],
+    "reponse_correcte": "Vasco da Gama"
+  },
+  {
+    "id": 4,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel sultanat était considéré comme l’un des plus puissants de Ngazidja avant la colonisation française ?",
+    "options": [
+      "Itsandra",
+      "Washili",
+      "Mboudé",
+      "Mitsamiouli"
+    ],
+    "reponse_correcte": "Itsandra"
+  },
+  {
+    "id": 5,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien commerce maritime contribua fortement à l’enrichissement des élites comoriennes entre le XVIIe et le XIXe siècle ?",
+    "options": [
+      "Commerce du cuivre",
+      "Commerce des esclaves",
+      "Commerce du pétrole",
+      "Commerce du coton européen"
+    ],
+    "reponse_correcte": "Commerce des esclaves"
+  },
+  {
+    "id": 6,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel dirigeant comorien prit le pouvoir après l’assassinat d’Ali Soilih en 1978 avec le soutien de mercenaires étrangers ?",
+    "options": [
+      "Ahmed Abdallah",
+      "Said Mohamed Djohar",
+      "Azali Assoumani",
+      "Prince Said Ibrahim"
+    ],
+    "reponse_correcte": "Ahmed Abdallah"
+  },
+  {
+    "id": 7,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel mercenaire français joua un rôle majeur dans plusieurs coups d’État aux Comores durant le XXe siècle ?",
+    "options": [
+      "Jean Kay",
+      "Bob Denard",
+      "Paul Barril",
+      "Jacques Foccart"
+    ],
+    "reponse_correcte": "Bob Denard"
+  },
+  {
+    "id": 8,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quelle île des Comores fut la première à passer sous contrôle français officiel ?",
+    "options": [
+      "Anjouan",
+      "Mohéli",
+      "Grande Comore",
+      "Mayotte"
+    ],
+    "reponse_correcte": "Mayotte"
+  },
+  {
+    "id": 9,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel traité du XIXe siècle permit à la France d’étendre progressivement son influence sur l’archipel des Comores ?",
+    "options": [
+      "Traité de Fomboni",
+      "Traité de Bambao",
+      "Traité de protectorat",
+      "Traité de Moroni"
+    ],
+    "reponse_correcte": "Traité de protectorat"
+  },
+  {
+    "id": 10,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quelle était la principale religion introduite et diffusée par les commerçants arabes et swahilis aux Comores ?",
+    "options": [
+      "Christianisme",
+      "Islam",
+      "Bouddhisme",
+      "Hindouisme"
+    ],
+    "reponse_correcte": "Islam"
+  },
+  {
+    "id": 11,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel sultan de Mayotte céda officiellement l’île à la France en 1841 ?",
+    "options": [
+      "Sultan Salim",
+      "Sultan Andriantsoly",
+      "Sultan Said Ali",
+      "Sultan Msa Fumu"
+    ],
+    "reponse_correcte": "Sultan Andriantsoly"
+  },
+  {
+    "id": 12,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel événement marqua la fin du régime révolutionnaire d’Ali Soilih en 1978 ?",
+    "options": [
+      "Une invasion malgache",
+      "Un coup d’État soutenu par des mercenaires",
+      "Une guerre civile régionale",
+      "Une intervention de l’ONU"
+    ],
+    "reponse_correcte": "Un coup d’État soutenu par des mercenaires"
+  },
+  {
+    "id": 13,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien royaume de Ngazidja était réputé pour ses rivalités maritimes et commerciales au XVIIIe siècle ?",
+    "options": [
+      "Itsandra",
+      "Bambao",
+      "Washili",
+      "Dimani"
+    ],
+    "reponse_correcte": "Bambao"
+  },
+  {
+    "id": 14,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel produit agricole colonial fit la richesse économique des Comores durant la période française ?",
+    "options": [
+      "Le cacao",
+      "La vanille",
+      "Le café brésilien",
+      "Le blé"
+    ],
+    "reponse_correcte": "La vanille"
+  },
+  {
+    "id": 15,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quelle ville de Grande Comore devint un important centre religieux et commercial grâce aux échanges avec Zanzibar ?",
+    "options": [
+      "Iconi",
+      "Moroni",
+      "Mbeni",
+      "Mitsoudjé"
+    ],
+    "reponse_correcte": "Moroni"
+  },
+  {
+    "id": 16,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien système social comorien était basé sur les lignages et les alliances matrimoniales ?",
+    "options": [
+      "Le système clanique",
+      "Le système impérial",
+      "Le système féodal européen",
+      "Le système colonial"
+    ],
+    "reponse_correcte": "Le système clanique"
+  },
+  {
+    "id": 17,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel chef religieux comorien fut reconnu pour son influence islamique dans l’archipel au XIXe siècle ?",
+    "options": [
+      "Cheikh Ahmed Maoulana",
+      "Cheikh Abdou Salam",
+      "Cheikh Al Habib Omar",
+      "Cheikh Said Hassane"
+    ],
+    "reponse_correcte": "Cheikh Ahmed Maoulana"
+  },
+  {
+    "id": 18,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quelle île des Comores était historiquement connue pour ses plantations d’ylang-ylang sous la colonisation française ?",
+    "options": [
+      "Mohéli",
+      "Grande Comore",
+      "Anjouan",
+      "Mayotte"
+    ],
+    "reponse_correcte": "Anjouan"
+  },
+  {
+    "id": 19,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel accord politique renforça l’autonomie des îles comoriennes avant l’indépendance ?",
+    "options": [
+      "Les accords de Fomboni",
+      "La loi-cadre Defferre",
+      "Le traité de Domoni",
+      "Les accords de Moroni"
+    ],
+    "reponse_correcte": "La loi-cadre Defferre"
+  },
+  {
+    "id": 20,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien port comorien était stratégique pour les routes commerciales de l’océan Indien ?",
+    "options": [
+      "Domoni",
+      "Moya",
+      "Nioumachoua",
+      "Itsamia"
+    ],
+    "reponse_correcte": "Domoni"
+  },
+  {
+    "id": 21,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel sultan de Mayotte demanda officiellement la protection française avant la cession de l’île ?",
+    "options": [
+      "Andriantsoly",
+      "Said Mohamed",
+      "Msa Fumu",
+      "Sultan Alawi"
+    ],
+    "reponse_correcte": "Andriantsoly"
+  },
+  {
+    "id": 22,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quelle ville d’Anjouan était historiquement connue pour son activité commerciale avec les marchands arabes ?",
+    "options": [
+      "Sima",
+      "Domoni",
+      "Pomoni",
+      "Moya"
+    ],
+    "reponse_correcte": "Domoni"
+  },
+  {
+    "id": 23,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "En quelle année les Comores proclamèrent-elles unilatéralement leur indépendance ?",
+    "options": [
+      "1974",
+      "1975",
+      "1976",
+      "1978"
+    ],
+    "reponse_correcte": "1975"
+  },
+  {
+    "id": 24,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel dirigeant comorien lança une politique révolutionnaire inspirée du socialisme après l’indépendance ?",
+    "options": [
+      "Ahmed Abdallah",
+      "Ali Soilih",
+      "Azali Assoumani",
+      "Said Mohamed Djohar"
+    ],
+    "reponse_correcte": "Ali Soilih"
+  },
+  {
+    "id": 25,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel archipel voisin entretenait d’importants échanges culturels avec les Comores durant l’époque précoloniale ?",
+    "options": [
+      "Les Seychelles",
+      "Madagascar",
+      "Le Cap-Vert",
+      "Les Canaries"
+    ],
+    "reponse_correcte": "Madagascar"
+  },
+  {
+    "id": 26,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel explorateur européen traversa l’océan Indien en utilisant les routes maritimes proches des Comores à la fin du XVe siècle ?",
+    "options": [
+      "Christophe Colomb",
+      "Fernand de Magellan",
+      "Vasco da Gama",
+      "James Cook"
+    ],
+    "reponse_correcte": "Vasco da Gama"
+  },
+  {
+    "id": 27,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quelle île des Comores est dominée par le volcan Karthala ?",
+    "options": [
+      "Mohéli",
+      "Anjouan",
+      "Mayotte",
+      "Grande Comore"
+    ],
+    "reponse_correcte": "Grande Comore"
+  },
+  {
+    "id": 28,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel accord permit la mise en place de la présidence tournante aux Comores après les crises séparatistes ?",
+    "options": [
+      "Accords de Fomboni",
+      "Accords de Moroni",
+      "Accords de Domoni",
+      "Accords de Bambao"
+    ],
+    "reponse_correcte": "Accords de Fomboni"
+  },
+  {
+    "id": 29,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel produit parfumé des Comores est largement exporté pour l’industrie cosmétique mondiale ?",
+    "options": [
+      "Le cacao",
+      "Le safran",
+      "L’ylang-ylang",
+      "Le thé"
+    ],
+    "reponse_correcte": "L’ylang-ylang"
+  },
+  {
+    "id": 30,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien système traditionnel comorien célèbre le passage au statut social supérieur à travers des cérémonies coûteuses ?",
+    "options": [
+      "Le Grand Mariage",
+      "Le Moulidi",
+      "Le Baraza",
+      "Le Ndoa"
+    ],
+    "reponse_correcte": "Le Grand Mariage"
+  },
+  {
+    "id": 31,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel sultanat de Grande Comore était historiquement rival du sultanat d’Itsandra ?",
+    "options": [
+      "Bambao",
+      "Hamahamet",
+      "Washili",
+      "Mboudé"
+    ],
+    "reponse_correcte": "Bambao"
+  },
+  {
+    "id": 32,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel administrateur colonial français joua un rôle important dans l’organisation politique des Comores au début du XXe siècle ?",
+    "options": [
+      "Joseph Gallieni",
+      "Léon Humblot",
+      "Hubert Lyautey",
+      "Pierre Savorgnan"
+    ],
+    "reponse_correcte": "Léon Humblot"
+  },
+  {
+    "id": 33,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien centre religieux de Grande Comore était réputé pour l’enseignement islamique traditionnel ?",
+    "options": [
+      "Mbeni",
+      "Iconi",
+      "Mitsamiouli",
+      "Itsandra"
+    ],
+    "reponse_correcte": "Mbeni"
+  },
+  {
+    "id": 34,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel pays africain accueillit plusieurs opposants politiques comoriens durant certaines crises politiques du XXe siècle ?",
+    "options": [
+      "Kenya",
+      "Tanzanie",
+      "Nigeria",
+      "Ghana"
+    ],
+    "reponse_correcte": "Tanzanie"
+  },
+  {
+    "id": 35,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien sultan de Mohéli était lié à la dynastie malgache sakalava ?",
+    "options": [
+      "Ramanetaka",
+      "Said Omar",
+      "Msa Fumu",
+      "Ahmed Ali"
+    ],
+    "reponse_correcte": "Ramanetaka"
+  },
+  {
+    "id": 36,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quelle île des Comores fut le principal foyer des mouvements séparatistes de 1997 ?",
+    "options": [
+      "Mohéli",
+      "Grande Comore",
+      "Anjouan",
+      "Mayotte"
+    ],
+    "reponse_correcte": "Anjouan"
+  },
+  {
+    "id": 37,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel océan entoure l’archipel des Comores ?",
+    "options": [
+      "Océan Atlantique",
+      "Océan Indien",
+      "Océan Pacifique",
+      "Océan Arctique"
+    ],
+    "reponse_correcte": "Océan Indien"
+  },
+  {
+    "id": 38,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quelle ville de Grande Comore fut autrefois une capitale politique influente avant Moroni ?",
+    "options": [
+      "Iconi",
+      "Fomboni",
+      "Sima",
+      "Bandrani"
+    ],
+    "reponse_correcte": "Iconi"
+  },
+  {
+    "id": 39,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel vote organisé en 1974 montra une divergence entre Mayotte et les autres îles concernant l’indépendance ?",
+    "options": [
+      "Référendum constitutionnel",
+      "Référendum d’autonomie",
+      "Référendum sur l’indépendance",
+      "Vote parlementaire colonial"
+    ],
+    "reponse_correcte": "Référendum sur l’indépendance"
+  },
+  {
+    "id": 40,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel produit était historiquement exporté depuis les Comores vers les marchés arabes et indiens ?",
+    "options": [
+      "Le bois de santal",
+      "Le pétrole",
+      "Le charbon",
+      "Le fer"
+    ],
+    "reponse_correcte": "Le bois de santal"
+  },
+  
+  {
+    "id": 41,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien navigateur arabe mentionna les îles des Comores dans des récits maritimes médiévaux de l’océan Indien ?",
+    "options": [
+      "Ibn Battûta",
+      "Al-Masudi",
+      "Ibn Khaldoun",
+      "Al-Idrissi"
+    ],
+    "reponse_correcte": "Al-Masudi"
+  },
+  {
+    "id": 42,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quelle île des Comores est historiquement surnommée l’île aux parfums en raison de sa production agricole ?",
+    "options": [
+      "Mohéli",
+      "Grande Comore",
+      "Anjouan",
+      "Mayotte"
+    ],
+    "reponse_correcte": "Anjouan"
+  },
+  {
+    "id": 43,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien système politique dominait traditionnellement les villages comoriens avant la centralisation coloniale ?",
+    "options": [
+      "Le système des notables",
+      "Le système impérial",
+      "Le système parlementaire",
+      "Le système préfectoral"
+    ],
+    "reponse_correcte": "Le système des notables"
+  },
+  {
+    "id": 44,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel dirigeant comorien fut président lors de l’adoption de la constitution de l’Union des Comores en 2001 ?",
+    "options": [
+      "Ahmed Abdallah",
+      "Azali Assoumani",
+      "Ali Soilih",
+      "Ikililou Dhoinine"
+    ],
+    "reponse_correcte": "Azali Assoumani"
+  },
+  {
+    "id": 45,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien port d’Anjouan servait d’escale aux navires marchands venant d’Oman et de Zanzibar ?",
+    "options": [
+      "Mutsamudu",
+      "Itsamia",
+      "Nioumachoua",
+      "Mbeni"
+    ],
+    "reponse_correcte": "Mutsamudu"
+  },
+  {
+    "id": 46,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel empire africain influença indirectement le commerce maritime des Comores par les routes swahilies ?",
+    "options": [
+      "Empire du Mali",
+      "Empire du Monomotapa",
+      "Empire du Ghana",
+      "Empire songhaï"
+    ],
+    "reponse_correcte": "Empire du Monomotapa"
+  },
+  {
+    "id": 47,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quelle dynastie d’origine shirazienne revendiquait une influence sur plusieurs sultanats comoriens ?",
+    "options": [
+      "Dynastie Alawi",
+      "Dynastie Shirazi",
+      "Dynastie Fatimide",
+      "Dynastie Almoravide"
+    ],
+    "reponse_correcte": "Dynastie Shirazi"
+  },
+  {
+    "id": 48,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel événement de 1995 entraîna une intervention militaire française aux Comores ?",
+    "options": [
+      "Une guerre civile",
+      "Un coup d’État mené par Bob Denard",
+      "Une invasion étrangère",
+      "Une révolution populaire"
+    ],
+    "reponse_correcte": "Un coup d’État mené par Bob Denard"
+  },
+  {
+    "id": 49,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien rite social comorien était indispensable pour accéder à certains privilèges communautaires ?",
+    "options": [
+      "Le Moulidi",
+      "Le Grand Mariage",
+      "Le Debaa",
+      "Le Madjliss"
+    ],
+    "reponse_correcte": "Le Grand Mariage"
+  },
+  {
+    "id": 50,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel produit agricole introduit durant la colonisation française contribua fortement à l’économie d’exportation des Comores ?",
+    "options": [
+      "Le girofle",
+      "Le maïs",
+      "La vanille",
+      "Le tabac"
+    ],
+    "reponse_correcte": "Le girofle"
+  },
+  {
+    "id": 51,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien sultanat de Grande Comore était réputé pour sa puissance militaire maritime au XVIIIe siècle ?",
+    "options": [
+      "Washili",
+      "Itsandra",
+      "Mboudé",
+      "Hamahamet"
+    ],
+    "reponse_correcte": "Itsandra"
+  },
+  {
+    "id": 52,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel accord colonial transforma officiellement les Comores en colonie française rattachée à Madagascar en 1912 ?",
+    "options": [
+      "Le décret du 25 juillet 1912",
+      "Le traité de Moroni",
+      "Les accords de Fomboni",
+      "Le pacte de Domoni"
+    ],
+    "reponse_correcte": "Le décret du 25 juillet 1912"
+  },
+  {
+    "id": 53,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien peuple navigateur participa au peuplement des Comores avant l’arrivée massive des Arabes ?",
+    "options": [
+      "Les Bantous",
+      "Les Vikings",
+      "Les Perses",
+      "Les Berbères"
+    ],
+    "reponse_correcte": "Les Bantous"
+  },
+  {
+    "id": 54,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel président comorien fut assassiné en 1989 dans des circonstances liées à la garde présidentielle ?",
+    "options": [
+      "Ahmed Abdallah",
+      "Ali Soilih",
+      "Said Mohamed Djohar",
+      "Azali Assoumani"
+    ],
+    "reponse_correcte": "Ahmed Abdallah"
+  },
+  {
+    "id": 55,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quelle île des Comores possède historiquement la ville de Fomboni comme capitale ?",
+    "options": [
+      "Anjouan",
+      "Grande Comore",
+      "Mohéli",
+      "Mayotte"
+    ],
+    "reponse_correcte": "Mohéli"
+  },
+  {
+    "id": 56,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien réseau commercial liait les Comores à la côte est-africaine et à la péninsule arabique ?",
+    "options": [
+      "La route swahilie",
+      "La route saharienne",
+      "La route andalouse",
+      "La route byzantine"
+    ],
+    "reponse_correcte": "La route swahilie"
+  },
+  {
+    "id": 57,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel dirigeant prit le pouvoir lors du coup d’État militaire de 1999 aux Comores ?",
+    "options": [
+      "Ahmed Abdallah Sambi",
+      "Azali Assoumani",
+      "Ikililou Dhoinine",
+      "Ali Soilihi"
+    ],
+    "reponse_correcte": "Azali Assoumani"
+  },
+  {
+    "id": 58,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quelle activité traditionnelle était utilisée pour transmettre oralement l’histoire et les généalogies aux Comores ?",
+    "options": [
+      "Les récits des notables",
+      "Le théâtre colonial",
+      "Les archives portugaises",
+      "Les chants vikings"
+    ],
+    "reponse_correcte": "Les récits des notables"
+  },
+  {
+    "id": 59,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien sultan de Mohéli établit des relations diplomatiques avec les Européens au XIXe siècle ?",
+    "options": [
+      "Ramanetaka",
+      "Sultan Hassan Ier",
+      "Sultan Abdoul Aziz",
+      "Sultan Omar Ali"
+    ],
+    "reponse_correcte": "Ramanetaka"
+  },
+  {
+    "id": 60,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel élément culturel des Comores montre une forte influence de la civilisation swahilie et arabe ?",
+    "options": [
+      "La langue shikomori",
+      "Le latin comorien",
+      "Les runes anciennes",
+      "Le dialecte berbère"
+    ],
+    "reponse_correcte": "La langue shikomori"
+  },
+  {
+    "id": 61,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien sultan de Ngazidja chercha à unifier plusieurs territoires de Grande Comore avant la domination coloniale ?",
+    "options": [
+      "Said Ali bin Said Omar",
+      "Ramanetaka",
+      "Andriantsoly",
+      "Ahmed Abdallah"
+    ],
+    "reponse_correcte": "Said Ali bin Said Omar"
+  },
+  {
+    "id": 62,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quelle île des Comores fut longtemps convoitée pour sa position stratégique dans le canal du Mozambique ?",
+    "options": [
+      "Mohéli",
+      "Mayotte",
+      "Anjouan",
+      "Grande Comore"
+    ],
+    "reponse_correcte": "Mayotte"
+  },
+  {
+    "id": 63,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel type d’écriture arabe était historiquement utilisé pour transcrire certaines formes anciennes du shikomori ?",
+    "options": [
+      "Ajami",
+      "Koufi",
+      "Naskh",
+      "Diwani"
+    ],
+    "reponse_correcte": "Ajami"
+  },
+  {
+    "id": 64,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien centre urbain de Grande Comore était célèbre pour ses remparts défensifs contre les attaques rivales ?",
+    "options": [
+      "Iconi",
+      "Mbeni",
+      "Mitsamiouli",
+      "Bandraboua"
+    ],
+    "reponse_correcte": "Iconi"
+  },
+  {
+    "id": 65,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel administrateur colonial français obtint de vastes terres agricoles aux Comores au XIXe siècle ?",
+    "options": [
+      "Léon Humblot",
+      "Joseph Gallieni",
+      "Hubert Lyautey",
+      "René Caillié"
+    ],
+    "reponse_correcte": "Léon Humblot"
+  },
+  {
+    "id": 66,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien commerce maritime reliait directement les Comores à Zanzibar et à Oman ?",
+    "options": [
+      "Le commerce swahili-arabe",
+      "Le commerce atlantique",
+      "Le commerce byzantin",
+      "Le commerce transsaharien"
+    ],
+    "reponse_correcte": "Le commerce swahili-arabe"
+  },
+  {
+    "id": 67,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quelle réforme politique fut instaurée pour réduire les tensions entre les îles après les crises séparatistes ?",
+    "options": [
+      "La présidence tournante",
+      "Le système impérial",
+      "Le mandat colonial",
+      "Le gouvernorat militaire"
+    ],
+    "reponse_correcte": "La présidence tournante"
+  },
+  {
+    "id": 68,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien sultanat d’Anjouan était réputé pour ses liens commerciaux avec la côte swahilie ?",
+    "options": [
+      "Domoni",
+      "Itsandra",
+      "Mboudé",
+      "Washili"
+    ],
+    "reponse_correcte": "Domoni"
+  },
+  {
+    "id": 69,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel produit des Comores était particulièrement recherché dans la parfumerie française durant l’époque coloniale ?",
+    "options": [
+      "L’ylang-ylang",
+      "Le coton",
+      "Le cacao",
+      "Le tabac"
+    ],
+    "reponse_correcte": "L’ylang-ylang"
+  },
+  {
+    "id": 70,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien mode de transmission culturelle jouait un rôle essentiel dans la conservation de l’histoire des familles comoriennes ?",
+    "options": [
+      "La tradition orale",
+      "Les manuscrits latins",
+      "Les archives portugaises",
+      "Les chroniques vikings"
+    ],
+    "reponse_correcte": "La tradition orale"
+  },
+  {
+    "id": 71,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien royaume de Grande Comore était connu pour son influence religieuse et ses écoles coraniques ?",
+    "options": [
+      "Hamahamet",
+      "Itsandra",
+      "Mboudé",
+      "Washili"
+    ],
+    "reponse_correcte": "Hamahamet"
+  },
+  {
+    "id": 72,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel traité signé au XIXe siècle renforça la présence française dans les îles des Comores ?",
+    "options": [
+      "Le traité de protectorat",
+      "Le traité de Versailles",
+      "Le traité de Tananarive",
+      "Le traité de Fomboni"
+    ],
+    "reponse_correcte": "Le traité de protectorat"
+  },
+  {
+    "id": 73,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien commerce contribua à l’arrivée d’influences persanes et arabes dans l’archipel des Comores ?",
+    "options": [
+      "Le commerce maritime de l’océan Indien",
+      "Le commerce transatlantique",
+      "Le commerce méditerranéen",
+      "Le commerce baltique"
+    ],
+    "reponse_correcte": "Le commerce maritime de l’océan Indien"
+  },
+  {
+    "id": 74,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel président comorien fut surnommé le “père de l’indépendance” dans plusieurs récits politiques comoriens ?",
+    "options": [
+      "Ahmed Abdallah",
+      "Ali Soilih",
+      "Azali Assoumani",
+      "Said Mohamed Djohar"
+    ],
+    "reponse_correcte": "Ahmed Abdallah"
+  },
+  {
+    "id": 75,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quelle ville d’Anjouan fut historiquement un centre de commerce des esclaves dans l’océan Indien ?",
+    "options": [
+      "Mutsamudu",
+      "Fomboni",
+      "Mbeni",
+      "Itsamia"
+    ],
+    "reponse_correcte": "Mutsamudu"
+  },
+  {
+    "id": 76,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien peuple africain est considéré comme l’un des premiers habitants des Comores ?",
+    "options": [
+      "Les Bantous",
+      "Les Gaulois",
+      "Les Huns",
+      "Les Goths"
+    ],
+    "reponse_correcte": "Les Bantous"
+  },
+  {
+    "id": 77,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quelle réforme institutionnelle permit à chaque île comorienne d’obtenir une large autonomie politique au début des années 2000 ?",
+    "options": [
+      "La Constitution de l’Union des Comores",
+      "Le pacte colonial",
+      "Le décret impérial",
+      "La charte des sultanats"
+    ],
+    "reponse_correcte": "La Constitution de l’Union des Comores"
+  },
+  {
+    "id": 78,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien rituel culturel comorien rassemble souvent musique, poésie religieuse et célébration communautaire ?",
+    "options": [
+      "Le Debaa",
+      "Le Carnaval",
+      "Le Flamenco",
+      "Le Tamure"
+    ],
+    "reponse_correcte": "Le Debaa"
+  },
+  {
+    "id": 79,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel volcan actif domine le paysage de Ngazidja et influence l’histoire géographique de l’île ?",
+    "options": [
+      "Karthala",
+      "Nyiragongo",
+      "Kilimandjaro",
+      "Merapi"
+    ],
+    "reponse_correcte": "Karthala"
+  },
+  {
+    "id": 80,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien système social comorien accordait un prestige élevé aux familles ayant accompli le Grand Mariage ?",
+    "options": [
+      "Le système des notables",
+      "Le système féodal européen",
+      "Le système impérial",
+      "Le système colonial"
+    ],
+    "reponse_correcte": "Le système des notables"
+  },
+  {
+    "id": 81,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien centre politique de Grande Comore fut détruit en partie lors de conflits entre sultanats rivaux ?",
+    "options": [
+      "Iconi",
+      "Moroni",
+      "Mitsamiouli",
+      "Mbeni"
+    ],
+    "reponse_correcte": "Iconi"
+  },
+  {
+    "id": 82,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel produit agricole des Comores était surnommé “l’or vert” durant certaines périodes coloniales ?",
+    "options": [
+      "La vanille",
+      "Le maïs",
+      "Le manioc",
+      "Le cacao"
+    ],
+    "reponse_correcte": "La vanille"
+  },
+  {
+    "id": 83,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quelle puissance étrangère tenta d’étendre son influence dans l’océan Indien avant l’installation définitive des Français aux Comores ?",
+    "options": [
+      "Le Portugal",
+      "La Norvège",
+      "La Russie",
+      "Le Japon"
+    ],
+    "reponse_correcte": "Le Portugal"
+  },
+  {
+    "id": 84,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien titre était utilisé par certains dirigeants religieux influents des Comores ?",
+    "options": [
+      "Cheikh",
+      "Vizir",
+      "Consul",
+      "Patriarche"
+    ],
+    "reponse_correcte": "Cheikh"
+  },
+  {
+    "id": 85,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel président comorien fut renversé lors du coup d’État de 1995 dirigé par Bob Denard ?",
+    "options": [
+      "Said Mohamed Djohar",
+      "Ahmed Abdallah",
+      "Ali Soilih",
+      "Azali Assoumani"
+    ],
+    "reponse_correcte": "Said Mohamed Djohar"
+  },
+  {
+    "id": 86,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quelle île des Comores est la plus proche géographiquement de Madagascar ?",
+    "options": [
+      "Mayotte",
+      "Grande Comore",
+      "Mohéli",
+      "Anjouan"
+    ],
+    "reponse_correcte": "Mayotte"
+  },
+  {
+    "id": 87,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien réseau commercial favorisa l’introduction de l’islam dans l’archipel des Comores ?",
+    "options": [
+      "Les routes maritimes arabes",
+      "Les routes vikings",
+      "Les routes romaines",
+      "Les routes ibériques"
+    ],
+    "reponse_correcte": "Les routes maritimes arabes"
+  },
+  {
+    "id": 88,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien dirigeant de Mohéli entretenait des relations diplomatiques avec les Européens et Madagascar au XIXe siècle ?",
+    "options": [
+      "Ramanetaka",
+      "Said Ali",
+      "Ahmed Sambi",
+      "Ali Soilihi"
+    ],
+    "reponse_correcte": "Ramanetaka"
+  },
+  {
+    "id": 89,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien système de gouvernance locale reposait fortement sur les assemblées de notables aux Comores ?",
+    "options": [
+      "Le système coutumier",
+      "Le système impérial",
+      "Le système sénatorial romain",
+      "Le système préfectoral"
+    ],
+    "reponse_correcte": "Le système coutumier"
+  },
+  {
+    "id": 90,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quelle ville des Comores devint la capitale fédérale après l’indépendance de 1975 ?",
+    "options": [
+      "Moroni",
+      "Mutsamudu",
+      "Fomboni",
+      "Domoni"
+    ],
+    "reponse_correcte": "Moroni"
+  },
+  {
+    "id": 91,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien sultanat de Grande Comore contrôlait historiquement une partie importante des échanges maritimes régionaux ?",
+    "options": [
+      "Itsandra",
+      "Washili",
+      "Mboudé",
+      "Hamahamet"
+    ],
+    "reponse_correcte": "Itsandra"
+  },
+  {
+    "id": 92,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel accord signé en 2001 permit officiellement la création de l’Union des Comores ?",
+    "options": [
+      "Les accords de Fomboni",
+      "Le traité de Moroni",
+      "Le pacte de Domoni",
+      "Les accords de Mbeni"
+    ],
+    "reponse_correcte": "Les accords de Fomboni"
+  },
+  {
+    "id": 93,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien commerce de l’océan Indien reliait directement les Comores à l’Arabie et à l’Inde ?",
+    "options": [
+      "Le commerce des épices",
+      "Le commerce baltique",
+      "Le commerce transatlantique",
+      "Le commerce continental"
+    ],
+    "reponse_correcte": "Le commerce des épices"
+  },
+  {
+    "id": 94,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien chef révolutionnaire comorien tenta de moderniser profondément la société après 1975 ?",
+    "options": [
+      "Ali Soilih",
+      "Ahmed Abdallah",
+      "Azali Assoumani",
+      "Said Mohamed Djohar"
+    ],
+    "reponse_correcte": "Ali Soilih"
+  },
+  {
+    "id": 95,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quelle ville historique d’Anjouan était connue pour ses fortifications et son port naturel ?",
+    "options": [
+      "Mutsamudu",
+      "Fomboni",
+      "Mbeni",
+      "Bandrani"
+    ],
+    "reponse_correcte": "Mutsamudu"
+  },
+  {
+    "id": 96,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel groupe culturel influença fortement les traditions musicales et linguistiques des Comores ?",
+    "options": [
+      "Les Swahilis",
+      "Les Vikings",
+      "Les Celtes",
+      "Les Mongols"
+    ],
+    "reponse_correcte": "Les Swahilis"
+  },
+  {
+    "id": 97,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quelle crise politique éclata en 1997 avec des revendications séparatistes dans certaines îles des Comores ?",
+    "options": [
+      "La crise d’Anjouan",
+      "La guerre de Moroni",
+      "La révolte de Mitsamiouli",
+      "Le conflit de Fomboni"
+    ],
+    "reponse_correcte": "La crise d’Anjouan"
+  },
+  {
+    "id": 98,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel ancien rite religieux comorien est souvent associé aux célébrations spirituelles soufies ?",
+    "options": [
+      "Le Maoulida",
+      "Le Carnaval",
+      "Le Debaa guerrier",
+      "Le Baraza royal"
+    ],
+    "reponse_correcte": "Le Maoulida"
+  },
+  {
+    "id": 99,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel volcan actif des Comores est considéré parmi les plus grands volcans actifs du monde ?",
+    "options": [
+      "Karthala",
+      "Etna",
+      "Fuji",
+      "Kilimandjaro"
+    ],
+    "reponse_correcte": "Karthala"
+  },
+  {
+    "id": 100,
+    "categorie": "Histoire des Comores",
+    "niveau": "Ultra difficile",
+    "question": "Quel système traditionnel comorien donnait un rôle politique et social majeur aux anciens et aux familles influentes ?",
+    "options": [
+      "Le système des notables",
+      "Le système impérial",
+      "Le système colonial",
+      "Le système féodal"
+    ],
+    "reponse_correcte": "Le système des notables"
+  }
+
+]
