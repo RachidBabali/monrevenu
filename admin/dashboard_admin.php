@@ -1,10 +1,14 @@
 <?php
+
 /**
  * ECOSYSTÈME D'ADMINISTRATION CENTRALISÉ — MonRevenu
  * Gestion des Produits, Formations, Commissions, Retraits & Ventes d'affiliation
  */
 require_once '../basse_de_donner/monrevenu_bd.php';
+require_once '../includs/env_loader.php';
+require_once '../includs/r2_uploader.php';
 require_once 'auth_middleware.php';
+
 
 // Sécurité d'accès strict à l'administrateur
 $admin = requireRole($pdo, 'admin');
@@ -50,8 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'image/webp' => 'webp',
             ];
             $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $mimeReel = finfo_file($finfo, $fichier['tmp_name']);
-            finfo_close($finfo);
+            $mimeReel = $finfo !== false ? finfo_file($finfo, $fichier['tmp_name']) : null;
 
             if ($uploadOk && !array_key_exists($mimeReel, $typesAutorises)) {
                 $uploadOk = false;
@@ -61,19 +64,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($uploadOk) {
                 $extension = $typesAutorises[$mimeReel];
                 $nomFichier = 'produit_' . uniqid() . '_' . time() . '.' . $extension;
-                $dossierDestination = __DIR__ . '/uploads/produits/';
 
-                if (!is_dir($dossierDestination)) {
-                    mkdir($dossierDestination, 0755, true);
-                }
+                $resultat = uploaderVersR2($fichier['tmp_name'], 'produits/' . $nomFichier, $mimeReel);
 
-                $cheminComplet = $dossierDestination . $nomFichier;
-
-                if (move_uploaded_file($fichier['tmp_name'], $cheminComplet)) {
-                    $image = 'uploads/produits/' . $nomFichier;
+                if ($resultat['ok']) {
+                    $image = $resultat['url'];
                 } else {
                     $uploadOk = false;
-                    $error = "❌ Impossible d'enregistrer l'image sur le serveur.";
+                    $error = "❌ " . $resultat['error'];
                 }
             }
         }
@@ -156,17 +154,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                              VALUES (?, 'commission', ?, ?, 'complete', ?)"
                         );
                         $stmtTxVente->execute([
-                            $vente['vendeur_id'], $vente['commission_earn'], $referenceVente,
+                            $vente['vendeur_id'],
+                            $vente['commission_earn'],
+                            $referenceVente,
                             'Commission sur vente #' . $vente_id
                         ]);
                     }
 
                     $libelles_notif_statut = [
-                        'en_attente' => "⏳ Votre vente #" . $vente_id . " est en attente de traitement.",
-                        'contacte'   => "📞 Le client de votre vente #" . $vente_id . " a été contacté. En attente de confirmation.",
-                        'colis_recu' => "📦 Le client de votre vente #" . $vente_id . " a bien reçu son colis. Le paiement de votre commission suit très vite !",
-                        'validee'    => "💰 Vente #" . $vente_id . " validée ! " . number_format((float) $vente['commission_earn'], 0, ',', ' ') . " KMF ont été crédités sur votre solde.",
-                        'annulee'    => "❌ Votre vente #" . $vente_id . " a été annulée.",
+                        'en_attente' => " Votre vente #" . $vente_id . " est en attente de traitement.",
+                        'contacte'   => " Le client de votre vente #" . $vente_id . " a été contacté. En attente de confirmation.",
+                        'colis_recu' => " Le client de votre vente #" . $vente_id . " a bien reçu son colis. Le paiement de votre commission suit très vite !",
+                        'validee'    => " Vente #" . $vente_id . " validée ! " . number_format((float) $vente['commission_earn'], 0, ',', ' ') . " KMF ont été crédités sur votre solde.",
+                        'annulee'    => " Votre vente #" . $vente_id . " a été annulée.",
                     ];
                     $stmtNotifVente = $pdo->prepare(
                         "INSERT INTO messages (user_id, expediteur, message, statut)
@@ -175,14 +175,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmtNotifVente->execute([$vente['vendeur_id'], $libelles_notif_statut[$nouveau_statut]]);
 
                     $pdo->commit();
-                    $message = "✅ Statut de la vente mis à jour.";
+                    $message = " Statut de la vente mis à jour.";
                 } else {
                     $pdo->rollBack();
-                    $error = "❌ Vente introuvable.";
+                    $error = " Vente introuvable.";
                 }
             } catch (Exception $e) {
                 $pdo->rollBack();
-                $error = "❌ Échec de la mise à jour : " . $e->getMessage();
+                $error = " Échec de la mise à jour : " . $e->getMessage();
             }
         }
     }
@@ -211,7 +211,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                          VALUES (?, 'commission', ?, ?, 'complete', ?)"
                     );
                     $stmtTxVente->execute([
-                        $vente['vendeur_id'], $vente['commission_earn'], $referenceVente,
+                        $vente['vendeur_id'],
+                        $vente['commission_earn'],
+                        $referenceVente,
                         'Commission sur vente #' . $vente_id
                     ]);
 
@@ -385,7 +387,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($uploadOkPub) {
                 $finfo = finfo_open(FILEINFO_MIME_TYPE);
                 $mimePub = finfo_file($finfo, $fichierPub['tmp_name']);
-                finfo_close($finfo);
 
                 if (!array_key_exists($mimePub, $typesAutorisesPub)) {
                     $uploadOkPub = false;
@@ -679,17 +680,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($uploadOkStock) {
                 $extensionStock = $typesAutorisesStock[$mimeStock];
                 $nomFichierStock = 'produitstock_' . uniqid() . '_' . time() . '.' . $extensionStock;
-                $dossierStock = __DIR__ . '/uploads/produits_stock/';
 
-                if (!is_dir($dossierStock)) {
-                    mkdir($dossierStock, 0755, true);
-                }
+                $resultat = uploaderVersR2($fichierStock['tmp_name'], 'produits-stock/' . $nomFichierStock, $mimeStock);
 
-                if (move_uploaded_file($fichierStock['tmp_name'], $dossierStock . $nomFichierStock)) {
-                    $image_produit_stock = 'uploads/produits_stock/' . $nomFichierStock;
+                if ($resultat['ok']) {
+                    $image_produit_stock = $resultat['url'];
                 } else {
                     $uploadOkStock = false;
-                    $error = "❌ Impossible d'enregistrer l'image sur le serveur.";
+                    $error = "❌ " . $resultat['error'];
                 }
             }
         }
@@ -754,7 +752,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdo->commit();
                 $message = "✅ Stock attribué avec succès.";
             } catch (\Throwable $e) {
-                if ($pdo->inTransaction()) { $pdo->rollBack(); }
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
                 $error = "❌ Impossible d'attribuer le stock : " . $e->getMessage();
             }
         } else {
@@ -805,7 +805,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $error = "❌ Cette commission a déjà été envoyée ou la vente est introuvable.";
                 }
             } catch (\Throwable $e) {
-                if ($pdo->inTransaction()) { $pdo->rollBack(); }
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
                 $error = "❌ Échec de l'envoi : " . $e->getMessage();
             }
         }
@@ -987,6 +989,7 @@ $admin_initiales = strtoupper(substr($admin['fullname'] ?? 'A', 0, 1) . substr(s
 ?>
 <!DOCTYPE html>
 <html lang="fr" class="light">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1001,11 +1004,21 @@ $admin_initiales = strtoupper(substr($admin['fullname'] ?? 'A', 0, 1) . substr(s
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], mono: ['Roboto Mono', 'monospace'] },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        mono: ['Roboto Mono', 'monospace']
+                    },
                     colors: {
                         ink: '#191A3C',
-                        primary: { DEFAULT: '#5B4FE9', dark: '#4638D1', soft: '#EEECFF' },
-                        mint: { DEFAULT: '#00C2A8', soft: '#E3FBF7' },
+                        primary: {
+                            DEFAULT: '#5B4FE9',
+                            dark: '#4638D1',
+                            soft: '#EEECFF'
+                        },
+                        mint: {
+                            DEFAULT: '#00C2A8',
+                            soft: '#E3FBF7'
+                        },
                         canvas: '#F4F5FC'
                     },
                     boxShadow: {
@@ -1016,57 +1029,59 @@ $admin_initiales = strtoupper(substr($admin['fullname'] ?? 'A', 0, 1) . substr(s
             }
         }
     </script>
-   
+
 </head>
+
 <body class="bg-canvas text-ink min-h-screen">
 
-<div class="flex min-h-screen">
+    <div class="flex min-h-screen">
 
-    <!-- ============================ SIDEBAR ============================ -->
-     <?php include 'sections/sidebar.php'; ?> 
+        <!-- ============================ SIDEBAR ============================ -->
+        <?php include 'sections/sidebar.php'; ?>
 
-    <!-- ============================ CONTENU PRINCIPAL ============================ -->
-    <div class="flex-1 lg:pl-64 flex flex-col min-w-0">
+        <!-- ============================ CONTENU PRINCIPAL ============================ -->
+        <div class="flex-1 lg:pl-64 flex flex-col min-w-0">
 
-        <!-- Topbar -->
-        <?php include 'sections/Topbar.php'; ?> 
+            <!-- Topbar -->
+            <?php include 'sections/Topbar.php'; ?>
 
-        <main class="flex-1 p-5 lg:p-8 space-y-6 max-w-6xl w-full mx-auto">
+            <main class="flex-1 p-5 lg:p-8 space-y-6 max-w-6xl w-full mx-auto">
 
-            <!-- ============================ BANDEAU D'ACCUEIL ============================ -->
-            <?php include 'sections/bandeau_accueil.php'; ?> 
+                <!-- ============================ BANDEAU D'ACCUEIL ============================ -->
+                <?php include 'sections/bandeau_accueil.php'; ?>
 
-             <!-- ============================ MESSAGES FLASH ============================ -->
-             <?php include 'sections/MESSAGES_FLASH.php'; ?> 
-            <!-- Onglets mobile (sidebar cachée en dessous de lg) -->
-              <?php include 'sections/mobile_sidebar.php'; ?> 
+                <!-- ============================ MESSAGES FLASH ============================ -->
+                <?php include 'sections/MESSAGES_FLASH.php'; ?>
+                <!-- Onglets mobile (sidebar cachée en dessous de lg) -->
+                <?php include 'sections/mobile_sidebar.php'; ?>
 
-                  <!-- ============================ SECTION UTILISATEURS ============================ -->
-              <?php include 'sections/utilisateurs.php'; ?> 
-                     <!-- ============================ SECTION PRODUITS ============================ -->
-                <?php include 'sections/produits.php'; ?> 
-                    <!-- Modale d'édition produit (partagée, remplie en JS au clic sur "Modifier") -->
-                <?php include 'sections/edition-produit.php'; ?> 
-                    <!-- ============================ SECTION VENTES ============================ -->
-                <?php include 'sections/ventes.php'; ?> 
-                    <!-- ============================ SECTION FORMATIONS ============================ -->
-                <?php include 'sections/formations.php'; ?> 
-                     <!-- Modale d'édition formation -->
-            <?php include 'sections/edition-formation.php'; ?> 
-                     <!-- ============================ SECTION COMMISSIONS ============================ -->
-             <?php include 'sections/commissions.php'; ?> 
-                     <!-- ============================ SECTION STOCK REVENDEURS ============================ -->
-              <?php include 'sections/stock_revendeurs.php'; ?>
-                     <!-- ============================ SECTION PUBLICITÉS ============================ -->
-              <?php include 'sections/publicites.php'; ?> 
-                     <!-- ============================ SECTION RETRAITS ============================ -->
-              <?php include 'sections/retraits.php'; ?>
-                     <!-- ============================ SECTION HISTORIQUE ============================ -->
-              <?php include 'sections/historique.php'; ?> 
+                <!-- ============================ SECTION UTILISATEURS ============================ -->
+                <?php include 'sections/utilisateurs.php'; ?>
+                <!-- ============================ SECTION PRODUITS ============================ -->
+                <?php include 'sections/produits.php'; ?>
+                <!-- Modale d'édition produit (partagée, remplie en JS au clic sur "Modifier") -->
+                <?php include 'sections/edition-produit.php'; ?>
+                <!-- ============================ SECTION VENTES ============================ -->
+                <?php include 'sections/ventes.php'; ?>
+                <!-- ============================ SECTION FORMATIONS ============================ -->
+                <?php include 'sections/formations.php'; ?>
+                <!-- Modale d'édition formation -->
+                <?php include 'sections/edition-formation.php'; ?>
+                <!-- ============================ SECTION COMMISSIONS ============================ -->
+                <?php include 'sections/commissions.php'; ?>
+                <!-- ============================ SECTION STOCK REVENDEURS ============================ -->
+                <?php include 'sections/stock_revendeurs.php'; ?>
+                <!-- ============================ SECTION PUBLICITÉS ============================ -->
+                <?php include 'sections/publicites.php'; ?>
+                <!-- ============================ SECTION RETRAITS ============================ -->
+                <?php include 'sections/retraits.php'; ?>
+                <!-- ============================ SECTION HISTORIQUE ============================ -->
+                <?php include 'sections/historique.php'; ?>
 
-        </main>
+            </main>
+        </div>
     </div>
-</div>
-<script src="javaScript/script.js"></script>
+    <script src="javaScript/script.js"></script>
 </body>
+
 </html>
