@@ -7,6 +7,7 @@
 require_once '../basse_de_donner/monrevenu_bd.php';
 require_once '../includs/env_loader.php';
 require_once '../includs/r2_uploader.php';
+require_once '../includs/image_helper.php';
 require_once 'auth_middleware.php';
 
 
@@ -31,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $prix = (float)$_POST['prix'];
         $commission = (int)$_POST['commission_pourcentage'];
 
-        $image = 'uploads/produits/default.jpg';
+        $image = imageProduitParDefaut();
         $uploadOk = true;
 
         if (isset($_FILES['image_produit']) && $_FILES['image_produit']['error'] !== UPLOAD_ERR_NO_FILE) {
@@ -646,7 +647,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $prix_produit_stock = (float) ($_POST['prix_produit_stock'] ?? 0);
         $commission_produit_stock = (float) ($_POST['commission_produit_stock'] ?? 0);
 
-        $image_produit_stock = 'uploads/produits_stock/default.jpg';
+        $image_produit_stock = imageProduitParDefaut();
         $uploadOkStock = true;
 
         if (isset($_FILES['image_produit_stock']) && $_FILES['image_produit_stock']['error'] !== UPLOAD_ERR_NO_FILE) {
