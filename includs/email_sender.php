@@ -10,6 +10,8 @@
  * PHPMailer-master à la racine du projet.
  */
 
+require_once __DIR__ . '/env_loader.php';
+
 require_once $_SERVER['DOCUMENT_ROOT'] . '/lib/PHPMailer-master/src/PHPMailer.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/lib/PHPMailer-master/src/SMTP.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/lib/PHPMailer-master/src/Exception.php';
@@ -18,15 +20,12 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 // ── Configuration SMTP ───────────────────────────────────────────────
-// ⚠️ À adapter avec vos vrais identifiants. Ne laissez jamais un mot
-// de passe en clair dans un fichier commité sur un dépôt public :
-// utilisez plutôt des variables d'environnement (getenv()) ou un
-// fichier config.php exclu du dépôt (.gitignore).
-define('SMTP_HOST', 'smtp.gmail.com');
-define('SMTP_PORT', 587);
-define('SMTP_USER', 'bigrach2006@gmail.com');
-define('SMTP_PASS', 'wbtt lssd ticu alns'); // mot de passe d'application Gmail, pas le mot de passe du compte
-define('SMTP_FROM_NAME', 'MonRevenu');
+// Valeurs lues depuis .env — jamais codées en dur ici.
+define('SMTP_HOST', env('SMTP_HOST', 'smtp.gmail.com'));
+define('SMTP_PORT', (int) env('SMTP_PORT', 587));
+define('SMTP_USER', env('SMTP_USER'));
+define('SMTP_PASS', env('SMTP_PASS'));
+define('SMTP_FROM_NAME', env('SMTP_FROM_NAME', 'MonRevenu'));
 
 /**
  * Envoie le code de vérification par email.

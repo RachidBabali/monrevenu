@@ -1,12 +1,15 @@
 <?php
 /**
  * Configuration de la base de données - Mon Revenu
+ * Les identifiants sont lus depuis .env (jamais codés en dur ici).
  */
 
-$host     = 'localhost';
-$dbname   = 'u783994563_mon_revenu_db';
-$username = 'u783994563_rachid';
-$password = '123rachiD';
+require_once __DIR__ . '/../includs/env_loader.php';
+
+$host     = env('DB_HOST', 'localhost');
+$dbname   = env('DB_NAME');
+$username = env('DB_USER');
+$password = env('DB_PASS');
 $charset  = 'utf8mb4';
 
 // Options PDO pour la sécurité et la performance
