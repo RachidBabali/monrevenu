@@ -54,7 +54,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'image/webp' => 'webp',
             ];
             $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $mimeReel = $finfo !== false ? finfo_file($finfo, $fichier['tmp_name']) : null;
+            $mimeReel = finfo_file($finfo, $fichier['tmp_name']);
+            finfo_close($finfo);
 
             if ($uploadOk && !array_key_exists($mimeReel, $typesAutorises)) {
                 $uploadOk = false;
@@ -162,11 +163,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
 
                     $libelles_notif_statut = [
-                        'en_attente' => " Votre vente #" . $vente_id . " est en attente de traitement.",
-                        'contacte'   => " Le client de votre vente #" . $vente_id . " a été contacté. En attente de confirmation.",
-                        'colis_recu' => " Le client de votre vente #" . $vente_id . " a bien reçu son colis. Le paiement de votre commission suit très vite !",
-                        'validee'    => " Vente #" . $vente_id . " validée ! " . number_format((float) $vente['commission_earn'], 0, ',', ' ') . " KMF ont été crédités sur votre solde.",
-                        'annulee'    => " Votre vente #" . $vente_id . " a été annulée.",
+                        'en_attente' => "⏳ Votre vente #" . $vente_id . " est en attente de traitement.",
+                        'contacte'   => "📞 Le client de votre vente #" . $vente_id . " a été contacté. En attente de confirmation.",
+                        'colis_recu' => "📦 Le client de votre vente #" . $vente_id . " a bien reçu son colis. Le paiement de votre commission suit très vite !",
+                        'validee'    => "💰 Vente #" . $vente_id . " validée ! " . number_format((float) $vente['commission_earn'], 0, ',', ' ') . " KMF ont été crédités sur votre solde.",
+                        'annulee'    => "❌ Votre vente #" . $vente_id . " a été annulée.",
                     ];
                     $stmtNotifVente = $pdo->prepare(
                         "INSERT INTO messages (user_id, expediteur, message, statut)
@@ -175,14 +176,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmtNotifVente->execute([$vente['vendeur_id'], $libelles_notif_statut[$nouveau_statut]]);
 
                     $pdo->commit();
-                    $message = " Statut de la vente mis à jour.";
+                    $message = "✅ Statut de la vente mis à jour.";
                 } else {
                     $pdo->rollBack();
-                    $error = " Vente introuvable.";
+                    $error = "❌ Vente introuvable.";
                 }
             } catch (Exception $e) {
                 $pdo->rollBack();
-                $error = " Échec de la mise à jour : " . $e->getMessage();
+                $error = "❌ Échec de la mise à jour : " . $e->getMessage();
             }
         }
     }
@@ -387,6 +388,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($uploadOkPub) {
                 $finfo = finfo_open(FILEINFO_MIME_TYPE);
                 $mimePub = finfo_file($finfo, $fichierPub['tmp_name']);
+                finfo_close($finfo);
 
                 if (!array_key_exists($mimePub, $typesAutorisesPub)) {
                     $uploadOkPub = false;
@@ -812,6 +814,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
+
+    // --- POST/REDIRECT/GET ---
+    // Empêche la resoumission du formulaire (double création, etc.) quand
+    // l'utilisateur rafraîchit la page ou revient en arrière après un POST.
+    // Le message/erreur est stocké en session le temps d'une redirection,
+    // puis affiché une seule fois sur la page rechargée en GET.
+    $_SESSION['flash_message'] = $message;
+    $_SESSION['flash_error']   = $error;
+    header('Location: dashboard_admin.php');
+    exit();
+}
+
+// Récupère le message flash laissé par un éventuel POST précédent (voir plus haut)
+if (isset($_SESSION['flash_message']) || isset($_SESSION['flash_error'])) {
+    $message = $_SESSION['flash_message'] ?? '';
+    $error   = $_SESSION['flash_error'] ?? '';
+    unset($_SESSION['flash_message'], $_SESSION['flash_error']);
 }
 
 // --- RÉCUPÉRATION DES DONNÉES DISPONIBLES ---
