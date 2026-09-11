@@ -40,6 +40,11 @@ $csrf_token = $_SESSION['csrf_token'];
 $message = '';
 $error = '';
 
+if (isset($_SESSION['flash_message_commande'])) {
+    $message = $_SESSION['flash_message_commande'];
+    unset($_SESSION['flash_message_commande']);
+}
+
 /**
  * Décode un jeton d'affiliation généré par genererTokenAffiliation() dans
  * boutique.php. Retourne [produit_id, ref_id] si valide, sinon [0, 0].
@@ -163,7 +168,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_commander'])) 
                     $adresse_client !== '' ? $adresse_client : null,
                 ]);
 
-                $message = "Merci {$nom_client}, votre commande a bien été enregistrée. Le vendeur va vous contacter sur WhatsApp au {$telephone_client} pour confirmer.";
+                $_SESSION['flash_message_commande'] = "Merci {$nom_client}, votre commande a bien été enregistrée. Le vendeur va vous contacter sur WhatsApp au {$telephone_client} pour confirmer.";
+                header('Location: ' . $_SERVER['REQUEST_URI']);
+                exit();
             } catch (PDOException $e) {
                 $error = "Une erreur est survenue lors de l'enregistrement de votre commande. Merci de réessayer.";
             }
@@ -179,9 +186,20 @@ if ($produit) {
     $og_description = !empty($produit['description'])
         ? mb_substr(trim($produit['description']), 0, 160)
         : 'Découvrez ce produit disponible sur MonRevenu.';
-    $og_image = !empty($produit['image'])
-        ? BASE_URL . '/admin/' . $produit['image']
-        : BASE_URL . '/assets/img/produit-placeholder.png';
+    $imageProduit = $produit['image'] ?? '';
+    if (str_starts_with($imageProduit, 'data:')) {
+        // Une data URI n'est pas utilisable comme image de partage (WhatsApp/Facebook
+        // exigent une vraie URL http/https) — on retombe sur le placeholder générique.
+        $og_image = BASE_URL . '/assets/img/produit-placeholder.png';
+    } elseif (preg_match('#^https?://#', $imageProduit)) {
+        // Déjà une URL absolue (image hébergée sur R2/cdn.monrevenu.xyz)
+        $og_image = $imageProduit;
+    } elseif ($imageProduit !== '') {
+        // Ancien chemin local relatif (produit créé avant la migration vers R2)
+        $og_image = BASE_URL . '/admin/' . $imageProduit;
+    } else {
+        $og_image = BASE_URL . '/assets/img/produit-placeholder.png';
+    }
 } else {
     $og_titre       = 'Produit indisponible — MonRevenu';
     $og_description = 'Ce lien n\'est plus valide ou le produit n\'est plus disponible à la vente.';
@@ -373,4 +391,4 @@ function toggleTheme() {
 }
 </script>
 </body>
-</html>
+</html> 
