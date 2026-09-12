@@ -1,23 +1,22 @@
-/* ============================================================
-   MonRevenu — css/style.css
-   Complète Tailwind (CDN) pour ce que les classes utilitaires
-   ne couvrent pas facilement : animation des modales, etc.
-   Sera étoffé au fil des sections.
-   ============================================================ */
-
 .mr-modal {
   position: fixed;
   inset: 0;
   z-index: 100;
-  display: flex;
+  display: none;              /* ← caché par défaut, plus de conflit */
   align-items: center;
   justify-content: center;
   padding: 20px;
   background: rgba(15, 37, 71, 0.55);
   opacity: 0;
   transition: opacity 0.2s ease;
+  pointer-events: none;       /* ← sécurité supplémentaire */
 }
-.mr-modal.is-open { opacity: 1; }
+
+.mr-modal.is-open {
+  display: flex;
+  opacity: 1;
+  pointer-events: auto;
+}
 
 .mr-modal__panel {
   transform: translateY(16px) scale(0.98);
