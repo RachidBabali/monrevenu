@@ -53,7 +53,7 @@ try {
 
 $protocole = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
 define('BASE_URL_SITE', $protocole . $_SERVER['HTTP_HOST']);
-define('SECRET_AFFILIATION', 'change-moi-avec-une-longue-cle-aleatoire-unique');
+define('SECRET_AFFILIATION', env('AFFILIATION_SECRET'));
 
 /**
  * Calcule le montant de commission réel d'un produit à partir de son
@@ -124,6 +124,7 @@ $commission_moyenne = $total_produits > 0
     .font-display { font-family: 'Sora', sans-serif; }
     .line-clamp-2 {
       display: -webkit-box;
+      line-clamp: 2;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;

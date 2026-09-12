@@ -15,7 +15,8 @@ define('BASE_URL', $protocole . $_SERVER['HTTP_HOST']);
 // ============================================================
 // 3. CLÉ SECRÈTE POUR LA SIGNATURE DES LIENS D'AFFILIATION
 // ============================================================
-define('SECRET_AFFILIATION', 'change-moi-avec-une-longue-cle-aleatoire-unique');
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/env_loader.php';
+define('SECRET_AFFILIATION', env('AFFILIATION_SECRET'));
 
 // ============================================================
 // 3bis. RÈGLE DE COMMISSION FIXE (identique à boutique.php)
@@ -82,17 +83,18 @@ $ref_id     = 0;
 if (!empty($_GET['token'])) {
     [$produit_id, $ref_id] = decoderTokenAffiliation($_GET['token']);
 } else {
-    $produit_id = (int) ($_GET['id'] ?? 0);
+    $produit_id  = (int) ($_GET['id'] ?? 0);
     $ref_id_brut = (int) ($_GET['ref'] ?? 0);
     $sig_recue   = $_GET['sig'] ?? '';
 
+    // La signature est désormais OBLIGATOIRE : un ref_id sans "sig" valide
+    // n'est jamais accepté, pour empêcher quiconque de s'attribuer une
+    // commission en construisant simplement une URL avec un ref arbitraire.
     if ($ref_id_brut > 0 && $sig_recue !== '') {
         $sig_attendue = hash_hmac('sha256', $produit_id . '|' . $ref_id_brut, SECRET_AFFILIATION);
         if (hash_equals($sig_attendue, $sig_recue)) {
             $ref_id = $ref_id_brut;
         }
-    } elseif ($ref_id_brut > 0) {
-        $ref_id = $ref_id_brut;
     }
 }
 

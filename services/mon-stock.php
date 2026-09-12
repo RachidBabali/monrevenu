@@ -141,6 +141,23 @@ $commissions_en_attente = array_sum(array_map(
     $mes_ventes
 ));
 
+/**
+ * Résout le chemin d'affichage d'une image produit, qu'elle soit une URL
+ * R2/CDN absolue, une data URI (placeholder généré en code), ou un ancien
+ * chemin local relatif (produit créé avant la migration vers R2).
+ */
+function resoudreImageProduit(?string $chemin): string
+{
+    $chemin = $chemin ?? '';
+    if (preg_match('#^(https?:|data:)#', $chemin)) {
+        return $chemin;
+    }
+    if ($chemin !== '') {
+        return '/admin/' . $chemin;
+    }
+    return '/assets/img/produit-placeholder.png';
+}
+
 define('SEUIL_STOCK_FAIBLE', 5);
 $produits_stock_faible = array_filter($mon_stock, fn($p) => (int) $p['quantite_disponible'] <= SEUIL_STOCK_FAIBLE && (int) $p['quantite_disponible'] > 0);
 ?>
@@ -308,7 +325,7 @@ $produits_stock_faible = array_filter($mon_stock, fn($p) => (int) $p['quantite_d
         <div class="divide-y divide-line dark:divide-slate-800/60">
           <?php foreach ($mon_stock as $p): $stock_initial = (int) $p['quantite_disponible'] + (int) $p['quantite_vendue']; ?>
             <div class="flex items-center gap-3.5 px-5 py-3.5">
-              <img src="/admin/<?= htmlspecialchars($p['image']) ?>" alt="" class="w-10 h-10 rounded-lg object-cover border border-line dark:border-slate-800 shrink-0">
+              <img src="<?= htmlspecialchars(resoudreImageProduit($p['image'])) ?>" alt="" class="w-10 h-10 rounded-lg object-cover border border-line dark:border-slate-800 shrink-0">
               <div class="min-w-0 flex-1">
                 <p class="text-[13px] font-semibold text-ink dark:text-white truncate"><?= htmlspecialchars($p['nom_produit']) ?></p>
                 <p class="text-[11.5px] text-ink/40 dark:text-slate-500 mt-0.5">Initial <?= $stock_initial ?> · Vendu <?= (int) $p['quantite_vendue'] ?></p>
@@ -333,7 +350,7 @@ $produits_stock_faible = array_filter($mon_stock, fn($p) => (int) $p['quantite_d
           <?php foreach ($mes_ventes as $v): ?>
             <div class="flex items-center justify-between gap-3 px-5 py-3.5">
               <div class="flex items-center gap-3.5 min-w-0">
-                <img src="/admin/<?= htmlspecialchars($v['image']) ?>" alt="" class="w-9 h-9 rounded-lg object-cover border border-line dark:border-slate-800 shrink-0">
+                <img src="<?= htmlspecialchars(resoudreImageProduit($v['image'])) ?>" alt="" class="w-9 h-9 rounded-lg object-cover border border-line dark:border-slate-800 shrink-0">
                 <div class="min-w-0">
                   <p class="text-[13px] font-semibold text-ink dark:text-white truncate">
                     <?= htmlspecialchars($v['nom_produit']) ?> <span class="text-ink/35 dark:text-slate-500 font-normal">#<?= (int) $v['id'] ?></span>
