@@ -102,7 +102,11 @@ $ref_valide = $ref_id > 0;
 
 $vendeur = null;
 if ($ref_valide && $ref_id > 0) {
-    $stmtRef = $pdo->prepare("SELECT id, fullname, role FROM users_monrevenu WHERE id = ? LIMIT 1");
+    $stmtRef = $pdo->prepare(
+        "SELECT id, fullname, role FROM users_monrevenu
+         WHERE id = ? AND status = 'active' AND is_active = 1
+         LIMIT 1"
+    );
     $stmtRef->execute([$ref_id]);
     $vendeur = $stmtRef->fetch();
 
@@ -141,7 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_commander'])) 
         $nom_client       = trim($_POST['nom_client'] ?? '');
         $telephone_client = trim($_POST['telephone_client'] ?? '');
         $adresse_client   = trim($_POST['adresse_client'] ?? '');
-        $quantite         = max(1, (int) ($_POST['quantite'] ?? 1));
+        $quantite         = max(1, min(20, (int) ($_POST['quantite'] ?? 1)));
 
         if ($nom_client === '' || $telephone_client === '') {
             $error = "Merci de renseigner votre nom et votre numéro WhatsApp.";
