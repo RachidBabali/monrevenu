@@ -20,13 +20,13 @@ define('SECRET_AFFILIATION', 'change-moi-avec-une-longue-cle-aleatoire-unique');
 // ============================================================
 // 3bis. RÈGLE DE COMMISSION FIXE (identique à boutique.php)
 // ============================================================
-define('SEUIL_PRIX_COMMISSION', 10000);
-define('COMMISSION_BASSE', 500);
-define('COMMISSION_HAUTE', 1000);
-
-function calculerCommission(float $prix): int
+/**
+ * Calcule le montant de commission réel d'un produit à partir de son
+ * pourcentage configuré par l'admin (colonne commission_pct).
+ */
+function calculerCommission(float $prix, float $commission_pct): float
 {
-    return $prix <= SEUIL_PRIX_COMMISSION ? COMMISSION_BASSE : COMMISSION_HAUTE;
+    return round($prix * ($commission_pct / 100), 2);
 }
 
 // ============================================================
@@ -147,7 +147,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_commander'])) 
             $error = "Le nom ou le numéro renseigné est trop long.";
         } else {
             $prix_unitaire        = (float) $produit['prix'];
-            $commission_unitaire  = calculerCommission($prix_unitaire);
+            $commission_pct       = (float) $produit['commission_pourcentage'];
+            $commission_unitaire  = calculerCommission($prix_unitaire, $commission_pct);
             $commission_totale    = $commission_unitaire * $quantite;
 
             try {
@@ -155,13 +156,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_commander'])) 
                     "INSERT INTO vendeur_ventes
                         (produit_id, vendeur_id, quantite, prix_unitaire, commission_pct, commission_earn,
                          nom_client, telephone_client, adresse_client, statut, commission_creditee)
-                     VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, 'en_attente', 0)"
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'en_attente', 0)"
                 );
                 $stmtVente->execute([
                     $produit['id'],
                     $vendeur['id'],
                     $quantite,
                     $prix_unitaire,
+                    $commission_pct,
                     $commission_totale,
                     $nom_client,
                     $telephone_client,
@@ -391,4 +393,4 @@ function toggleTheme() {
 }
 </script>
 </body>
-</html> 
+</html>
