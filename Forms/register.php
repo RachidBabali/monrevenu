@@ -362,37 +362,8 @@ document.getElementById('registerForm').addEventListener('submit', function (e) 
   }
 });
 
-// ── Inscription / connexion avec Google ───────────────────────────────────
-window.handleGoogleCredential = function (response) {
-  const csrf = document.querySelector('#registerForm input[name="csrf_token"]').value;
-  fetch('includs/google_auth_handler.php', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: 'credential=' + encodeURIComponent(response.credential) + '&csrf_token=' + encodeURIComponent(csrf)
-  })
-    .then((r) => r.json())
-    .then((data) => {
-      if (data.success) {
-        window.location.href = data.redirect || '/dashboard.php';
-      } else {
-        alert(data.error || 'Échec de la connexion avec Google.');
-      }
-    })
-    .catch(() => alert('Erreur réseau, réessayez.'));
-};
-
-function initGoogleButtonRegister() {
-  if (!window.google || !google.accounts || !google.accounts.id) {
-    setTimeout(initGoogleButtonRegister, 300);
-    return;
-  }
-  const clientId = document.querySelector('meta[name="google-signin-client_id"]')?.content;
-  if (!clientId || clientId.includes('YOUR_GOOGLE_CLIENT_ID')) return;
-
-  google.accounts.id.initialize({ client_id: clientId, callback: handleGoogleCredential });
-  google.accounts.id.renderButton(document.getElementById('googleBtnRegister'), {
-    theme: 'outline', size: 'large', shape: 'pill', text: 'signup_with', width: 320
-  });
-}
-document.addEventListener('DOMContentLoaded', initGoogleButtonRegister);
+// La connexion/inscription Google est initialisée une seule fois pour toute
+// la page dans js/app.js (voir initGoogleSignIn) — évite le double appel à
+// google.accounts.id.initialize() qui faisait planter le SDK Google et
+// bloquait le scroll de la page.
 </script>

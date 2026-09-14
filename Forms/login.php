@@ -177,39 +177,8 @@ document.getElementById('loginForm').addEventListener('submit', function (e) {
   if (bloque) e.preventDefault();
 });
 
-// ── Connexion avec Google ─────────────────────────────────────────────────
-window.handleGoogleCredential = function (response) {
-  const csrf = document.querySelector('#loginForm input[name="csrf_token"]').value;
-  fetch('includs/google_auth_handler.php', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: 'credential=' + encodeURIComponent(response.credential) + '&csrf_token=' + encodeURIComponent(csrf)
-  })
-    .then((r) => r.json())
-    .then((data) => {
-      if (data.success) {
-        window.location.href = data.redirect || '/dashboard.php';
-      } else {
-        afficherErreurLogin('loginPhone', data.error || 'Échec de la connexion avec Google.');
-      }
-    })
-    .catch(() => {
-      afficherErreurLogin('loginPhone', 'Erreur réseau, réessayez.');
-    });
-};
-
-function initGoogleButtonLogin() {
-  if (!window.google || !google.accounts || !google.accounts.id) {
-    setTimeout(initGoogleButtonLogin, 300);
-    return;
-  }
-  const clientId = document.querySelector('meta[name="google-signin-client_id"]')?.content;
-  if (!clientId || clientId.includes('YOUR_GOOGLE_CLIENT_ID')) return;
-
-  google.accounts.id.initialize({ client_id: clientId, callback: handleGoogleCredential });
-  google.accounts.id.renderButton(document.getElementById('googleBtnLogin'), {
-    theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with', width: 320
-  });
-}
-document.addEventListener('DOMContentLoaded', initGoogleButtonLogin);
+// La connexion/inscription Google est initialisée une seule fois pour toute
+// la page dans js/app.js (voir initGoogleSignIn) — évite le double appel à
+// google.accounts.id.initialize() qui faisait planter le SDK Google et
+// bloquait le scroll de la page.
 </script>
