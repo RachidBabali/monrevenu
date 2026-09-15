@@ -11,7 +11,7 @@ if (empty($_SESSION['csrf_token'])) {
 
 $errors = [
     'champs_manquants' => 'Veuillez remplir tous les champs.',
-    'identifiants'      => 'Numéro de téléphone ou code secret incorrect.',
+    'identifiants'      => 'Numéro de téléphone ou mot de passe incorrect.',
     'compte_inactif'    => 'Votre compte est désactivé. Contactez le support.',
     'trop_tentatives'   => 'Trop de tentatives depuis cet appareil. Réessayez dans __RESTE__ minute(s).',
     'compte_bloque'     => 'Ce compte a été bloqué après plusieurs tentatives échouées. Réessayez dans __RESTE__ minute(s).',
@@ -49,7 +49,7 @@ $ouvrir_login = ($error || $success) ? "document.addEventListener('DOMContentLoa
     </button>
 
     <h2 class="text-lg font-extrabold text-mr-navy mb-1">Connexion</h2>
-    <p class="text-sm text-mr-navy-soft mb-6">Entrez votre numéro et votre code secret pour accéder à votre espace</p>
+    <p class="text-sm text-mr-navy-soft mb-6">Entrez votre numéro et votre mot de passe pour accéder à votre espace</p>
 
     <?php if ($error): ?>
       <div class="text-sm font-semibold rounded-xl px-4 py-3 mb-5 bg-red-50 text-red-600"><?= htmlspecialchars($message_erreur) ?></div>
@@ -58,7 +58,7 @@ $ouvrir_login = ($error || $success) ? "document.addEventListener('DOMContentLoa
       <div class="text-sm font-semibold rounded-xl px-4 py-3 mb-5 bg-emerald-50 text-emerald-600">✓ Compte créé ! Vous pouvez vous connecter.</div>
     <?php endif; ?>
     <?php if ($success === 'mdp_reinitialise'): ?>
-      <div class="text-sm font-semibold rounded-xl px-4 py-3 mb-5 bg-emerald-50 text-emerald-600">✓ Code secret réinitialisé ! Vous pouvez vous connecter.</div>
+      <div class="text-sm font-semibold rounded-xl px-4 py-3 mb-5 bg-emerald-50 text-emerald-600">✓ Mot de passe réinitialisé ! Vous pouvez vous connecter.</div>
     <?php endif; ?>
 
     <form method="POST" action="includs/login_handler.php" id="loginForm" novalidate class="space-y-4">
@@ -79,17 +79,17 @@ $ouvrir_login = ($error || $success) ? "document.addEventListener('DOMContentLoa
         <p class="field-error text-xs text-red-600 font-semibold mt-1.5" id="err-loginPhone" style="display:none;"></p>
       </div>
 
-      <!-- Code secret -->
+      <!-- Mot de passe -->
       <div>
-        <label for="loginCode" class="block text-xs font-bold text-mr-navy-soft uppercase tracking-wide mb-1.5">Code secret</label>
+        <label for="loginCode" class="block text-xs font-bold text-mr-navy-soft uppercase tracking-wide mb-1.5">Mot de passe</label>
         <div class="flex items-center gap-2.5 border border-slate-200 rounded-xl px-3.5 py-3 focus-within:border-mr-blue focus-within:ring-2 focus-within:ring-mr-blue/10 transition-shadow">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="text-slate-400 shrink-0"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" stroke-width="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="2"/></svg>
           <input type="password" id="loginCode" name="code"
-                 placeholder="A1B2"
+                 placeholder="Votre mot de passe"
                  autocomplete="current-password"
-                 maxlength="4" required
-                 class="flex-1 min-w-0 outline-none text-sm text-mr-navy bg-transparent placeholder:text-slate-300 uppercase tracking-[0.3em] text-center font-bold">
-          <button class="eye-btn text-slate-400 hover:text-mr-blue transition-colors shrink-0" type="button" id="eyeBtn" onclick="togglePwd()" aria-label="Afficher/masquer le code">
+                 maxlength="64" required
+                 class="flex-1 min-w-0 outline-none text-sm text-mr-navy bg-transparent placeholder:text-slate-300">
+          <button class="eye-btn text-slate-400 hover:text-mr-blue transition-colors shrink-0" type="button" id="eyeBtn" onclick="togglePwd()" aria-label="Afficher/masquer le mot de passe">
             <svg id="iconEyeOpen" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
               <circle cx="12" cy="12" r="3"/>
@@ -105,7 +105,7 @@ $ouvrir_login = ($error || $success) ? "document.addEventListener('DOMContentLoa
       </div>
 
       <div class="text-right -mt-2">
-        <a href="/mot_de_passe_oublie.php" class="text-xs font-bold text-mr-blue hover:text-mr-blue-dark">Code secret oublié ?</a>
+        <a href="/mot_de_passe_oublie.php" class="text-xs font-bold text-mr-blue hover:text-mr-blue-dark">Mot de passe oublié ?</a>
       </div>
 
       <button type="submit" class="w-full bg-mr-blue hover:bg-mr-blue-dark text-white font-bold text-sm py-3.5 rounded-full transition-colors">
@@ -147,9 +147,6 @@ function togglePwd() {
     eyeOff.style.display  = 'none';
   }
 }
-document.getElementById('loginCode').addEventListener('input', function (e) {
-  e.target.value = e.target.value.toUpperCase();
-});
 
 function afficherErreurLogin(id, message) {
   const el = document.getElementById('err-' + id);
@@ -163,7 +160,7 @@ document.getElementById('loginPhone').addEventListener('blur', function (e) {
 });
 
 document.getElementById('loginCode').addEventListener('blur', function (e) {
-  afficherErreurLogin('loginCode', (e.target.value.length > 0 && e.target.value.length !== 4) ? 'Le code fait 4 caractères.' : '');
+  afficherErreurLogin('loginCode', (e.target.value.length > 0 && e.target.value.length < 8) ? 'Le mot de passe doit contenir au moins 8 caractères.' : '');
 });
 
 document.getElementById('loginForm').addEventListener('submit', function (e) {
@@ -172,13 +169,44 @@ document.getElementById('loginForm').addEventListener('submit', function (e) {
   let bloque = false;
 
   if (identifiant.length < 5) { afficherErreurLogin('loginPhone', 'Identifiant trop court.'); bloque = true; }
-  if (code.length !== 4) { afficherErreurLogin('loginCode', 'Le code fait 4 caractères.'); bloque = true; }
+  if (code.length < 8) { afficherErreurLogin('loginCode', 'Le mot de passe doit contenir au moins 8 caractères.'); bloque = true; }
 
   if (bloque) e.preventDefault();
 });
 
-// La connexion/inscription Google est initialisée une seule fois pour toute
-// la page dans js/app.js (voir initGoogleSignIn) — évite le double appel à
-// google.accounts.id.initialize() qui faisait planter le SDK Google et
-// bloquait le scroll de la page.
+// ── Connexion avec Google ─────────────────────────────────────────────────
+window.handleGoogleCredential = function (response) {
+  const csrf = document.querySelector('#loginForm input[name="csrf_token"]').value;
+  fetch('includs/google_auth_handler.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'credential=' + encodeURIComponent(response.credential) + '&csrf_token=' + encodeURIComponent(csrf)
+  })
+    .then((r) => r.json())
+    .then((data) => {
+      if (data.success) {
+        window.location.href = data.redirect || '/dashboard.php';
+      } else {
+        afficherErreurLogin('loginPhone', data.error || 'Échec de la connexion avec Google.');
+      }
+    })
+    .catch(() => {
+      afficherErreurLogin('loginPhone', 'Erreur réseau, réessayez.');
+    });
+};
+
+function initGoogleButtonLogin() {
+  if (!window.google || !google.accounts || !google.accounts.id) {
+    setTimeout(initGoogleButtonLogin, 300);
+    return;
+  }
+  const clientId = document.querySelector('meta[name="google-signin-client_id"]')?.content;
+  if (!clientId || clientId.includes('YOUR_GOOGLE_CLIENT_ID')) return;
+
+  google.accounts.id.initialize({ client_id: clientId, callback: handleGoogleCredential });
+  google.accounts.id.renderButton(document.getElementById('googleBtnLogin'), {
+    theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with', width: 320
+  });
+}
+document.addEventListener('DOMContentLoaded', initGoogleButtonLogin);
 </script>

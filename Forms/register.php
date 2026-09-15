@@ -15,11 +15,12 @@ $errors = [
     'email_invalide'     => 'Format d\'email invalide (exemple@domaine.com).',
     'phone_non_comorien' => 'Merci de saisir un numéro comorien valide (ex: 3000000 ou 4000000).',
     'phone_invalide'     => 'Merci de saisir un numéro de téléphone valide pour le pays sélectionné.',
-    'code_invalide'      => 'Le code secret doit contenir exactement 2 chiffres et 2 lettres.',
-    'code_different'     => 'Les codes secrets ne correspondent pas.',
+    'code_invalide'      => 'Le mot de passe doit contenir au moins 8 caractères.',
+    'code_different'     => 'Les mots de passe ne correspondent pas.',
     'conditions'         => 'Vous devez accepter les conditions générales.',
     'existe_deja'        => 'Cet email ou téléphone est déjà utilisé.',
     'birthdate_invalide' => 'Vous devez avoir au moins 18 ans pour vous inscrire.',
+    'age_insuffisant'    => 'Vous devez avoir au moins 18 ans pour vous inscrire.',
     'methode_invalide'   => 'Merci de choisir un canal de vérification (WhatsApp ou Email).',
     'csrf'               => 'Session expirée, veuillez réessayer.',
     'serveur'            => 'Erreur serveur. Veuillez réessayer.',
@@ -35,6 +36,7 @@ $champ_en_erreur = [
     'code_different'     => 'confirmCode',
     'conditions'         => 'acceptTerms',
     'birthdate_invalide' => 'birthdate',
+    'age_insuffisant'    => 'birthdate',
     'methode_invalide'   => 'verificationMethod',
 ];
 
@@ -161,32 +163,54 @@ $ouvrir_register = ($error || $success || $parrain_id_recu > 0) ? "document.addE
       <!-- Canal de vérification (email uniquement) -->
       <input type="hidden" name="verification_method" value="email">
 
-      <!-- Code secret -->
+      <!-- Mot de passe -->
       <div>
-        <label for="code" class="block text-xs font-bold text-mr-navy-soft uppercase tracking-wide mb-1.5">Code secret (2 chiffres + 2 lettres)</label>
+        <label for="code" class="block text-xs font-bold text-mr-navy-soft uppercase tracking-wide mb-1.5">Mot de passe</label>
         <div class="flex items-center gap-2.5 border border-slate-200 rounded-xl px-3.5 py-3 focus-within:border-mr-blue focus-within:ring-2 focus-within:ring-mr-blue/10 transition-shadow" style="<?= classeChampErreur('code', $champ_errone) ?>">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="text-slate-400 shrink-0"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" stroke-width="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="2"/></svg>
-          <input type="text" id="code" name="code"
-                 placeholder="Ex: A1B2"
+          <input type="password" id="code" name="code"
+                 placeholder="8 caractères minimum"
                  autocomplete="new-password"
-                 maxlength="4" minlength="4" required
-                 class="flex-1 min-w-0 outline-none text-sm text-mr-navy bg-transparent placeholder:text-slate-300 uppercase tracking-[0.3em] text-center font-bold">
+                 minlength="8" maxlength="64" required
+                 class="flex-1 min-w-0 outline-none text-sm text-mr-navy bg-transparent placeholder:text-slate-300">
+          <button class="eye-btn text-slate-400 hover:text-mr-blue transition-colors shrink-0" type="button" onclick="togglePwdField('code', 'eyeOpenCode', 'eyeOffCode')" aria-label="Afficher/masquer le mot de passe">
+            <svg id="eyeOpenCode" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <svg id="eyeOffCode" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+              <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+              <line x1="1" y1="1" x2="23" y2="23"/>
+            </svg>
+          </button>
         </div>
-        <p class="text-[11px] text-slate-400 mt-1.5">Exactement 2 chiffres et 2 lettres, dans l'ordre de votre choix (ex: A1B2, 12AB, B4A9).</p>
+        <p class="text-[11px] text-slate-400 mt-1.5">8 caractères minimum. Mélangez lettres et chiffres pour plus de sécurité.</p>
         <p class="text-xs text-red-600 font-semibold mt-1" id="err-code" style="display:none;"></p>
         <?php afficherErreurChamp('code', $champ_errone, $errors, $error); ?>
       </div>
 
-      <!-- Confirmation code secret -->
+      <!-- Confirmation mot de passe -->
       <div>
-        <label for="confirmCode" class="block text-xs font-bold text-mr-navy-soft uppercase tracking-wide mb-1.5">Confirmer le code secret</label>
+        <label for="confirmCode" class="block text-xs font-bold text-mr-navy-soft uppercase tracking-wide mb-1.5">Confirmer le mot de passe</label>
         <div class="flex items-center gap-2.5 border border-slate-200 rounded-xl px-3.5 py-3 focus-within:border-mr-blue focus-within:ring-2 focus-within:ring-mr-blue/10 transition-shadow" style="<?= classeChampErreur('confirmCode', $champ_errone) ?>">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="text-slate-400 shrink-0"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" stroke-width="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="2"/></svg>
-          <input type="text" id="confirmCode" name="confirm_code"
-                 placeholder="Ex: A1B2"
-                 autocomplete="off"
-                 maxlength="4" minlength="4" required
-                 class="flex-1 min-w-0 outline-none text-sm text-mr-navy bg-transparent placeholder:text-slate-300 uppercase tracking-[0.3em] text-center font-bold">
+          <input type="password" id="confirmCode" name="confirm_code"
+                 placeholder="8 caractères minimum"
+                 autocomplete="new-password"
+                 minlength="8" maxlength="64" required
+                 class="flex-1 min-w-0 outline-none text-sm text-mr-navy bg-transparent placeholder:text-slate-300">
+          <button class="eye-btn text-slate-400 hover:text-mr-blue transition-colors shrink-0" type="button" onclick="togglePwdField('confirmCode', 'eyeOpenConfirm', 'eyeOffConfirm')" aria-label="Afficher/masquer le mot de passe">
+            <svg id="eyeOpenConfirm" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <svg id="eyeOffConfirm" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+              <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+              <line x1="1" y1="1" x2="23" y2="23"/>
+            </svg>
+          </button>
         </div>
         <p class="text-xs text-red-600 font-semibold mt-1.5" id="err-confirmCode" style="display:none;"></p>
         <?php afficherErreurChamp('confirmCode', $champ_errone, $errors, $error); ?>
@@ -231,11 +255,21 @@ const champCode = document.getElementById('code');
 const champConfirmCode = document.getElementById('confirmCode');
 const champBirthdate = document.getElementById('birthdate');
 
-[champCode, champConfirmCode].forEach(function (input) {
-  input.addEventListener('input', function (e) {
-    e.target.value = e.target.value.toUpperCase();
-  });
-});
+// Affichage / masquage des mots de passe
+function togglePwdField(inputId, eyeOpenId, eyeOffId) {
+  const input = document.getElementById(inputId);
+  const eyeOpen = document.getElementById(eyeOpenId);
+  const eyeOff = document.getElementById(eyeOffId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    eyeOpen.style.display = 'none';
+    eyeOff.style.display = 'block';
+  } else {
+    input.type = 'password';
+    eyeOpen.style.display = 'block';
+    eyeOff.style.display = 'none';
+  }
+}
 
 function afficherErreur(id, message) {
   const el = document.getElementById('err-' + id);
@@ -245,10 +279,7 @@ function afficherErreur(id, message) {
 }
 
 function validerCodeSecret(valeur) {
-  if (valeur.length !== 4) return 'Le code doit faire exactement 4 caractères.';
-  const nbChiffres = (valeur.match(/[0-9]/g) || []).length;
-  const nbLettres  = (valeur.match(/[A-Z]/g) || []).length;
-  if (nbChiffres !== 2 || nbLettres !== 2) return 'Il faut exactement 2 chiffres et 2 lettres.';
+  if (valeur.length < 8) return 'Le mot de passe doit contenir au moins 8 caractères.';
   return '';
 }
 
@@ -323,7 +354,7 @@ champCode.addEventListener('blur', function (e) {
 
 champConfirmCode.addEventListener('blur', function (e) {
   if (e.target.value && champCode.value && e.target.value !== champCode.value) {
-    afficherErreur('confirmCode', 'Les codes secrets ne correspondent pas.');
+    afficherErreur('confirmCode', 'Les mots de passe ne correspondent pas.');
   } else {
     afficherErreur('confirmCode', '');
   }
@@ -352,7 +383,7 @@ document.getElementById('registerForm').addEventListener('submit', function (e) 
   const erreurCode = validerCodeSecret(code);
   if (erreurCode) { afficherErreur('code', erreurCode); bloque = true; }
 
-  if (code !== confirmCode) { afficherErreur('confirmCode', 'Les codes secrets ne correspondent pas.'); bloque = true; }
+  if (code !== confirmCode) { afficherErreur('confirmCode', 'Les mots de passe ne correspondent pas.'); bloque = true; }
 
   if (!terms) { afficherErreur('acceptTerms', 'Vous devez accepter les conditions générales.'); bloque = true; }
 
@@ -362,8 +393,37 @@ document.getElementById('registerForm').addEventListener('submit', function (e) 
   }
 });
 
-// La connexion/inscription Google est initialisée une seule fois pour toute
-// la page dans js/app.js (voir initGoogleSignIn) — évite le double appel à
-// google.accounts.id.initialize() qui faisait planter le SDK Google et
-// bloquait le scroll de la page.
+// ── Inscription / connexion avec Google ───────────────────────────────────
+window.handleGoogleCredential = function (response) {
+  const csrf = document.querySelector('#registerForm input[name="csrf_token"]').value;
+  fetch('includs/google_auth_handler.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'credential=' + encodeURIComponent(response.credential) + '&csrf_token=' + encodeURIComponent(csrf)
+  })
+    .then((r) => r.json())
+    .then((data) => {
+      if (data.success) {
+        window.location.href = data.redirect || '/dashboard.php';
+      } else {
+        alert(data.error || 'Échec de la connexion avec Google.');
+      }
+    })
+    .catch(() => alert('Erreur réseau, réessayez.'));
+};
+
+function initGoogleButtonRegister() {
+  if (!window.google || !google.accounts || !google.accounts.id) {
+    setTimeout(initGoogleButtonRegister, 300);
+    return;
+  }
+  const clientId = document.querySelector('meta[name="google-signin-client_id"]')?.content;
+  if (!clientId || clientId.includes('YOUR_GOOGLE_CLIENT_ID')) return;
+
+  google.accounts.id.initialize({ client_id: clientId, callback: handleGoogleCredential });
+  google.accounts.id.renderButton(document.getElementById('googleBtnRegister'), {
+    theme: 'outline', size: 'large', shape: 'pill', text: 'signup_with', width: 320
+  });
+}
+document.addEventListener('DOMContentLoaded', initGoogleButtonRegister);
 </script>

@@ -4,7 +4,7 @@
  * ║         LOGIN HANDLER — Mon Revenu                      ║
  * ║  Gère : admin → dashboard_admin / agent → dashboard_agent
  * ║          affilie → dashboard.php                        ║
- * ║  Connexion par : numéro de téléphone + code secret       ║
+ * ║  Connexion par : numéro de téléphone + mot de passe      ║
  * ║  Numéros acceptés : Comores (+269) et Sénégal (+221)     ║
  * ╚══════════════════════════════════════════════════════════╝
  * À placer dans : includs/login_handler.php
@@ -57,7 +57,9 @@ try {
 
 // ── 4. Récupération des champs ───────────────────────────────────────────────
 $identifiant = trim($_POST['identifiant'] ?? '');
-$code        = strtoupper(trim($_POST['code'] ?? ''));
+// Mot de passe (8 caractères minimum, comme Google) — plus de
+// forçage en majuscules, on garde la casse telle que saisie.
+$code        = trim($_POST['code'] ?? '');
 
 if (!$identifiant || !$code) {
     header('Location: /index.php?error=champs_manquants');
@@ -144,7 +146,7 @@ try {
     $stmt->execute([$cle_recherche, $cle_recherche]);
     $user = $stmt->fetch();
 
-    // ── 7. Vérifier le code secret ───────────────────────────────────────────
+    // ── 7. Vérifier le mot de passe ───────────────────────────────────────────
     $hash_reference = $user['password'] ?? '$2y$12$D9m5x1sJZ3yKf6q1r0aFZO7hV1Q6qk4pQnR2eYkD5vXbG8tJmW3Ke';
     $code_valide = password_verify($code, $hash_reference);
 

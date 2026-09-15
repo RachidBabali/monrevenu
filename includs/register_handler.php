@@ -17,7 +17,7 @@ require_once __DIR__ . '/email_sender.php';
    ============================================================ */
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: /inscription.php');
+    header('Location: /index.php');
     exit();
 }
 
@@ -33,7 +33,7 @@ if (
         $_POST['csrf_token']
     )
 ) {
-    header('Location: /inscription.php?error=csrf');
+    header('Location: /index.php?error=csrf');
     exit();
 }
 
@@ -62,12 +62,14 @@ $phone_country = trim(
     $_POST['phone_country'] ?? 'KM'
 );
 
-$code = strtoupper(
-    trim($_POST['code'] ?? '')
+// Mot de passe (8 caractères minimum, comme Google) — plus de
+// forçage en majuscules, on garde la casse telle que saisie.
+$code = trim(
+    $_POST['code'] ?? ''
 );
 
-$confirm_code = strtoupper(
-    trim($_POST['confirm_code'] ?? '')
+$confirm_code = trim(
+    $_POST['confirm_code'] ?? ''
 );
 
 $terms = isset(
@@ -87,7 +89,7 @@ if (
     empty($code)
 ) {
     header(
-        'Location: /inscription.php?error=champs_manquants'
+        'Location: /index.php?error=champs_manquants'
     );
     exit();
 }
@@ -102,7 +104,7 @@ if (
     mb_strlen($fullname) > 100
 ) {
     header(
-        'Location: /inscription.php?error=nom_invalide'
+        'Location: /index.php?error=nom_invalide'
     );
     exit();
 }
@@ -114,7 +116,7 @@ if (
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     header(
-        'Location: /inscription.php?error=email_invalide'
+        'Location: /index.php?error=email_invalide'
     );
     exit();
 }
@@ -134,7 +136,7 @@ if (
     $date_naissance->format('Y-m-d') !== $birthdate
 ) {
     header(
-        'Location: /inscription.php?error=birthdate_invalide'
+        'Location: /index.php?error=birthdate_invalide'
     );
     exit();
 }
@@ -150,7 +152,7 @@ $age = $date_naissance->diff(
 
 if ($age < 18) {
     header(
-        'Location: /inscription.php?error=age_insuffisant'
+        'Location: /index.php?error=age_insuffisant'
     );
     exit();
 }
@@ -198,7 +200,7 @@ if ($phone_country === 'SN') {
 
     if (!preg_match('/^7\d{8}$/', $phone_local)) {
         header(
-            'Location: /inscription.php?error=phone_invalide'
+            'Location: /index.php?error=phone_invalide'
         );
         exit();
     }
@@ -214,7 +216,7 @@ if ($phone_country === 'SN') {
 
     if (!preg_match('/^[34]\d{6}$/', $phone_local)) {
         header(
-            'Location: /inscription.php?error=phone_non_comorien'
+            'Location: /index.php?error=phone_non_comorien'
         );
         exit();
     }
@@ -224,57 +226,26 @@ if ($phone_country === 'SN') {
 
 
 /* ============================================================
-   CODE SECRET
+   MOT DE PASSE — 8 caractères minimum, comme Google
    ============================================================ */
 
-/*
- * Le code secret doit contenir exactement :
- *
- * 4 caractères
- * 2 chiffres
- * 2 lettres majuscules
- */
-
-if (strlen($code) !== 4) {
+if (mb_strlen($code) < 8) {
 
     header(
-        'Location: /inscription.php?error=code_invalide'
-    );
-    exit();
-}
-
-
-$nb_chiffres = preg_match_all(
-    '/[0-9]/',
-    $code
-);
-
-$nb_lettres = preg_match_all(
-    '/[A-Z]/',
-    $code
-);
-
-
-if (
-    $nb_chiffres !== 2 ||
-    $nb_lettres !== 2
-) {
-
-    header(
-        'Location: /inscription.php?error=code_invalide'
+        'Location: /index.php?error=code_invalide'
     );
     exit();
 }
 
 
 /* ============================================================
-   CONFIRMATION DU CODE
+   CONFIRMATION DU MOT DE PASSE
    ============================================================ */
 
 if ($code !== $confirm_code) {
 
     header(
-        'Location: /inscription.php?error=code_different'
+        'Location: /index.php?error=code_different'
     );
     exit();
 }
@@ -287,7 +258,7 @@ if ($code !== $confirm_code) {
 if (!$terms) {
 
     header(
-        'Location: /inscription.php?error=conditions'
+        'Location: /index.php?error=conditions'
     );
     exit();
 }
@@ -335,7 +306,7 @@ try {
     if ($compte_existant && !$compte_en_attente_verification) {
 
         header(
-            'Location: /inscription.php?error=existe_deja'
+            'Location: /index.php?error=existe_deja'
         );
         exit();
     }
@@ -375,6 +346,9 @@ try {
             $nouvel_utilisateur_id
         ]);
 
+        // Après création, l'utilisateur doit recevoir un code par
+        // email pour vérifier son compte : redirection vers
+        // verification.php (inchangée).
         $resultatEnvoi = envoyerCodeEmail(
             $email,
             $code_verification,
@@ -410,7 +384,7 @@ try {
 
 
     /* --------------------------------------------------------
-       Hash du code secret
+       Hash du mot de passe
        -------------------------------------------------------- */
 
     $password_hash = password_hash(
@@ -508,6 +482,9 @@ try {
 
     /* ========================================================
        ENVOI DU CODE PAR EMAIL
+       Le compte vient d'être créé (is_active = 0) : l'utilisateur
+       doit maintenant recevoir un code par email et le saisir sur
+       verification.php avant de pouvoir se connecter.
        ======================================================== */
 
     $resultatEnvoi = envoyerCodeEmail(
@@ -571,7 +548,7 @@ try {
 
 
     header(
-        'Location: /inscription.php?error=serveur'
+        'Location: /index.php?error=serveur'
     );
 
     exit();
