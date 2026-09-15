@@ -43,6 +43,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     $balance -= $montant;
                     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     $transfert_success = 'Transfert de '.number_format($montant,0,',','.').' KMF envoyé à '.$dest['fullname'].' !';
+
+                    require_once __DIR__ . '/../includs/notifications.php';
+                    envoyerNotification(
+                        $pdo, $user_id,
+                        "💸 Vous avez envoyé " . number_format($montant, 0, ',', '.') . " KMF à " . $dest['fullname'] . ".",
+                        'Transfert envoyé', '/page/historique.php'
+                    );
+                    envoyerNotification(
+                        $pdo, (int) $dest['id'],
+                        "💰 Vous avez reçu " . number_format($montant, 0, ',', '.') . " KMF de " . $user_fullname . " !",
+                        'Transfert reçu', '/page/historique.php'
+                    );
                 } catch(Exception $e) {
                     $pdo->rollBack();
                     $transfert_error = 'Erreur lors du transfert. Réessayez.';
@@ -94,10 +106,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                          VALUES (?, 'retrait', ?, ?, 'en_attente', ?)"
                     )->execute([$user_id, $montant_r, $referenceTx, 'Demande de retrait via ' . $methode_r]);
 
-                    $textNotif = "🏦 Votre demande de retrait de " . number_format($montant_r, 0, ',', '.') . " KMF a été enregistrée et est en attente de validation.";
-                    $pdo->prepare(
-                        "INSERT INTO messages (user_id, expediteur, message, statut) VALUES (?, 'MonRevenu', ?, 'non_lu')"
-                    )->execute([$user_id, $textNotif]);
+                    require_once __DIR__ . '/../includs/notifications.php';
+                    envoyerNotification(
+                        $pdo, $user_id,
+                        "🏦 Votre demande de retrait de " . number_format($montant_r, 0, ',', '.') . " KMF a été enregistrée et est en attente de validation.",
+                        'Demande de retrait', '/page/historique.php'
+                    );
 
                     $pdo->commit();
                     $balance -= $montant_r;

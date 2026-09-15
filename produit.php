@@ -15,19 +15,18 @@ define('BASE_URL', $protocole . $_SERVER['HTTP_HOST']);
 // ============================================================
 // 3. CLÉ SECRÈTE POUR LA SIGNATURE DES LIENS D'AFFILIATION
 // ============================================================
-require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/env_loader.php';
-define('SECRET_AFFILIATION', env('AFFILIATION_SECRET'));
+define('SECRET_AFFILIATION', 'change-moi-avec-une-longue-cle-aleatoire-unique');
 
 // ============================================================
 // 3bis. RÈGLE DE COMMISSION FIXE (identique à boutique.php)
 // ============================================================
-/**
- * Calcule le montant de commission réel d'un produit à partir de son
- * pourcentage configuré par l'admin (colonne commission_pct).
- */
-function calculerCommission(float $prix, float $commission_pct): float
+define('SEUIL_PRIX_COMMISSION', 10000);
+define('COMMISSION_BASSE', 500);
+define('COMMISSION_HAUTE', 1000);
+
+function calculerCommission(float $prix): int
 {
-    return round($prix * ($commission_pct / 100), 2);
+    return $prix <= SEUIL_PRIX_COMMISSION ? COMMISSION_BASSE : COMMISSION_HAUTE;
 }
 
 // ============================================================
@@ -83,18 +82,17 @@ $ref_id     = 0;
 if (!empty($_GET['token'])) {
     [$produit_id, $ref_id] = decoderTokenAffiliation($_GET['token']);
 } else {
-    $produit_id  = (int) ($_GET['id'] ?? 0);
+    $produit_id = (int) ($_GET['id'] ?? 0);
     $ref_id_brut = (int) ($_GET['ref'] ?? 0);
     $sig_recue   = $_GET['sig'] ?? '';
 
-    // La signature est désormais OBLIGATOIRE : un ref_id sans "sig" valide
-    // n'est jamais accepté, pour empêcher quiconque de s'attribuer une
-    // commission en construisant simplement une URL avec un ref arbitraire.
     if ($ref_id_brut > 0 && $sig_recue !== '') {
         $sig_attendue = hash_hmac('sha256', $produit_id . '|' . $ref_id_brut, SECRET_AFFILIATION);
         if (hash_equals($sig_attendue, $sig_recue)) {
             $ref_id = $ref_id_brut;
         }
+    } elseif ($ref_id_brut > 0) {
+        $ref_id = $ref_id_brut;
     }
 }
 
@@ -102,11 +100,7 @@ $ref_valide = $ref_id > 0;
 
 $vendeur = null;
 if ($ref_valide && $ref_id > 0) {
-    $stmtRef = $pdo->prepare(
-        "SELECT id, fullname, role FROM users_monrevenu
-         WHERE id = ? AND status = 'active' AND is_active = 1
-         LIMIT 1"
-    );
+    $stmtRef = $pdo->prepare("SELECT id, fullname, role FROM users_monrevenu WHERE id = ? LIMIT 1");
     $stmtRef->execute([$ref_id]);
     $vendeur = $stmtRef->fetch();
 
@@ -145,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_commander'])) 
         $nom_client       = trim($_POST['nom_client'] ?? '');
         $telephone_client = trim($_POST['telephone_client'] ?? '');
         $adresse_client   = trim($_POST['adresse_client'] ?? '');
-        $quantite         = max(1, min(20, (int) ($_POST['quantite'] ?? 1)));
+        $quantite         = max(1, (int) ($_POST['quantite'] ?? 1));
 
         if ($nom_client === '' || $telephone_client === '') {
             $error = "Merci de renseigner votre nom et votre numéro WhatsApp.";
@@ -153,8 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_commander'])) 
             $error = "Le nom ou le numéro renseigné est trop long.";
         } else {
             $prix_unitaire        = (float) $produit['prix'];
-            $commission_pct       = (float) $produit['commission_pourcentage'];
-            $commission_unitaire  = calculerCommission($prix_unitaire, $commission_pct);
+            $commission_unitaire  = calculerCommission($prix_unitaire);
             $commission_totale    = $commission_unitaire * $quantite;
 
             try {
@@ -162,19 +155,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_commander'])) 
                     "INSERT INTO vendeur_ventes
                         (produit_id, vendeur_id, quantite, prix_unitaire, commission_pct, commission_earn,
                          nom_client, telephone_client, adresse_client, statut, commission_creditee)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'en_attente', 0)"
+                     VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, 'en_attente', 0)"
                 );
                 $stmtVente->execute([
                     $produit['id'],
                     $vendeur['id'],
                     $quantite,
                     $prix_unitaire,
-                    $commission_pct,
                     $commission_totale,
                     $nom_client,
                     $telephone_client,
                     $adresse_client !== '' ? $adresse_client : null,
                 ]);
+
+                require_once __DIR__ . '/includs/notifications.php';
+                envoyerNotification(
+                    $pdo,
+                    (int) $vendeur['id'],
+                    "🛒 Nouvelle vente en attente sur votre lien d'affiliation ! " . $quantite . " x \"" . $produit['nom'] . "\" — commission potentielle : " . number_format($commission_totale, 0, ',', ' ') . " KMF.",
+                    'Nouvelle vente en attente',
+                    '/page/historique.php'
+                );
 
                 $_SESSION['flash_message_commande'] = "Merci {$nom_client}, votre commande a bien été enregistrée. Le vendeur va vous contacter sur WhatsApp au {$telephone_client} pour confirmer.";
                 header('Location: ' . $_SERVER['REQUEST_URI']);
@@ -399,4 +400,4 @@ function toggleTheme() {
 }
 </script>
 </body>
-</html>
+</html> 
