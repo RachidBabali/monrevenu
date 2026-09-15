@@ -1,6 +1,6 @@
 <!-- ================= HEADER ================= -->
 <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-100">
-  <div class="max-w-7xl mx-auto px-5 md:px-8 h-20 flex items-center justify-between">
+  <div class="max-w-7xl mx-auto px-5 md:px-8 h-20 flex items-center justify-between gap-6">
 
     <!-- Logo -->
     <a href="index.php" class="flex items-center gap-3 shrink-0">
@@ -14,7 +14,7 @@
     </a>
 
     <!-- Actions -->
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-3 ml-auto">
       <button type="button" onclick="openModal('modal-register')"
               class="sm:hidden inline-flex bg-[#1E3F8F] hover:bg-[#152C66] text-white text-[13.5px] font-bold px-5 py-2.5 rounded-full transition-colors">
         Créer un compte
@@ -54,4 +54,18 @@
 function toggleMobileMenu() {
   document.getElementById('mrMobileMenu').classList.toggle('hidden');
 }
+
+// Ferme le menu mobile si on clique n'importe où en dehors du header
+document.addEventListener('click', function (e) {
+  const menu = document.getElementById('mrMobileMenu');
+  const btn = document.getElementById('mrMobileBtn');
+  if (!menu || menu.classList.contains('hidden')) return;
+
+  const clicDansLeMenu = menu.contains(e.target);
+  const clicSurLeBouton = btn.contains(e.target);
+
+  if (!clicDansLeMenu && !clicSurLeBouton) {
+    menu.classList.add('hidden');
+  }
+});
 </script>
