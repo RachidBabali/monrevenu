@@ -62,6 +62,10 @@ $phone_country = trim(
     $_POST['phone_country'] ?? 'KM'
 );
 
+$code = strtoupper(
+    trim($_POST['code'] ?? '')
+);
+
 // Mot de passe (8 caractères minimum, comme Google) — plus de
 // forçage en majuscules, on garde la casse telle que saisie.
 $code = trim(
@@ -200,7 +204,7 @@ if ($phone_country === 'SN') {
 
     if (!preg_match('/^7\d{8}$/', $phone_local)) {
         header(
-            'Location: /index.php?error=phone_invalide'
+            'Location: /inscription.php?error=phone_invalide'
         );
         exit();
     }
@@ -216,7 +220,7 @@ if ($phone_country === 'SN') {
 
     if (!preg_match('/^[34]\d{6}$/', $phone_local)) {
         header(
-            'Location: /index.php?error=phone_non_comorien'
+            'Location: /inscription.php?error=phone_non_comorien'
         );
         exit();
     }
@@ -426,6 +430,8 @@ try {
 
     $pdo->beginTransaction();
 
+    require_once __DIR__ . '/geoip.php';
+    $pays = detecterPaysVisiteur();
 
     $stmt = $pdo->prepare(
         "INSERT INTO users_monrevenu
@@ -435,6 +441,8 @@ try {
             birthdate,
             phone,
             phone_verified,
+            pays_code,
+            pays_nom,
             verification_code,
             code_expires_at,
             code_sent_at,
@@ -451,6 +459,8 @@ try {
             :birthdate,
             :phone,
             0,
+            :pays_code,
+            :pays_nom,
             :verification_code,
             :code_expires_at,
             NOW(),
@@ -468,6 +478,8 @@ try {
         ':email' => $email,
         ':birthdate' => $birthdate,
         ':phone' => $phone_normalise,
+        ':pays_code' => $pays['code'],
+        ':pays_nom' => $pays['nom'],
         ':verification_code' => $code_verification_hash,
         ':code_expires_at' => $code_expiration,
         ':password' => $password_hash

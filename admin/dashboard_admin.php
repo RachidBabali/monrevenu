@@ -170,11 +170,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'validee'    => "💰 Vente #" . $vente_id . " validée ! " . number_format((float) $vente['commission_earn'], 0, ',', ' ') . " KMF ont été crédités sur votre solde.",
                         'annulee'    => "❌ Votre vente #" . $vente_id . " a été annulée.",
                     ];
-                    $stmtNotifVente = $pdo->prepare(
-                        "INSERT INTO messages (user_id, expediteur, message, statut)
-                         VALUES (?, 'MonRevenu', ?, 'non_lu')"
+                    require_once __DIR__ . '/../includs/notifications.php';
+                    $titres_notif_statut = [
+                        'en_attente' => 'Vente en attente',
+                        'contacte'   => 'Client contacté',
+                        'colis_recu' => 'Colis reçu',
+                        'validee'    => 'Commission créditée',
+                        'annulee'    => 'Vente annulée',
+                    ];
+                    envoyerNotification(
+                        $pdo,
+                        (int) $vente['vendeur_id'],
+                        $libelles_notif_statut[$nouveau_statut],
+                        $titres_notif_statut[$nouveau_statut] ?? 'MonRevenu',
+                        '/page/historique.php'
                     );
-                    $stmtNotifVente->execute([$vente['vendeur_id'], $libelles_notif_statut[$nouveau_statut]]);
 
                     $pdo->commit();
                     $message = "✅ Statut de la vente mis à jour.";
@@ -219,12 +229,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'Commission sur vente #' . $vente_id
                     ]);
 
-                    $stmtNotifComm2 = $pdo->prepare(
-                        "INSERT INTO messages (user_id, expediteur, message, statut)
-                         VALUES (?, 'MonRevenu', ?, 'non_lu')"
+                    require_once __DIR__ . '/../includs/notifications.php';
+                    envoyerNotification(
+                        $pdo,
+                        (int) $vente['vendeur_id'],
+                        "💰 Commission envoyée ! " . number_format((float) $vente['commission_earn'], 0, ',', ' ') . " KMF ont été crédités sur votre solde pour la vente #" . $vente_id . ".",
+                        'Commission créditée',
+                        '/page/historique.php'
                     );
-                    $texteNotifComm2 = "💰 Commission envoyée ! " . number_format((float) $vente['commission_earn'], 0, ',', ' ') . " KMF ont été crédités sur votre solde pour la vente #" . $vente_id . ".";
-                    $stmtNotifComm2->execute([$vente['vendeur_id'], $texteNotifComm2]);
 
                     $pdo->commit();
                     $message = "✅ Commission envoyée avec succès !";

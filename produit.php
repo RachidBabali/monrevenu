@@ -195,6 +195,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_commander'])) 
                     $adresse_client !== '' ? $adresse_client : null,
                 ]);
 
+                require_once __DIR__ . '/includs/notifications.php';
+                envoyerNotification(
+                    $pdo,
+                    (int) $vendeur['id'],
+                    "🛒 Nouvelle vente en attente sur votre lien d'affiliation ! " . $quantite . " x \"" . $produit['nom'] . "\" — commission potentielle : " . number_format($commission_totale, 0, ',', ' ') . " KMF.",
+                    'Nouvelle vente en attente',
+                    '/page/historique.php'
+                );
+
                 $_SESSION['flash_message_commande'] = "Merci {$nom_client}, votre commande a bien été enregistrée. Le vendeur va vous contacter sur WhatsApp au {$telephone_client} pour confirmer.";
                 header('Location: ' . $_SERVER['REQUEST_URI']);
                 exit();

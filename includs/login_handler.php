@@ -4,7 +4,11 @@
  * ║         LOGIN HANDLER — Mon Revenu                      ║
  * ║  Gère : admin → dashboard_admin / agent → dashboard_agent
  * ║          affilie → dashboard.php                        ║
+<<<<<<< HEAD
  * ║  Connexion par : numéro de téléphone + mot de passe      ║
+=======
+ * ║  Connexion par : numéro de téléphone + code secret       ║
+>>>>>>> f1e769c39d429639ad5f7b4c954fa1872686204d
  * ║  Numéros acceptés : Comores (+269) et Sénégal (+221)     ║
  * ╚══════════════════════════════════════════════════════════╝
  * À placer dans : includs/login_handler.php
@@ -57,9 +61,7 @@ try {
 
 // ── 4. Récupération des champs ───────────────────────────────────────────────
 $identifiant = trim($_POST['identifiant'] ?? '');
-// Mot de passe (8 caractères minimum, comme Google) — plus de
-// forçage en majuscules, on garde la casse telle que saisie.
-$code        = trim($_POST['code'] ?? '');
+$code        = strtoupper(trim($_POST['code'] ?? ''));
 
 if (!$identifiant || !$code) {
     header('Location: /index.php?error=champs_manquants');
@@ -146,7 +148,7 @@ try {
     $stmt->execute([$cle_recherche, $cle_recherche]);
     $user = $stmt->fetch();
 
-    // ── 7. Vérifier le mot de passe ───────────────────────────────────────────
+    // ── 7. Vérifier le code secret ───────────────────────────────────────────
     $hash_reference = $user['password'] ?? '$2y$12$D9m5x1sJZ3yKf6q1r0aFZO7hV1Q6qk4pQnR2eYkD5vXbG8tJmW3Ke';
     $code_valide = password_verify($code, $hash_reference);
 
@@ -213,6 +215,13 @@ try {
     try {
         $pdo->prepare("UPDATE users_monrevenu SET last_login=NOW() WHERE id=?")->execute([$user['id']]);
     } catch (\PDOException $e) { /* colonne last_login absente — ignoré */ }
+
+    require_once __DIR__ . '/geoip.php';
+    $pays = detecterPaysVisiteur();
+    try {
+        $pdo->prepare("UPDATE users_monrevenu SET pays_code = ?, pays_nom = ? WHERE id = ?")
+            ->execute([$pays['code'], $pays['nom'], $user['id']]);
+    } catch (\PDOException $e) { /* colonnes pays absentes — migration pas encore appliquée */ }
 
     session_regenerate_id(true);
 

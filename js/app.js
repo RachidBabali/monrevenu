@@ -147,4 +147,126 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js')
       .catch((err) => console.warn('Échec enregistrement service worker :', err));
   });
+<<<<<<< HEAD
 }
+=======
+}
+
+// ── Cloche de notifications + abonnement aux notifications push ───────────
+// Ne s'active que sur les pages qui incluent le composant
+// sections/notifications_bell.php (identifiable par [data-notif-bell]).
+(function initNotifications() {
+  const cloches = document.querySelectorAll('[data-notif-bell]');
+  if (!cloches.length) return;
+
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+  const vapidPublicKey = document.querySelector('meta[name="vapid-public-key"]')?.content || '';
+
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = atob(base64);
+    return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+  }
+
+  function rafraichirCloche(cloche) {
+    fetch('/includs/notifications_api.php')
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.ok) return;
+        const badge = cloche.querySelector('.notif-badge');
+        if (data.unread > 0) {
+          badge.textContent = data.unread > 99 ? '99+' : data.unread;
+          badge.classList.remove('hidden');
+          badge.classList.add('flex');
+        } else {
+          badge.classList.add('hidden');
+          badge.classList.remove('flex');
+        }
+
+        const liste = cloche.querySelector('.notif-liste');
+        if (!data.notifications.length) {
+          liste.innerHTML = '<p class="notif-vide px-4 py-6 text-center text-[12px] text-slate-400">Aucune notification pour le moment.</p>';
+          return;
+        }
+        liste.innerHTML = data.notifications.map((n) => `
+          <button type="button" data-id="${n.id}" data-lu="${n.non_lu ? '0' : '1'}"
+            class="notif-item w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${n.non_lu ? 'bg-brand/5' : ''}">
+            <p class="text-[12.5px] text-slate-700 dark:text-slate-200 leading-snug">${n.message}</p>
+            <p class="text-[10px] text-slate-400 mt-1">${n.date}</p>
+          </button>
+        `).join('');
+      })
+      .catch(() => {});
+  }
+
+  function activerAbonnementPush(cloche) {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !vapidPublicKey) return;
+
+    navigator.serviceWorker.ready.then((registration) => {
+      registration.pushManager.getSubscription().then((subExistant) => {
+        if (subExistant) return; // déjà abonné sur cet appareil
+        const boutonActiver = cloche.querySelector('.notif-activer-push');
+        if (Notification.permission === 'denied') return; // l'utilisateur a déjà refusé
+        boutonActiver?.classList.remove('hidden');
+      });
+    });
+  }
+
+  function demanderAbonnementPush(cloche) {
+    navigator.serviceWorker.ready.then((registration) => {
+      registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+      }).then((subscription) => {
+        return fetch('/includs/push_subscribe.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'subscribe', csrf_token: csrfToken, ...subscription.toJSON() })
+        });
+      }).then(() => {
+        cloche.querySelector('.notif-activer-push')?.classList.add('hidden');
+      }).catch((err) => console.warn('Abonnement push refusé ou échoué :', err));
+    });
+  }
+
+  cloches.forEach((cloche) => {
+    const toggle = cloche.querySelector('.notif-bell-toggle');
+    const panel = cloche.querySelector('.notif-panel');
+
+    toggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const estOuvert = !panel.classList.contains('hidden');
+      document.querySelectorAll('.notif-panel').forEach((p) => p.classList.add('hidden'));
+      if (!estOuvert) {
+        panel.classList.remove('hidden');
+        rafraichirCloche(cloche);
+      }
+    });
+
+    cloche.querySelector('.notif-marquer-tout').addEventListener('click', () => {
+      fetch('/includs/notifications_api.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'marquer_tout_lu', csrf_token: csrfToken })
+      }).then(() => rafraichirCloche(cloche));
+    });
+
+    cloche.querySelector('.notif-liste').addEventListener('click', (e) => {
+      const item = e.target.closest('.notif-item');
+      if (!item || item.dataset.lu === '1') return;
+      fetch('/page/marquer-lu.php?id=' + item.dataset.id).then(() => rafraichirCloche(cloche));
+    });
+
+    cloche.querySelector('.notif-activer-push').addEventListener('click', () => demanderAbonnementPush(cloche));
+
+    rafraichirCloche(cloche);
+    activerAbonnementPush(cloche);
+    setInterval(() => rafraichirCloche(cloche), 30000);
+  });
+
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.notif-panel').forEach((p) => p.classList.add('hidden'));
+  });
+})();
+>>>>>>> f1e769c39d429639ad5f7b4c954fa1872686204d

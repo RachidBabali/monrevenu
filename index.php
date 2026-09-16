@@ -1,4 +1,9 @@
-<?php session_start(); ?>
+<?php
+session_start();
+require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/geoip.php';
+enregistrerVisitePays($pdo, $_SESSION['user_id'] ?? null);
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>

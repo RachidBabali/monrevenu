@@ -78,13 +78,16 @@ if (!$email || !$google_id) {
 try {
     // ── 5. Chercher un compte existant (par google_id, puis par email) ──────
     $stmt = $pdo->prepare("
-        SELECT id, fullname, email, role, is_active
+        SELECT id, fullname, email, role, is_active, phone_verified
         FROM users_monrevenu
         WHERE google_id = ? OR email = ?
         LIMIT 1
     ");
     $stmt->execute([$google_id, $email]);
     $user = $stmt->fetch();
+
+    require_once __DIR__ . '/geoip.php';
+    $pays = detecterPaysVisiteur();
 
     if ($user) {
         // Compte existant : on s'assure que google_id est bien enregistré
@@ -97,31 +100,42 @@ try {
             repondre(false, ['error' => 'Votre compte est désactivé. Contactez le support.']);
         }
 
-        $user_id   = (int) $user['id'];
-        $user_role = $user['role'];
+        $user_id        = (int) $user['id'];
+        $user_role      = $user['role'];
+        $phone_verified = (int) $user['phone_verified'];
 
     } else {
         // ── 6. Créer un nouveau compte ───────────────────────────────────────
-        // Pas de téléphone, pas de code secret : phone_verified reste à 0,
-        // mais is_active = 1 directement, car Google a déjà confirmé l'email.
+        // Pas de téléphone, pas de code secret : phone_verified reste à 0
+        // tant que la personne n'a pas complété /completer-telephone.php,
+        // qui bloque l'accès aux produits d'affiliation en attendant
+        // (voir includs/auth_middleware.php > exigerTelephoneVerifie).
         $stmt = $pdo->prepare("
             INSERT INTO users_monrevenu
-                (fullname, email, google_id, phone, phone_verified, password, role, balance, is_active, created_at)
+                (fullname, email, google_id, phone, phone_verified, pays_code, pays_nom, password, role, balance, is_active, created_at)
             VALUES
-                (:fullname, :email, :google_id, NULL, 0, :password, 'affilie', 0.00, 1, NOW())
+                (:fullname, :email, :google_id, NULL, 0, :pays_code, :pays_nom, :password, 'affilie', 0.00, 1, NOW())
         ");
         $stmt->execute([
             ':fullname' => $fullname,
             ':email'    => $email,
             ':google_id'=> $google_id,
+            ':pays_code'=> $pays['code'],
+            ':pays_nom' => $pays['nom'],
             // Mot de passe factice inutilisable : ce compte ne pourra se
             // connecter que via Google tant qu'aucun code secret n'est défini.
             ':password' => password_hash(bin2hex(random_bytes(16)), PASSWORD_BCRYPT),
         ]);
 
-        $user_id   = (int) $pdo->lastInsertId();
-        $user_role = 'affilie';
+        $user_id        = (int) $pdo->lastInsertId();
+        $user_role      = 'affilie';
+        $phone_verified = 0;
     }
+
+    // Rafraîchit le pays détecté à chaque connexion (utile si le compte a
+    // changé d'appareil/réseau depuis sa création).
+    $pdo->prepare("UPDATE users_monrevenu SET pays_code = ?, pays_nom = ? WHERE id = ?")
+        ->execute([$pays['code'], $pays['nom'], $user_id]);
 
     // ── 7. Ouvrir la session ─────────────────────────────────────────────────
     session_regenerate_id(true);
@@ -138,6 +152,12 @@ try {
     try {
         $pdo->prepare("UPDATE users_monrevenu SET last_login = NOW() WHERE id = ?")->execute([$user_id]);
     } catch (\PDOException $e) { /* colonne last_login absente — ignoré */ }
+
+    // Téléphone non vérifié : direction la page de complétion obligatoire,
+    // quel que soit le rôle — pas d'accès aux produits avant ça.
+    if ($phone_verified !== 1) {
+        repondre(true, ['redirect' => '/completer-telephone.php']);
+    }
 
     $redirect = match ($user_role) {
         'admin' => '/admin/dashboard_admin.php',

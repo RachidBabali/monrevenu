@@ -6,6 +6,9 @@ if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
     header('Location: /index.php'); exit();
 }
 
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/auth_middleware.php';
+exigerTelephoneVerifie($pdo);
+
 $user_id       = $_SESSION['user_id'];
 $user_fullname = $_SESSION['user_fullname'] ?? 'Utilisateur';
 $user_initials = strtoupper(substr($user_fullname, 0, 2));
@@ -17,6 +20,10 @@ $stmt->execute([$user_id]);
 $sender  = $stmt->fetch();
 $balance = $sender['balance'] ?? 0;
 $role    = $sender['role'] ?? 'client';
+
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr" class="light">
@@ -26,6 +33,8 @@ $role    = $sender['role'] ?? 'client';
   <meta name="theme-color" content="#1246A0"/>
   <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="csrf-token" content="<?= htmlspecialchars($_SESSION['csrf_token']) ?>"/>
+  <meta name="vapid-public-key" content="<?= htmlspecialchars(env('VAPID_PUBLIC_KEY', '')) ?>"/>
   <title>MonRevenu – Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{sora:['Sora','sans-serif']},colors:{brand:{DEFAULT:'#1246A0',mid:'#1A5FCC',light:'#3B82F6',soft:'#EEF4FF'}}}}}</script>
@@ -51,6 +60,7 @@ $role    = $sender['role'] ?? 'client';
         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         Rechercher...
       </button>
+      <?php include $_SERVER['DOCUMENT_ROOT'] . '/sections/notifications_bell.php'; ?>
       <button onclick="toggleTheme()" class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center">
         <svg class="w-[18px] h-[18px] text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
       </button>
@@ -71,6 +81,7 @@ $role    = $sender['role'] ?? 'client';
       <button onclick="openSearch()" class="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center">
         <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       </button>
+      <?php include $_SERVER['DOCUMENT_ROOT'] . '/sections/notifications_bell.php'; ?>
       <button onclick="toggleTheme()" class="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center">
         <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg>
       </button>
