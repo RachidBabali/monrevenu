@@ -7,6 +7,9 @@ if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
     header('Location: /index.php'); exit();
 }
 
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/auth_middleware.php';
+exigerTelephoneVerifie($pdo);
+
 $user_id = $_SESSION['user_id'] ?? $_SESSION['id'] ?? null;
 
 if (!$user_id) {
@@ -30,7 +33,7 @@ $produits = [];
 try {
     if ($recherche !== '') {
         $stmt = $pdo->prepare(
-            "SELECT id, nom_produit AS nom, description, image, prix_vente AS prix, commission_pct AS commission_pourcentage
+            "SELECT id, nom_produit AS nom, description, image, prix_vente AS prix
              FROM vendeur_produits
              WHERE statut = 'actif' AND nom_produit LIKE ?
              ORDER BY nom_produit ASC"
@@ -38,7 +41,7 @@ try {
         $stmt->execute(['%' . $recherche . '%']);
     } else {
         $stmt = $pdo->prepare(
-            "SELECT id, nom_produit AS nom, description, image, prix_vente AS prix, commission_pct AS commission_pourcentage
+            "SELECT id, nom_produit AS nom, description, image, prix_vente AS prix
              FROM vendeur_produits
              WHERE statut = 'actif'
              ORDER BY nom_produit ASC"
@@ -53,15 +56,15 @@ try {
 
 $protocole = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
 define('BASE_URL_SITE', $protocole . $_SERVER['HTTP_HOST']);
-define('SECRET_AFFILIATION', env('AFFILIATION_SECRET'));
+define('SECRET_AFFILIATION', 'change-moi-avec-une-longue-cle-aleatoire-unique');
 
-/**
- * Calcule le montant de commission réel d'un produit à partir de son
- * pourcentage configuré par l'admin (colonne commission_pct).
- */
-function calculerCommission(float $prix, float $commission_pct): float
+define('SEUIL_PRIX_COMMISSION', 10000);
+define('COMMISSION_BASSE', 500);
+define('COMMISSION_HAUTE', 1000);
+
+function calculerCommission(float $prix): int
 {
-    return round($prix * ($commission_pct / 100), 2);
+    return $prix <= SEUIL_PRIX_COMMISSION ? COMMISSION_BASSE : COMMISSION_HAUTE;
 }
 
 function slugify(string $texte): string
@@ -82,7 +85,7 @@ function genererTokenAffiliation(int $produitId, int $refId): string
 
 $total_produits = count($produits);
 $commission_moyenne = $total_produits > 0
-    ? array_sum(array_map(fn($p) => calculerCommission((float) ($p['prix'] ?? 0), (float) ($p['commission_pourcentage'] ?? 0)), $produits)) / $total_produits
+    ? array_sum(array_map(fn($p) => calculerCommission((float) ($p['prix'] ?? 0)), $produits)) / $total_produits
     : 0;
 ?>
 <!DOCTYPE html>
@@ -124,7 +127,6 @@ $commission_moyenne = $total_produits > 0
     .font-display { font-family: 'Sora', sans-serif; }
     .line-clamp-2 {
       display: -webkit-box;
-      line-clamp: 2;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
@@ -205,22 +207,11 @@ $commission_moyenne = $total_produits > 0
             $produit_id          = (int) $produit['id'];
             $produit_nom         = $produit['nom'] ?? 'Produit sans nom';
             $produit_description = $produit['description'] ?? '';
-
-            $produit_image_brut = $produit['image'] ?? '';
-            if (preg_match('#^(https?:|data:)#', $produit_image_brut)) {
-                // URL R2/CDN absolue ou data URI générée en code — utilisable telle quelle
-                $produit_image = $produit_image_brut;
-            } elseif ($produit_image_brut !== '') {
-                // Ancien chemin local relatif (produit pas encore migré)
-                $produit_image = '/admin/' . $produit_image_brut;
-            } else {
-                $produit_image = '/assets/img/produit-placeholder.png';
-            }
-
+            $produit_image       = !empty($produit['image']) ? '/admin/' . $produit['image'] : '/assets/img/produit-placeholder.png';
             $produit_prix_brut   = (float) ($produit['prix'] ?? 0);
             $produit_prix        = number_format($produit_prix_brut, 0, ',', ' ');
 
-            $commission_montant_brut = calculerCommission($produit_prix_brut, (float) ($produit['commission_pourcentage'] ?? 0));
+            $commission_montant_brut = calculerCommission($produit_prix_brut);
             $commission_montant      = number_format($commission_montant_brut, 0, ',', ' ');
 
             $slug = slugify($produit_nom);

@@ -6,6 +6,9 @@ if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
     header('Location: /index.php'); exit();
 }
 
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/auth_middleware.php';
+exigerTelephoneVerifie($pdo);
+
 $user_id       = $_SESSION['user_id'];
 $user_fullname = $_SESSION['user_fullname'] ?? 'Utilisateur';
 $user_initials = strtoupper(substr($user_fullname, 0, 2));

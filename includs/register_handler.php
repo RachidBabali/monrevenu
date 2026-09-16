@@ -8,8 +8,8 @@
 
 session_start();
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/email_sender.php';
+require_once __DIR__ . '/../basse_de_donner/monrevenu_bd.php';
+require_once __DIR__ . '/email_sender.php';
 
 
 /* ============================================================
@@ -56,6 +56,10 @@ $birthdate = trim(
 
 $phone = trim(
     $_POST['phone'] ?? ''
+);
+
+$phone_country = trim(
+    $_POST['phone_country'] ?? 'KM'
 );
 
 $code = strtoupper(
@@ -153,7 +157,7 @@ if ($age < 18) {
 
 
 /* ============================================================
-   NUMÉRO COMORIEN
+   NUMÉRO DE TÉLÉPHONE — Comores ou Sénégal
    ============================================================ */
 
 $phone_nettoye = preg_replace(
@@ -162,71 +166,61 @@ $phone_nettoye = preg_replace(
     $phone
 );
 
-
 /*
- * Format :
- *
- * 00269XXXXXXXX
- * 269XXXXXXXX
- * 3XXXXXX ou 4XXXXXX
+ * Retire un éventuel indicatif international déjà tapé par
+ * l'utilisateur (00269/269 pour les Comores, 00221/221 pour
+ * le Sénégal), et déduit le pays si l'indicatif est présent
+ * même si le menu déroulant n'a pas été changé.
  */
 
-if (
-    str_starts_with(
-        $phone_nettoye,
-        '00269'
-    )
-) {
-
-    $phone_local = substr(
-        $phone_nettoye,
-        5
-    );
-
-} elseif (
-    str_starts_with(
-        $phone_nettoye,
-        '269'
-    ) &&
-    strlen($phone_nettoye) === 10
-) {
-
-    $phone_local = substr(
-        $phone_nettoye,
-        3
-    );
-
+if (str_starts_with($phone_nettoye, '00269')) {
+    $phone_local = substr($phone_nettoye, 5);
+    $phone_country = 'KM';
+} elseif (str_starts_with($phone_nettoye, '00221')) {
+    $phone_local = substr($phone_nettoye, 5);
+    $phone_country = 'SN';
+} elseif (str_starts_with($phone_nettoye, '269') && strlen($phone_nettoye) === 10) {
+    $phone_local = substr($phone_nettoye, 3);
+    $phone_country = 'KM';
+} elseif (str_starts_with($phone_nettoye, '221') && strlen($phone_nettoye) === 12) {
+    $phone_local = substr($phone_nettoye, 3);
+    $phone_country = 'SN';
 } else {
-
     $phone_local = $phone_nettoye;
 }
 
+if ($phone_country === 'SN') {
 
-/*
- * Numéro local comorien :
- * (3 ou 4) + 6 chiffres
- * — 3 pour l'opérateur Huri, 4 pour l'opérateur Yas
- */
+    /*
+     * Numéro local sénégalais : 9 chiffres, commence par 7
+     * (tous les opérateurs mobiles sénégalais : Orange, Free, Expresso).
+     */
 
-if (
-    !preg_match(
-        '/^[34]\d{6}$/',
-        $phone_local
-    )
-) {
+    if (!preg_match('/^7\d{8}$/', $phone_local)) {
+        header(
+            'Location: /inscription.php?error=phone_invalide'
+        );
+        exit();
+    }
 
-    header(
-        'Location: /inscription.php?error=phone_non_comorien'
-    );
-    exit();
+    $phone_normalise = '221' . $phone_local;
+
+} else {
+
+    /*
+     * Numéro local comorien : (3 ou 4) + 6 chiffres
+     * — 3 pour l'opérateur Huri, 4 pour l'opérateur Yas
+     */
+
+    if (!preg_match('/^[34]\d{6}$/', $phone_local)) {
+        header(
+            'Location: /inscription.php?error=phone_non_comorien'
+        );
+        exit();
+    }
+
+    $phone_normalise = '269' . $phone_local;
 }
-
-
-/*
- * Format international
- */
-
-$phone_normalise = '269' . $phone_local;
 
 
 /* ============================================================
@@ -333,23 +327,12 @@ try {
 
     $compte_existant = $stmt->fetch();
 
-    /*
-     * NB : la colonne `status` de cette base n'accepte que
-     * 'active' / 'suspended' / 'deleted' (pas de valeur 'pending').
-     * On utilise donc `is_active` pour distinguer un compte pas
-     * encore vérifié (is_active = 0) d'un compte pleinement actif.
-     */
     $compte_en_attente_verification =
         $compte_existant
         && (int) $compte_existant['is_active'] === 0
         && $compte_existant['status'] !== 'suspended';
 
     if ($compte_existant && !$compte_en_attente_verification) {
-
-        /*
-         * Un vrai compte actif ou suspendu existe déjà avec cet
-         * email ou ce téléphone : on bloque comme avant.
-         */
 
         header(
             'Location: /inscription.php?error=existe_deja'
@@ -358,14 +341,6 @@ try {
     }
 
     if ($compte_en_attente_verification) {
-
-        /*
-         * Un compte est resté coincé en 'pending' — très probablement
-         * parce que l'envoi du code avait échoué la première fois.
-         * Plutôt que de bloquer l'utilisateur, on relance simplement
-         * son processus de vérification : nouveau code, nouvel envoi,
-         * pas de nouvelle ligne en base.
-         */
 
         $nouvel_utilisateur_id = (int) $compte_existant['id'];
 
@@ -465,10 +440,6 @@ try {
     );
 
 
-    /*
-     * Le code expire dans 10 minutes.
-     */
-
     $code_expiration = date(
         'Y-m-d H:i:s',
         strtotime('+10 minutes')
@@ -481,18 +452,8 @@ try {
 
     $pdo->beginTransaction();
 
-
-    /*
-     * Création du compte.
-     *
-     * IMPORTANT :
-     *
-     * phone_verified = 0
-     * is_active      = 0
-     * status         = pending
-     *
-     * Le compte sera activé après vérification de l'email.
-     */
+    require_once __DIR__ . '/geoip.php';
+    $pays = detecterPaysVisiteur();
 
     $stmt = $pdo->prepare(
         "INSERT INTO users_monrevenu
@@ -502,6 +463,8 @@ try {
             birthdate,
             phone,
             phone_verified,
+            pays_code,
+            pays_nom,
             verification_code,
             code_expires_at,
             code_sent_at,
@@ -518,6 +481,8 @@ try {
             :birthdate,
             :phone,
             0,
+            :pays_code,
+            :pays_nom,
             :verification_code,
             :code_expires_at,
             NOW(),
@@ -535,22 +500,16 @@ try {
         ':email' => $email,
         ':birthdate' => $birthdate,
         ':phone' => $phone_normalise,
+        ':pays_code' => $pays['code'],
+        ':pays_nom' => $pays['nom'],
         ':verification_code' => $code_verification_hash,
         ':code_expires_at' => $code_expiration,
         ':password' => $password_hash
     ]);
 
 
-    /*
-     * ID du nouvel utilisateur.
-     */
-
     $nouvel_utilisateur_id = (int) $pdo->lastInsertId();
 
-
-    /*
-     * Valide la transaction.
-     */
 
     $pdo->commit();
 
@@ -566,15 +525,6 @@ try {
     );
 
 
-    /*
-     * Si l'envoi échoue :
-     *
-     * Le compte existe déjà dans la base.
-     *
-     * On redirige quand même vers la page de vérification
-     * afin d'éviter de recréer plusieurs comptes.
-     */
-
     if (!$resultatEnvoi['ok']) {
 
         error_log(
@@ -584,22 +534,11 @@ try {
             ($resultatEnvoi['error'] ?? 'Erreur inconnue')
         );
 
-        /*
-         * On conserve l'utilisateur en session.
-         */
-
         $_SESSION['pending_verification_user_id'] =
             $nouvel_utilisateur_id;
 
         $_SESSION['csrf_token'] =
             bin2hex(random_bytes(32));
-
-        /*
-         * On va quand même vers verification.php.
-         *
-         * L'utilisateur pourra utiliser
-         * "Renvoyer le code".
-         */
 
         header(
             'Location: /verification.php?nouveau=1&envoi=echec'
@@ -619,10 +558,6 @@ try {
         bin2hex(random_bytes(32));
 
 
-    /* ========================================================
-       REDIRECTION VERS VÉRIFICATION
-       ======================================================== */
-
     header(
         'Location: /verification.php?nouveau=1'
     );
@@ -631,11 +566,6 @@ try {
 
 
 } catch (PDOException $e) {
-
-    /*
-     * Annule la transaction uniquement
-     * si elle est encore active.
-     */
 
     if ($pdo->inTransaction()) {
         $pdo->rollBack();

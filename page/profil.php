@@ -3,6 +3,7 @@ session_start();
 
 // 1. Connexion à la base de données (fichier centralisé du projet)
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/geoip.php';
 
 // Vérification de la sécurité de session
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
@@ -124,7 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // 3. RÉCUPÉRATION DES DONNÉES EN DIRECT DEPUIS LA BDD
 try {
-    $stmt = $pdo->prepare("SELECT fullname, email, phone FROM users_monrevenu WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT fullname, email, phone, pays_code, pays_nom FROM users_monrevenu WHERE id = ?");
     $stmt->execute([$user_id]);
     $user = $stmt->fetch();
 } catch (PDOException $e) {
@@ -134,6 +135,8 @@ try {
 // Valeurs de secours : priorité à la BDD (fraîche), puis à la session
 $user_fullname = $user['fullname'] ?? $_SESSION['user_fullname'] ?? '';
 $user_email    = $user['email'] ?? $_SESSION['user_email'] ?? '';
+$user_pays_code = $user['pays_code'] ?? null;
+$user_pays_nom  = $user['pays_nom'] ?? null;
 $user_phone    = $user['phone'] ?? '';
 
 // Affichage lisible du numéro comorien : +269 XX XX XXX
@@ -176,6 +179,7 @@ if (count($mots) >= 2) {
     }
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css" rel="stylesheet"/>
   <style>body{font-family:'Sora',sans-serif;}</style>
 </head>
 <body class="bg-[#F8F9FB] dark:bg-[#0B1120] text-slate-900 dark:text-slate-100 min-h-screen transition-colors duration-300">
@@ -226,7 +230,15 @@ if (count($mots) >= 2) {
       <div class="w-20 h-20 rounded-full bg-[#EEF4FF] dark:bg-slate-800 flex items-center justify-center font-bold text-[24px] text-[#1246A0] dark:text-blue-400 mx-auto mb-3 tracking-wider shadow-inner">
         <?= htmlspecialchars($user_initials) ?>
       </div>
-      <h2 class="font-bold text-[17px] text-slate-800 dark:text-white"><?= htmlspecialchars($user_fullname ?: 'Utilisateur') ?></h2>
+      <h2 class="font-bold text-[17px] text-slate-800 dark:text-white flex items-center justify-center gap-2">
+        <?= htmlspecialchars($user_fullname ?: 'Utilisateur') ?>
+        <?php if ($user_pays_code): ?>
+          <?= drapeauHtml($user_pays_code, 'text-[16px] rounded-sm') ?>
+        <?php endif; ?>
+      </h2>
+      <?php if ($user_pays_nom): ?>
+        <p class="text-[11px] text-slate-400 -mt-0.5">Connecté depuis : <?= htmlspecialchars($user_pays_nom) ?></p>
+      <?php endif; ?>
       <p class="text-[12px] text-slate-400 mt-0.5"><?= htmlspecialchars($user_email ?: 'Email non renseigné') ?></p>
       <?php if ($user_phone_affiche): ?>
         <p class="text-[12px] text-slate-400 mt-0.5 flex items-center justify-center gap-1.5">
