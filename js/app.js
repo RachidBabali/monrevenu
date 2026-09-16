@@ -147,6 +147,9 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js')
       .catch((err) => console.warn('Échec enregistrement service worker :', err));
   });
+<<<<<<< HEAD
+}
+=======
 }
 
 // ── Cloche de notifications + abonnement aux notifications push ───────────
@@ -266,3 +269,4 @@ if ('serviceWorker' in navigator) {
     document.querySelectorAll('.notif-panel').forEach((p) => p.classList.add('hidden'));
   });
 })();
+>>>>>>> f1e769c39d429639ad5f7b4c954fa1872686204d

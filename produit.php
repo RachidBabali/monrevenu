@@ -30,6 +30,31 @@ function calculerCommission(float $prix): int
 }
 
 // ============================================================
+// 3ter. VALIDATION DU NUMÉRO (Sénégal +221 ou Comores +269 uniquement)
+// ============================================================
+/**
+ * Vérifie que le numéro correspond à un format sénégalais (+221) ou
+ * comorien (+269). Accepte avec ou sans indicatif, espaces retirés.
+ */
+function validerTelephoneSenegalOuComores(string $tel): bool
+{
+    // On retire tout sauf les chiffres et le signe +
+    $tel = preg_replace('/[^\d+]/', '', $tel);
+
+    // Sénégal : +221 suivi de 9 chiffres commençant par 7 (mobile)
+    if (preg_match('/^(\+221|00221)?7[0-8]\d{7}$/', $tel)) {
+        return true;
+    }
+
+    // Comores : +269 suivi de 7 chiffres commençant par 3 ou 4 (mobile)
+    if (preg_match('/^(\+269|00269)?[34]\d{6}$/', $tel)) {
+        return true;
+    }
+
+    return false;
+}
+
+// ============================================================
 // 4. JETON CSRF (protection du formulaire de commande)
 // ============================================================
 if (empty($_SESSION['csrf_token'])) {
@@ -145,6 +170,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_commander'])) 
             $error = "Merci de renseigner votre nom et votre numéro WhatsApp.";
         } elseif (mb_strlen($nom_client) > 120 || mb_strlen($telephone_client) > 30) {
             $error = "Le nom ou le numéro renseigné est trop long.";
+        } elseif (!validerTelephoneSenegalOuComores($telephone_client)) {
+            $error = "Merci de renseigner un numéro WhatsApp valide du Sénégal (+221) ou des Comores (+269).";
         } else {
             $prix_unitaire        = (float) $produit['prix'];
             $commission_unitaire  = calculerCommission($prix_unitaire);
@@ -360,10 +387,14 @@ $og_url = BASE_URL . '/produit.php' . (!empty($_SERVER['QUERY_STRING']) ? '?' . 
                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ok">
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2Zm5.8 14.14c-.24.68-1.4 1.3-1.93 1.38-.5.08-1.13.11-1.82-.12-.42-.14-.96-.32-1.65-.62-2.9-1.25-4.79-4.17-4.94-4.36-.14-.19-1.18-1.57-1.18-3 0-1.42.75-2.12 1.01-2.41.26-.29.58-.36.77-.36.19 0 .39 0 .55.01.18.01.41-.07.64.49.24.58.81 2 .88 2.14.07.15.12.32.02.51-.1.19-.15.31-.3.48-.15.17-.31.37-.44.5-.15.15-.3.31-.13.6.17.29.75 1.24 1.62 2.01 1.11.99 2.05 1.3 2.34 1.45.29.15.46.12.63-.07.17-.19.72-.84.91-1.13.19-.29.38-.24.63-.14.26.1 1.65.78 1.93.92.29.15.48.22.55.34.07.13.07.72-.17 1.4Z"/></svg>
                 </span>
-                <input type="tel" name="telephone_client" required placeholder="Ex : +269......" value="<?= htmlspecialchars($_POST['telephone_client'] ?? '') ?>"
+                <input type="tel" name="telephone_client" required
+                       placeholder="Ex : +221771234567 ou +2693312345"
+                       pattern="^(\+221|00221)?7[0-8][0-9]{7}$|^(\+269|00269)?[34][0-9]{6}$"
+                       title="Numéro sénégalais (+221) ou comorien (+269) uniquement"
+                       value="<?= htmlspecialchars($_POST['telephone_client'] ?? '') ?>"
                        class="w-full bg-paper dark:bg-slate-900 border border-line dark:border-slate-700 rounded-lg pl-9 pr-3.5 py-2.5 text-[13.5px] text-ink dark:text-white outline-none focus:border-brand focus:ring-1 focus:ring-brand/25 transition-all">
               </div>
-              <p class="text-[10.5px] text-ink/40 dark:text-slate-500 mt-1.5">Le vendeur vous contactera sur ce numéro via WhatsApp pour confirmer votre commande.</p>
+              <p class="text-[10.5px] text-ink/40 dark:text-slate-500 mt-1.5">Numéro sénégalais (+221) ou comorien (+269) uniquement — le vendeur vous contactera sur WhatsApp pour confirmer.</p>
             </div>
 
             <div>
@@ -400,4 +431,4 @@ function toggleTheme() {
 }
 </script>
 </body>
-</html> 
+</html>

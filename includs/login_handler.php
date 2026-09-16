@@ -4,7 +4,11 @@
  * ║         LOGIN HANDLER — Mon Revenu                      ║
  * ║  Gère : admin → dashboard_admin / agent → dashboard_agent
  * ║          affilie → dashboard.php                        ║
+<<<<<<< HEAD
+ * ║  Connexion par : numéro de téléphone + mot de passe      ║
+=======
  * ║  Connexion par : numéro de téléphone + code secret       ║
+>>>>>>> f1e769c39d429639ad5f7b4c954fa1872686204d
  * ║  Numéros acceptés : Comores (+269) et Sénégal (+221)     ║
  * ╚══════════════════════════════════════════════════════════╝
  * À placer dans : includs/login_handler.php
