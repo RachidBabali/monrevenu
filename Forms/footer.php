@@ -19,6 +19,7 @@
         <a href="/contact.php" class="hover:text-mr-navy transition-colors">Contact</a>
         <a href="/conditions.php" class="hover:text-mr-navy transition-colors">Conditions d'utilisation</a>
         <a href="/confidentialite.php" class="hover:text-mr-navy transition-colors">Politique de confidentialité</a>
+        <a href="/suppression-donnees.php" class="hover:text-mr-navy transition-colors">Suppression des données</a>
       </nav>
     </div>
 

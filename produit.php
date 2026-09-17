@@ -114,7 +114,9 @@ $ref_valide = $ref_id > 0;
 
 $vendeur = null;
 if ($ref_valide && $ref_id > 0) {
-    $stmtRef = $pdo->prepare("SELECT id, fullname, role FROM users_monrevenu WHERE id = ? LIMIT 1");
+    // is_active=1 AND status='active' : un compte suspendu ou supprimé ne doit
+    // plus jamais faire créditer de commission via un ancien lien d'affiliation.
+    $stmtRef = $pdo->prepare("SELECT id, fullname, role FROM users_monrevenu WHERE id = ? AND is_active = 1 AND status = 'active' LIMIT 1");
     $stmtRef->execute([$ref_id]);
     $vendeur = $stmtRef->fetch();
 

@@ -19,7 +19,7 @@ $code = $verif['code'];
 $expireAtTimestamp = strtotime($verif['expire_at']); // pour le compte à rebours JS
 
 // Numéro WhatsApp business à afficher — mettre le vrai numéro dans .env
-$numeroBusinessAffiche = $_ENV['WHATSAPP_BUSINESS_DISPLAY_NUMBER'] ?? '+269 XX XX XXX';
+$numeroBusinessAffiche = $_ENV['WHATSAPP_BUSINESS_DISPLAY_NUMBER'] ?? '+221 77 876 48 19';
 $numeroBusinessWaMe = preg_replace('/\D/', '', $numeroBusinessAffiche); // format wa.me : chiffres seuls
 
 $lienWaMe = 'https://wa.me/' . $numeroBusinessWaMe . '?text=' . urlencode($code);

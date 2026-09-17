@@ -121,11 +121,136 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         header('Location: profil.php'); exit();
     }
+
+    // --- 2c. Suppression du compte ---
+    if (isset($_POST['action_supprimer_compte'])) {
+
+        try {
+            $pdo->beginTransaction();
+
+            $stmtLock = $pdo->prepare(
+                "SELECT balance, password, google_id, phone FROM users_monrevenu WHERE id = ? FOR UPDATE"
+            );
+            $stmtLock->execute([$user_id]);
+            $compte = $stmtLock->fetch();
+
+            if (!$compte) {
+                $pdo->rollBack();
+                header('Location: /index.php'); exit();
+            }
+
+            // Confirmation : mot de passe pour un compte classique, mot-clé
+            // "SUPPRIMER" pour un compte Google Sign-In (mot de passe local
+            // inutilisable, généré aléatoirement à la création du compte).
+            $est_compte_google = !empty($compte['google_id']);
+
+            if ($est_compte_google) {
+                $confirmation_ok = trim($_POST['confirmation_mot_cle'] ?? '') === 'SUPPRIMER';
+                $type_suppression = 'mot_cle_google';
+            } else {
+                $confirmation_ok = password_verify($_POST['confirmation_mot_de_passe'] ?? '', $compte['password']);
+                $type_suppression = 'mot_de_passe';
+            }
+
+            if (!$confirmation_ok) {
+                $pdo->rollBack();
+                $_SESSION['flash_error'] = $est_compte_google
+                    ? "Merci de saisir exactement le mot SUPPRIMER pour confirmer."
+                    : "Code secret incorrect, la suppression a été annulée.";
+                header('Location: profil.php'); exit();
+            }
+
+            if ((float) $compte['balance'] > 0) {
+                $pdo->rollBack();
+                $_SESSION['flash_error'] = "Vous avez un solde de " . number_format((float) $compte['balance'], 0, ',', ' ') . " KMF non retiré. Retirez-le avant de supprimer votre compte.";
+                header('Location: profil.php'); exit();
+            }
+
+            $stmtRetrait = $pdo->prepare("SELECT COUNT(*) FROM withdrawals WHERE user_id = ? AND status = 'en_attente'");
+            $stmtRetrait->execute([$user_id]);
+            if ((int) $stmtRetrait->fetchColumn() > 0) {
+                $pdo->rollBack();
+                $_SESSION['flash_error'] = "Vous avez une demande de retrait en cours de traitement. Attendez qu'elle soit traitée avant de supprimer votre compte.";
+                header('Location: profil.php'); exit();
+            }
+
+            // Anonymisation en place : l'id reste stable, donc toutes les lignes
+            // à valeur comptable (vendeur_ventes, ventes_stock, transactions_monrevenu,
+            // withdrawals, agent_commissions...) restent intactes et continuent de
+            // pointer vers cette même ligne, désormais anonymisée — rien à modifier
+            // dans ces tables. status='deleted' + is_active=0 : le numéro/email
+            // redeviennent utilisables pour une nouvelle inscription (déjà géré par
+            // register_handler.php, qui exclut status='deleted' de la vérification
+            // de doublon) et produit.php refuse désormais de créditer un ref vers
+            // un compte is_active=0/status!='active'.
+            $email_anonyme = 'compte-supprime-' . $user_id . '@monrevenu.invalid';
+            $phone_anonyme = 'suppr-' . $user_id;
+            $mot_de_passe_verrouille = password_hash(bin2hex(random_bytes(32)), PASSWORD_BCRYPT);
+
+            $stmtAnonymise = $pdo->prepare(
+                "UPDATE users_monrevenu SET
+                    fullname = 'Compte supprimé',
+                    email = ?,
+                    phone = ?,
+                    password = ?,
+                    google_id = NULL,
+                    verification_code = NULL,
+                    code_expires_at = NULL,
+                    code_sent_at = NULL,
+                    whatsapp_verif_code = NULL,
+                    whatsapp_verif_expire_at = NULL,
+                    whatsapp_verif_numero = NULL,
+                    reset_password_code = NULL,
+                    reset_password_expires_at = NULL,
+                    status = 'deleted',
+                    is_active = 0
+                 WHERE id = ?"
+            );
+            $stmtAnonymise->execute([$email_anonyme, $phone_anonyme, $mot_de_passe_verrouille, $user_id]);
+
+            // Jetons techniques liés à l'appareil : suppression réelle (pas de valeur comptable).
+            $pdo->prepare("DELETE FROM push_subscriptions WHERE user_id = ?")->execute([$user_id]);
+
+            if (!empty($compte['phone'])) {
+                $pdo->prepare("DELETE FROM login_attempts_compte WHERE phone = ?")->execute([$compte['phone']]);
+            }
+
+            // Journal d'audit, sans donnée personnelle (voir MIGRATION_suppression_compte.sql).
+            // Non bloquant : si la table n'existe pas encore, on continue quand même la suppression.
+            try {
+                $pdo->prepare(
+                    "INSERT INTO journal_suppressions_compte (compte_id, type_suppression) VALUES (?, ?)"
+                )->execute([$user_id, $type_suppression]);
+            } catch (PDOException $e) {
+                error_log('journal_suppressions_compte (table absente ?) : ' . $e->getMessage());
+            }
+
+            $pdo->commit();
+
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            error_log('Erreur suppression compte : ' . $e->getMessage());
+            $_SESSION['flash_error'] = "Une erreur est survenue, votre compte n'a pas été supprimé. Réessayez.";
+            header('Location: profil.php'); exit();
+        }
+
+        // Destruction complète de la session en cours.
+        $_SESSION = [];
+        if (ini_get('session.use_cookies')) {
+            $params = session_get_cookie_params();
+            setcookie(session_name(), '', time() - 42000, $params['path'], $params['domain'], $params['secure'], $params['httponly']);
+        }
+        session_destroy();
+
+        header('Location: /index.php?success=compte_supprime'); exit();
+    }
 }
 
 // 3. RÉCUPÉRATION DES DONNÉES EN DIRECT DEPUIS LA BDD
 try {
-    $stmt = $pdo->prepare("SELECT fullname, email, phone, pays_code, pays_nom FROM users_monrevenu WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT fullname, email, phone, pays_code, pays_nom, google_id FROM users_monrevenu WHERE id = ?");
     $stmt->execute([$user_id]);
     $user = $stmt->fetch();
 } catch (PDOException $e) {
@@ -138,6 +263,7 @@ $user_email    = $user['email'] ?? $_SESSION['user_email'] ?? '';
 $user_pays_code = $user['pays_code'] ?? null;
 $user_pays_nom  = $user['pays_nom'] ?? null;
 $user_phone    = $user['phone'] ?? '';
+$est_compte_google = !empty($user['google_id']);
 
 // Affichage lisible du numéro comorien : +269 XX XX XXX
 $user_phone_affiche = $user_phone;
@@ -315,6 +441,47 @@ if (count($mots) >= 2) {
         Mettre à jour le code secret
       </button>
     </form>
+
+    <!-- Zone de danger : suppression du compte -->
+    <section id="supprimer-compte" class="bg-white dark:bg-[#141E33] rounded-[24px] p-5 shadow-sm border border-red-200 dark:border-red-500/30 flex flex-col gap-3">
+      <h3 class="font-bold text-[14px] text-red-600 border-b border-red-100 dark:border-red-500/20 pb-2">Supprimer mon compte</h3>
+      <p class="text-[12px] text-slate-500 dark:text-slate-400 leading-relaxed">
+        Cette action est <strong>irréversible</strong>. Vos informations personnelles (nom, email, téléphone, vérification WhatsApp)
+        seront effacées et votre session fermée immédiatement. Vos ventes, commissions et retraits déjà effectués sont conservés,
+        mais dissociés de votre identité, pour des raisons comptables et légales.
+        Plus de détails sur <a href="/suppression-donnees.php" class="underline hover:text-red-600">la page de suppression des données</a>.
+      </p>
+      <p class="text-[12px] text-amber-600 dark:text-amber-400 font-medium">
+        La suppression est refusée si votre solde n'est pas nul ou si une demande de retrait est en cours de traitement.
+      </p>
+
+      <form action="" method="POST" id="form-suppression" class="flex flex-col gap-3 mt-1" onsubmit="return confirm('Supprimer définitivement votre compte MonRevenu ? Cette action est irréversible.');">
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+
+        <?php if ($est_compte_google): ?>
+          <div class="flex flex-col gap-1.5">
+            <label for="confirmation_mot_cle" class="text-slate-400 font-medium text-[12px]">
+              Tapez <strong>SUPPRIMER</strong> pour confirmer (compte connecté via Google, pas de code secret local)
+            </label>
+            <input type="text" id="confirmation_mot_cle" name="confirmation_mot_cle" required
+                   placeholder="SUPPRIMER"
+                   class="bg-slate-50 dark:bg-slate-900 border border-red-200 dark:border-red-500/30 rounded-xl px-4 py-3 text-[13px] text-slate-800 dark:text-slate-100 font-semibold outline-none focus:border-red-500 transition-all">
+          </div>
+        <?php else: ?>
+          <div class="flex flex-col gap-1.5">
+            <label for="confirmation_mot_de_passe" class="text-slate-400 font-medium text-[12px]">Confirmez avec votre code secret</label>
+            <input type="password" id="confirmation_mot_de_passe" name="confirmation_mot_de_passe" required autocomplete="current-password"
+                   style="text-transform:uppercase; letter-spacing:0.3em; text-align:center; font-weight:700;"
+                   class="bg-slate-50 dark:bg-slate-900 border border-red-200 dark:border-red-500/30 rounded-xl px-4 py-3 text-[15px] text-slate-800 dark:text-slate-100 outline-none focus:border-red-500 transition-all">
+          </div>
+        <?php endif; ?>
+
+        <button type="submit" name="action_supprimer_compte"
+                class="btn-submit mt-1 bg-red-600 hover:bg-red-700 text-white font-bold text-[13px] py-3.5 px-4 rounded-xl shadow-sm active:scale-[0.98] transition-all disabled:opacity-60">
+          Supprimer définitivement mon compte
+        </button>
+      </form>
+    </section>
 
   </main>
 

@@ -60,6 +60,9 @@ $ouvrir_login = ($error || $success) ? "document.addEventListener('DOMContentLoa
     <?php if ($success === 'mdp_reinitialise'): ?>
       <div class="text-sm font-semibold rounded-xl px-4 py-3 mb-5 bg-emerald-50 text-emerald-600">✓ Mot de passe réinitialisé ! Vous pouvez vous connecter.</div>
     <?php endif; ?>
+    <?php if ($success === 'compte_supprime'): ?>
+      <div class="text-sm font-semibold rounded-xl px-4 py-3 mb-5 bg-emerald-50 text-emerald-600">✓ Votre compte a bien été supprimé.</div>
+    <?php endif; ?>
 
     <form method="POST" action="includs/login_handler.php" id="loginForm" novalidate class="space-y-4">
 
