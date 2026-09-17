@@ -1,0 +1,4 @@
+.env
+admin/uploads/
+test_smtp.php
+vendor/

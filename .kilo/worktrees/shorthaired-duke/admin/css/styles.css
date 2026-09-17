@@ -1,0 +1,24 @@
+        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+        .font-mono { font-family: 'Roboto Mono', monospace; }
+        .dot-grid {
+            background-image: radial-gradient(rgba(255,255,255,0.35) 1px, transparent 1px);
+            background-size: 14px 14px;
+        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-thumb { background: #DCDCF0; border-radius: 8px; }
+
+        /* Focus clavier visible partout — accessibilité, essentiel pour un panneau admin */
+        a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+            outline: 2px solid #5B4FE9;
+            outline-offset: 2px;
+            border-radius: 6px;
+        }
+
+        .kpi-card { transition: box-shadow .18s ease, transform .18s ease; }
+        .kpi-card:hover { box-shadow: 0 2px 4px rgba(25,26,60,0.06), 0 14px 32px -14px rgba(25,26,60,0.16); transform: translateY(-1px); }
+
+        @media (prefers-reduced-motion: reduce) {
+            .kpi-card { transition: none !important; }
+            .kpi-card:hover { transform: none !important; }
+        }
+  
