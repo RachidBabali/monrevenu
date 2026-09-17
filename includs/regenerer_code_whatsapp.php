@@ -7,10 +7,12 @@
  * (le contexte mentionne un meta csrf-token déjà présent sur dashboard.php).
  */
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 header('Content-Type: application/json');
 
-require_once __DIR__ . '/../config/connexion.php'; // adapter le chemin ($pdo)
+require_once __DIR__ . '/../basse_de_donner/monrevenu_bd.php'; // fournit $pdo
 require_once __DIR__ . '/whatsapp_verif_helpers.php';
 
 if (empty($_SESSION['user_id'])) {

@@ -1,29 +1,31 @@
 <?php
-session_start();
-require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
-
-if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
-    header('Location: /index.php'); exit();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
-
+require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/auth_middleware.php';
-exigerTelephoneVerifie($pdo);
+exigerConnexion();
 
 $user_id       = $_SESSION['user_id'];
 $user_fullname = $_SESSION['user_fullname'] ?? 'Utilisateur';
 $user_initials = strtoupper(substr($user_fullname, 0, 2));
 $prenom        = explode(' ', $user_fullname)[0];
 
-// Solde + phone + rôle (requis par wallet.php)
-$stmt = $pdo->prepare("SELECT balance, role, phone FROM users_monrevenu WHERE id = ?");
+// Solde + phone + rôle (requis par wallet.php) + phone_verified (bannière WhatsApp)
+$stmt = $pdo->prepare("SELECT balance, role, phone, phone_verified FROM users_monrevenu WHERE id = ?");
 $stmt->execute([$user_id]);
-$sender  = $stmt->fetch();
-$balance = $sender['balance'] ?? 0;
-$role    = $sender['role'] ?? 'client';
+$sender         = $stmt->fetch();
+$balance        = $sender['balance'] ?? 0;
+$role           = $sender['role'] ?? 'client';
+$phone_verifie  = (int) ($sender['phone_verified'] ?? 0);
 
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
+
+$message_success = $_SESSION['flash_success'] ?? '';
+$message_error   = $_SESSION['flash_error'] ?? '';
+unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 ?>
 <!DOCTYPE html>
 <html lang="fr" class="light">
@@ -89,6 +91,23 @@ if (empty($_SESSION['csrf_token'])) {
   </header>
 
   <main class="flex-1 pb-24 lg:pb-8">
+
+    <?php if (!empty($message_success)): ?>
+      <div role="status" class="mx-4 lg:mx-8 mt-4 flex items-center gap-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 text-green-700 dark:text-green-400 rounded-2xl p-4">
+        <p class="text-[13px] font-semibold"><?= htmlspecialchars($message_success) ?></p>
+      </div>
+    <?php endif; ?>
+    <?php if (!empty($message_error)): ?>
+      <div role="alert" class="mx-4 lg:mx-8 mt-4 flex items-center gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-600 dark:text-red-400 rounded-2xl p-4">
+        <p class="text-[13px] font-semibold"><?= htmlspecialchars($message_error) ?></p>
+      </div>
+    <?php endif; ?>
+
+    <?php if ($phone_verifie !== 1): ?>
+      <div class="mx-4 lg:mx-8 mt-4">
+        <?php include $_SERVER['DOCUMENT_ROOT'] . '/sections/banniere_verification_whatsapp.php'; ?>
+      </div>
+    <?php endif; ?>
 
     <div class="hidden lg:block px-8 pt-6 pb-2">
       <h2 class="text-[22px] font-bold">Bonjour, <?= htmlspecialchars($user_fullname) ?> 👋</h2>

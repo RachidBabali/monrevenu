@@ -15,15 +15,18 @@ if (!function_exists('exigerConnexion')) {
     }
 }
 
-if (!function_exists('exigerTelephoneVerifie')) {
+if (!function_exists('exigerAffiliationDebloquee')) {
     /**
-     * Bloque l'accès à une page tant que le compte n'a pas de téléphone
-     * vérifié — notamment les comptes créés via Google Sign-In, qui
-     * n'ont jamais de téléphone à l'inscription et pourraient sinon
-     * contourner totalement la vérification de pays/numéro.
-     * Redirige vers la page de complétion du profil.
+     * Bloque l'accès aux pages/actions d'affiliation (boutique, stock, vente)
+     * tant que le téléphone n'est pas vérifié. Contrairement à l'ancien
+     * exigerTelephoneVerifie(), ne redirige jamais vers completer-telephone.php
+     * (retiré du flux) : le compte reste sur le dashboard, où la bannière
+     * WhatsApp (sections/banniere_verification_whatsapp.php) explique quoi faire.
+     *
+     * Fail-closed : toute erreur DB bloque l'accès (contrairement à l'ancienne
+     * fonction qui laissait passer l'utilisateur en cas d'exception PDO).
      */
-    function exigerTelephoneVerifie(PDO $pdo): void
+    function exigerAffiliationDebloquee(PDO $pdo): void
     {
         exigerConnexion();
 
@@ -38,12 +41,15 @@ if (!function_exists('exigerTelephoneVerifie')) {
             $stmt->execute([$user_id]);
             $verifie = (int) $stmt->fetchColumn();
         } catch (PDOException $e) {
-            error_log('exigerTelephoneVerifie : ' . $e->getMessage());
-            return; // en cas d'erreur DB, on ne bloque pas l'utilisateur par précaution
+            error_log('exigerAffiliationDebloquee (fail-closed) : ' . $e->getMessage());
+            $_SESSION['flash_error'] = "Une erreur est survenue, merci de réessayer dans un instant.";
+            header('Location: /dashboard.php');
+            exit();
         }
 
         if ($verifie !== 1) {
-            header('Location: /completer-telephone.php');
+            $_SESSION['flash_error'] = "Vérifiez votre numéro WhatsApp depuis votre tableau de bord pour accéder à cette page.";
+            header('Location: /dashboard.php');
             exit();
         }
     }

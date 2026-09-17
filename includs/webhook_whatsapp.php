@@ -11,7 +11,7 @@
  * gratuite et ne nécessite ni template approuvé ni vérification business.
  */
 
-require_once __DIR__ . '/../config/connexion.php'; // adapter le chemin selon votre projet ($pdo)
+require_once __DIR__ . '/../basse_de_donner/monrevenu_bd.php'; // fournit $pdo
 require_once __DIR__ . '/whatsapp_verif_helpers.php';
 require_once __DIR__ . '/notifications.php'; // pour envoyerNotification()
 
@@ -86,11 +86,12 @@ try {
                 if ($resultat['success']) {
                     // Réutilise votre système de notifications existant (in-app + push).
                     // Aucun message WhatsApp sortant n'est envoyé, donc aucun coût/quota consommé.
+                    // Ordre des arguments : (pdo, userId, message, titrePush, lienPush) — voir includs/notifications.php.
                     envoyerNotification(
                         $pdo,
                         $resultat['user_id'],
-                        'Compte vérifié ✅',
                         'Votre numéro a été confirmé. Les fonctionnalités d\'affiliation sont maintenant débloquées.',
+                        'Compte vérifié ✅',
                         '/dashboard.php'
                     );
                 }

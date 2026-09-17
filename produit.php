@@ -13,21 +13,10 @@ $protocole = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https
 define('BASE_URL', $protocole . $_SERVER['HTTP_HOST']);
 
 // ============================================================
-// 3. CLÉ SECRÈTE POUR LA SIGNATURE DES LIENS D'AFFILIATION
+// 3. CLÉ SECRÈTE ET RÈGLE DE COMMISSION — partagées avec boutique.php
+//    (includs/affiliation_helpers.php) pour éviter toute divergence.
 // ============================================================
-define('SECRET_AFFILIATION', 'change-moi-avec-une-longue-cle-aleatoire-unique');
-
-// ============================================================
-// 3bis. RÈGLE DE COMMISSION FIXE (identique à boutique.php)
-// ============================================================
-define('SEUIL_PRIX_COMMISSION', 10000);
-define('COMMISSION_BASSE', 500);
-define('COMMISSION_HAUTE', 1000);
-
-function calculerCommission(float $prix): int
-{
-    return $prix <= SEUIL_PRIX_COMMISSION ? COMMISSION_BASSE : COMMISSION_HAUTE;
-}
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/affiliation_helpers.php';
 
 // ============================================================
 // 3ter. VALIDATION DU NUMÉRO (Sénégal +221 ou Comores +269 uniquement)

@@ -1,16 +1,13 @@
 <?php
-session_start();
-
-require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
-
-if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
-    header('Location: /index.php'); exit();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
 
+require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/auth_middleware.php';
-exigerTelephoneVerifie($pdo);
+exigerAffiliationDebloquee($pdo);
 
-$user_id = $_SESSION['user_id'] ?? $_SESSION['id'] ?? null;
+$user_id = $_SESSION['user_id'] ?? null;
 
 if (!$user_id) {
     header('Location: /index.php'); exit();
@@ -56,16 +53,8 @@ try {
 
 $protocole = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
 define('BASE_URL_SITE', $protocole . $_SERVER['HTTP_HOST']);
-define('SECRET_AFFILIATION', 'change-moi-avec-une-longue-cle-aleatoire-unique');
 
-define('SEUIL_PRIX_COMMISSION', 10000);
-define('COMMISSION_BASSE', 500);
-define('COMMISSION_HAUTE', 1000);
-
-function calculerCommission(float $prix): int
-{
-    return $prix <= SEUIL_PRIX_COMMISSION ? COMMISSION_BASSE : COMMISSION_HAUTE;
-}
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/affiliation_helpers.php';
 
 function slugify(string $texte): string
 {

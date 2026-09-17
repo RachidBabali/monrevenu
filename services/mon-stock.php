@@ -1,16 +1,13 @@
 <?php
-session_start();
-
-require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
-
-if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
-    header('Location: /index.php'); exit();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
 
+require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/auth_middleware.php';
-exigerTelephoneVerifie($pdo);
+exigerAffiliationDebloquee($pdo);
 
-$user_id = $_SESSION['user_id'] ?? $_SESSION['id'] ?? null;
+$user_id = $_SESSION['user_id'] ?? null;
 if (!$user_id) {
     header('Location: /index.php'); exit();
 }

@@ -12,7 +12,9 @@
  * de index.php / inscription.php.
  */
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/../basse_de_donner/monrevenu_bd.php'; define('GOOGLE_CLIENT_ID', '687334130412-4oatucl9n2d8fui8jio6ksa8mmcffh1b.apps.googleusercontent.com');
@@ -107,9 +109,10 @@ try {
     } else {
         // ── 6. Créer un nouveau compte ───────────────────────────────────────
         // Pas de téléphone, pas de code secret : phone_verified reste à 0
-        // tant que la personne n'a pas complété /completer-telephone.php,
-        // qui bloque l'accès aux produits d'affiliation en attendant
-        // (voir includs/auth_middleware.php > exigerTelephoneVerifie).
+        // jusqu'à ce que la personne valide le code WhatsApp affiché en
+        // bannière sur le dashboard (webhook_whatsapp.php). Tant que ce
+        // n'est pas fait, l'accès aux produits d'affiliation reste bloqué
+        // (voir includs/auth_middleware.php > exigerAffiliationDebloquee).
         $stmt = $pdo->prepare("
             INSERT INTO users_monrevenu
                 (fullname, email, google_id, phone, phone_verified, pays_code, pays_nom, password, role, balance, is_active, created_at)
@@ -153,10 +156,11 @@ try {
         $pdo->prepare("UPDATE users_monrevenu SET last_login = NOW() WHERE id = ?")->execute([$user_id]);
     } catch (\PDOException $e) { /* colonne last_login absente — ignoré */ }
 
-    // Téléphone non vérifié : direction la page de complétion obligatoire,
-    // quel que soit le rôle — pas d'accès aux produits avant ça.
+    // Téléphone non vérifié : direction le dashboard quand même (la bannière
+    // de vérification WhatsApp y prend le relais) — plus de redirection vers
+    // une page de complétion séparée, quel que soit le rôle.
     if ($phone_verified !== 1) {
-        repondre(true, ['redirect' => '/completer-telephone.php']);
+        repondre(true, ['redirect' => '/dashboard.php']);
     }
 
     $redirect = match ($user_role) {
