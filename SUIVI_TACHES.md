@@ -14,7 +14,7 @@ Légende : 🔴 Critique (perte d'argent / triche) · 🟠 Haute (fonctionnel/co
 
 - [ ] **`produit.php` : `ref` sans signature accepté** — ligne ~119, `elseif ($ref_id_brut > 0) $ref_id = $ref_id_brut;` attribue une commission à n'importe quel `ref=<id>` sans vérifier `sig`. Supprimer cette branche ou exiger systématiquement une signature valide.
 
-- [ ] **`produit.php` : vendeur suspendu/supprimé toujours payé + pas de plafond de quantité** — la requête vendeur ne filtre pas `status='active' AND is_active=1` ; `quantite` n'a pas de borne haute. Réintroduire les deux contrôles (régression déjà survenue une fois selon l'historique).
+- [ ] **`produit.php` : pas de plafond de quantité** — `quantite` n'a pas de borne haute, commandes massives possibles. (Le filtre vendeur `status='active' AND is_active=1` a été réintroduit le 2026-09-17, commit `2d74b09` — voir section "Déjà vérifié comme OK".)
 
 - [ ] **Webhook WhatsApp cassé** — `includs/webhook_whatsapp.php` fait `require __DIR__.'/../config/connexion.php'`, fichier inexistant (le projet utilise `basse_de_donner/monrevenu_bd.php`). Chaque appel du webhook plante → la vérification téléphone par WhatsApp entrante ne fonctionne jamais en l'état. Correctif d'une ligne, mais bloquant pour la fonctionnalité livrée au dernier commit.
 
@@ -63,6 +63,8 @@ Légende : 🔴 Critique (perte d'argent / triche) · 🟠 Haute (fonctionnel/co
 - ✅ Retrait (`sections/wallet.php`) : verrouillage `FOR UPDATE` correct, pas de race condition.
 - ✅ Publicités (`services/Publicites.php`) : validation serveur du temps de visionnage, anti-double-crédit OK.
 - ✅ Lien d'affiliation boutique ↔ produit : les deux secrets HMAC sont maintenant identiques (le bug de mismatch signalé le 15/09 n'est plus reproductible), même si le secret reste codé en dur (voir 🟡 ci-dessus).
+- ✅ `produit.php` — vendeur suspendu/supprimé toujours payé : corrigé le 2026-09-17 (commit `2d74b09`), la requête vendeur filtre maintenant `is_active = 1 AND status = 'active'`.
+- ✅ Suppression de compte (RGPD/Meta WhatsApp Business) : implémentée le 2026-09-17 (commit `2d74b09`) — `page/profil.php` (section "Supprimer mon compte", anonymisation transactionnelle, historique comptable conservé), `suppression-donnees.php` (page publique), `MIGRATION_suppression_compte.sql` (à exécuter manuellement en prod pour créer `journal_suppressions_compte`).
 
 ---
 
