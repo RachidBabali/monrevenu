@@ -2,54 +2,63 @@
 /**
  * Webhook Meta WhatsApp Cloud API.
  * URL à configurer dans Meta App Dashboard > WhatsApp > Configuration > Webhook :
- *   https://monrevenu.xyz/includs/webhook_whatsapp.php
- * Verify token = valeur de WHATSAPP_WEBHOOK_VERIFY_TOKEN (dans .env)
+ *   https://www.monrevenu.xyz/webhook_whatsapp.php
+ * Verify token = valeur de WHATSAPP_WEBHOOK_VERIFY_TOKEN (variable d'environnement Hostinger).
  * S'abonner au champ "messages".
  *
  * IMPORTANT : ne dépend PAS du numéro sortant configuré (WHATSAPP_ACCESS_TOKEN / PHONE_NUMBER_ID
  * peuvent rester des placeholders) — on ne fait ici QUE de la réception, qui est toujours
  * gratuite et ne nécessite ni template approuvé ni vérification business.
+ *
+ * RÈGLE CRITIQUE : le handshake GET (vérification Meta) doit rester la toute première
+ * chose exécutée, avant tout require de BD/session/notifications — un plantage dans ces
+ * fichiers (connexion BD indisponible, etc.) ne doit jamais empêcher de répondre le challenge.
  */
 
-require_once __DIR__ . '/../basse_de_donner/monrevenu_bd.php'; // fournit $pdo
-require_once __DIR__ . '/whatsapp_verif_helpers.php';
-require_once __DIR__ . '/notifications.php'; // pour envoyerNotification()
-
-header('Content-Type: application/json');
+require_once __DIR__ . '/includs/env_loader.php'; // fournit env(), aucun effet de bord
 
 // --- 1. Handshake de vérification (GET, une seule fois lors de la config du webhook) ---
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $mode = $_GET['hub_mode'] ?? '';
-    $token = $_GET['hub_verify_token'] ?? '';
-    $challenge = $_GET['hub_challenge'] ?? '';
+    $mode      = $_GET['hub_mode']         ?? $_GET['hub.mode']         ?? '';
+    $token     = $_GET['hub_verify_token'] ?? $_GET['hub.verify_token'] ?? '';
+    $challenge = $_GET['hub_challenge']    ?? $_GET['hub.challenge']    ?? '';
 
-    $verifyTokenAttendu = $_ENV['WHATSAPP_WEBHOOK_VERIFY_TOKEN'] ?? getenv('WHATSAPP_WEBHOOK_VERIFY_TOKEN');
+    $verifyTokenAttendu = env('WHATSAPP_WEBHOOK_VERIFY_TOKEN', '');
 
-    if ($mode === 'subscribe' && hash_equals((string) $verifyTokenAttendu, (string) $token)) {
+    header('Content-Type: text/plain; charset=utf-8');
+
+    if ($mode === 'subscribe' && $verifyTokenAttendu !== '' && hash_equals($verifyTokenAttendu, $token)) {
         http_response_code(200);
         echo $challenge;
         exit;
     }
 
     http_response_code(403);
-    exit('Verification failed');
+    echo 'Verification failed';
+    exit;
 }
 
-// --- 2. Réception des événements (POST) ---
+// --- 2. Réception des événements (POST) — la BD/les helpers ne sont chargés qu'ici ---
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     exit;
 }
 
+require_once __DIR__ . '/basse_de_donner/monrevenu_bd.php'; // fournit $pdo
+require_once __DIR__ . '/includs/whatsapp_verif_helpers.php';
+require_once __DIR__ . '/includs/notifications.php'; // pour envoyerNotification()
+
+header('Content-Type: application/json');
+
 $raw = file_get_contents('php://input');
 
 // Vérification de la signature Meta (CRITIQUE : sans ça, n'importe qui peut
 // forger une requête POST vers cet endpoint et débloquer un compte à volonté).
-$appSecret = $_ENV['WHATSAPP_APP_SECRET'] ?? getenv('WHATSAPP_APP_SECRET');
+$appSecret = env('WHATSAPP_APP_SECRET', '');
 $signatureRecue = $_SERVER['HTTP_X_HUB_SIGNATURE_256'] ?? '';
-$signatureAttendue = 'sha256=' . hash_hmac('sha256', $raw, (string) $appSecret);
+$signatureAttendue = 'sha256=' . hash_hmac('sha256', $raw, $appSecret);
 
-if (!$appSecret || !hash_equals($signatureAttendue, $signatureRecue)) {
+if ($appSecret === '' || !hash_equals($signatureAttendue, $signatureRecue)) {
     error_log('[webhook_whatsapp] Signature invalide, requête rejetée.');
     http_response_code(403);
     exit;

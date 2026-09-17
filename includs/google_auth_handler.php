@@ -17,7 +17,8 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 header('Content-Type: application/json; charset=utf-8');
 
-require_once __DIR__ . '/../basse_de_donner/monrevenu_bd.php'; define('GOOGLE_CLIENT_ID', '687334130412-4oatucl9n2d8fui8jio6ksa8mmcffh1b.apps.googleusercontent.com');
+require_once __DIR__ . '/../basse_de_donner/monrevenu_bd.php';
+define('GOOGLE_CLIENT_ID', env('GOOGLE_CLIENT_ID', ''));
 
 function repondre(bool $success, array $extra = []): void {
     echo json_encode(array_merge(['success' => $success], $extra));

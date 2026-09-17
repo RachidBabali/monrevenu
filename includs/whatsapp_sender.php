@@ -18,13 +18,17 @@
  *    "Authentication" avec un code à variable, ex: "{{1}} est votre
  *    code de vérification MonRevenu." Attendre son approbation par Meta
  *    (généralement quelques minutes à quelques heures).
- * 5. Remplacer les 3 constantes ci-dessous par vos vraies valeurs.
+ * 5. Renseigner les variables d'environnement correspondantes (Hostinger > hPanel >
+ *    Variables d'environnement, ou .env en local) : WHATSAPP_PHONE_NUMBER_ID,
+ *    WHATSAPP_ACCESS_TOKEN, WHATSAPP_TEMPLATE_NAME, WHATSAPP_TEMPLATE_LANGUE.
  */
 
-define('WHATSAPP_PHONE_NUMBER_ID', 'REMPLACER_PAR_VOTRE_PHONE_NUMBER_ID');
-define('WHATSAPP_ACCESS_TOKEN', 'REMPLACER_PAR_VOTRE_ACCESS_TOKEN');
-define('WHATSAPP_TEMPLATE_NAME', 'REMPLACER_PAR_LE_NOM_DE_VOTRE_MODELE'); // ex: 'code_verification'
-define('WHATSAPP_TEMPLATE_LANGUE', 'fr'); // doit correspondre à la langue du modèle approuvé
+require_once __DIR__ . '/env_loader.php'; // fournit env()
+
+define('WHATSAPP_PHONE_NUMBER_ID', env('WHATSAPP_PHONE_NUMBER_ID', ''));
+define('WHATSAPP_ACCESS_TOKEN', env('WHATSAPP_ACCESS_TOKEN', ''));
+define('WHATSAPP_TEMPLATE_NAME', env('WHATSAPP_TEMPLATE_NAME', ''));
+define('WHATSAPP_TEMPLATE_LANGUE', env('WHATSAPP_TEMPLATE_LANGUE', 'fr'));
 
 /**
  * Envoie un code de vérification par WhatsApp via l'API Cloud de Meta.
@@ -35,8 +39,8 @@ define('WHATSAPP_TEMPLATE_LANGUE', 'fr'); // doit correspondre à la langue du m
  */
 function envoyerCodeWhatsApp(string $telephone, string $code): array
 {
-    // Garde-fou : configuration non renseignée
-    if (WHATSAPP_PHONE_NUMBER_ID === '1266202099909859') {
+    // Garde-fou : configuration non renseignée (variables d'environnement absentes)
+    if (WHATSAPP_PHONE_NUMBER_ID === '' || WHATSAPP_ACCESS_TOKEN === '') {
         error_log("[whatsapp_sender] Configuration manquante — code non envoyé (mode test). Code pour {$telephone} : {$code}");
         return ['ok' => false, 'erreur' => 'Service WhatsApp non configuré.'];
     }

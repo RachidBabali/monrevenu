@@ -12,7 +12,7 @@ enregistrerVisitePays($pdo, $_SESSION['user_id'] ?? null);
   <meta name="theme-color" content="#1465e0"/>
   <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="google-signin-client_id" content="687334130412-4oatucl9n2d8fui8jio6ksa8mmcffh1b.apps.googleusercontent.com">
+  <meta name="google-signin-client_id" content="<?= htmlspecialchars(env('GOOGLE_CLIENT_ID', '')) ?>">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <title>MonRevenu – Recommandez. Gagnez. Développez vos revenus.</title>
 
@@ -45,7 +45,6 @@ enregistrerVisitePays($pdo, $_SESSION['user_id'] ?? null);
   </script>
 
   <!-- Google Sign-In SDK (formulaires) -->
-  <meta name="google-signin-client_id" content="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"/>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <link rel="stylesheet" href="css/style.css">
