@@ -19,3 +19,9 @@ RewriteRule ^produit/([a-z0-9\-]+)/([A-Za-z0-9_\-]+)/?$ produit.php?slug=$1&toke
     # Masquage signature PHP
     Header unset X-Powered-By
 </IfModule>
+
+# Fichiers internes jamais servis (schemas, notes, dependances, outils locaux)
+<FilesMatch "(\.(sql|md|lock)|^composer\.json|^\.env.*)$">
+    Require all denied
+</FilesMatch>
+RedirectMatch 404 ^/(dev|\.kilo|migrations)(/|$)
