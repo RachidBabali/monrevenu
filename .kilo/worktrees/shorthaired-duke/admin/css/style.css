@@ -1,9 +1,0 @@
-    .nav-btn { color: #6B7086; }
-    .nav-btn .nav-icon { background: transparent; color: #6B7086; }
-    .nav-btn:hover { background: #F4F5FC; color: #191A3C; }
-    .nav-btn.is-active { background: #EEECFF; color: #5B4FE9; }
-    .nav-btn.is-active .nav-icon { background: #5B4FE9; color: #fff; }
-
-    .mobile-tab-btn { color: #6B7086; background: transparent; }
-    .mobile-tab-btn.is-active { background: #5B4FE9; color: #fff; }
-

@@ -2,3 +2,10 @@
 admin/uploads/
 test_smtp.php
 vendor/
+.kilo/
+dev/
+node_modules/
+.env*
+*.log
+tailwindcss
+tailwindcss-linux-x64
