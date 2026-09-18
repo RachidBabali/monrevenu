@@ -63,20 +63,46 @@ function envoyerCodeEmail(string $destinataire, string $code, string $nomDestina
     }
 }
 
+/**
+ * Gabarit HTML unique des emails : table de 600 px, styles en ligne, logo en URL absolue.
+ * $contenuHtml est deja echappe par l'appelant.
+ */
+function gabaritEmail(string $titre, string $contenuHtml, ?array $bouton = null): string
+{
+    $base  = rtrim((string) (function_exists('env') ? env('APP_URL', 'https://monrevenu.xyz') : 'https://monrevenu.xyz'), '/');
+    $titre = htmlspecialchars($titre, ENT_QUOTES, 'UTF-8');
+    $btn   = '';
+    if ($bouton) {
+        $btn = "<tr><td style='padding:8px 32px 24px;'><a href='" . htmlspecialchars($bouton[1], ENT_QUOTES, 'UTF-8') . "' style='display:inline-block; background:#123F91; color:#ffffff; font-weight:600; font-size:15px; text-decoration:none; padding:12px 20px; border-radius:6px;'>"
+            . htmlspecialchars($bouton[0], ENT_QUOTES, 'UTF-8') . "</a></td></tr>";
+    }
+    return "<!DOCTYPE html><html lang='fr'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1'><title>{$titre}</title></head>
+<body style='margin:0; padding:0; background:#F6F7F9;'>
+<table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background:#F6F7F9;'><tr><td align='center' style='padding:24px 12px;'>
+<table role='presentation' width='600' cellpadding='0' cellspacing='0' style='width:100%; max-width:600px; background:#ffffff; border:1px solid #E3E6EB; border-radius:8px; font-family:Arial, Helvetica, sans-serif; color:#141A24;'>
+<tr><td style='padding:24px 32px 8px;'><img src='{$base}/assets/img/logo-64.png' width='32' height='32' alt='MonRevenu' style='display:block; border:0;'></td></tr>
+<tr><td style='padding:8px 32px 0;'><h1 style='margin:0; font-size:20px; line-height:28px; font-weight:bold; color:#141A24;'>{$titre}</h1></td></tr>
+<tr><td style='padding:12px 32px 16px; font-size:15px; line-height:24px; color:#4A5565;'>{$contenuHtml}</td></tr>
+{$btn}
+<tr><td style='padding:16px 32px 24px; border-top:1px solid #E3E6EB; font-size:12px; line-height:18px; color:#5F6B7C;'>MonRevenu, plateforme d'affiliation. Vous recevez cet email car un compte MonRevenu est associé à cette adresse. Cet email est automatique : pour nous écrire, utilisez contact@monrevenu.xyz.</td></tr>
+</table></td></tr></table></body></html>";
+}
+
+function blocCodeEmail(string $code): string
+{
+    $code = htmlspecialchars($code, ENT_QUOTES, 'UTF-8');
+    return "<p style='margin:16px 0; padding:16px; background:#F1F3F6; border-radius:6px; text-align:center; font-family:Courier New, monospace; font-size:28px; font-weight:bold; letter-spacing:8px; color:#123F91;'>{$code}</p>";
+}
+
 function construireContenuEmail(string $code, string $nom = ''): string
 {
-    $salutation = $nom ? htmlspecialchars($nom, ENT_QUOTES, 'UTF-8') : 'Bonjour';
-    return "
-        <div style='font-family:Arial,sans-serif; max-width:480px; margin:0 auto; padding:24px; background:#f8fafc; border-radius:12px;'>
-            <h2 style='color:#1e3a8a; margin-bottom:8px;'>MonRevenu</h2>
-            <p>Bonjour {$salutation},</p>
-            <p>Voici votre code de vérification :</p>
-            <div style='font-size:28px; font-weight:700; letter-spacing:0.3em; text-align:center; color:#1e3a8a; background:#fff; padding:16px; border-radius:8px; margin:16px 0;'>
-                {$code}
-            </div>
-            <p style='color:#64748b; font-size:13px;'>Ce code expire dans 10 minutes. Si vous n'avez pas demandé ce code, ignorez cet email.</p>
-        </div>
-    ";
+    $salutation = $nom ? 'Bonjour ' . htmlspecialchars($nom, ENT_QUOTES, 'UTF-8') . ',' : 'Bonjour,';
+    return gabaritEmail(
+        'Votre code de vérification',
+        "<p style='margin:0 0 8px;'>{$salutation}</p><p style='margin:0;'>Saisissez ce code sur MonRevenu pour activer votre compte :</p>"
+        . blocCodeEmail($code)
+        . "<p style='margin:0; font-size:13px; color:#5F6B7C;'>Le code expire dans 10 minutes. Si vous n'avez pas demandé ce code, ignorez cet email.</p>"
+    );
 }
 
 /**
@@ -117,18 +143,13 @@ function envoyerCodeResetMotDePasse(string $destinataire, string $code, string $
 
 function construireContenuEmailReset(string $code, string $nom = ''): string
 {
-    $salutation = $nom ? htmlspecialchars($nom, ENT_QUOTES, 'UTF-8') : 'Bonjour';
-    return "
-        <div style='font-family:Arial,sans-serif; max-width:480px; margin:0 auto; padding:24px; background:#f8fafc; border-radius:12px;'>
-            <h2 style='color:#1e3a8a; margin-bottom:8px;'>MonRevenu</h2>
-            <p>Bonjour {$salutation},</p>
-            <p>Une demande de réinitialisation de mot de passe a été effectuée pour votre compte. Voici votre code :</p>
-            <div style='font-size:28px; font-weight:700; letter-spacing:0.3em; text-align:center; color:#1e3a8a; background:#fff; padding:16px; border-radius:8px; margin:16px 0;'>
-                {$code}
-            </div>
-            <p style='color:#64748b; font-size:13px;'>Ce code expire dans 10 minutes. Si vous n'êtes pas à l'origine de cette demande, ignorez simplement cet email — votre mot de passe restera inchangé.</p>
-        </div>
-    ";
+    $salutation = $nom ? 'Bonjour ' . htmlspecialchars($nom, ENT_QUOTES, 'UTF-8') . ',' : 'Bonjour,';
+    return gabaritEmail(
+        'Réinitialisation de votre mot de passe',
+        "<p style='margin:0 0 8px;'>{$salutation}</p><p style='margin:0;'>Une réinitialisation du mot de passe a été demandée pour votre compte. Voici votre code :</p>"
+        . blocCodeEmail($code)
+        . "<p style='margin:0; font-size:13px; color:#5F6B7C;'>Le code expire dans 10 minutes. Si vous n'êtes pas à l'origine de cette demande, ignorez cet email : votre mot de passe ne change pas.</p>"
+    );
 }
 
 /**
@@ -155,7 +176,7 @@ function envoyerAlerteTentativesConnexion(string $destinataire, string $nom, str
         $mail->addAddress($destinataire, $nom);
 
         $mail->isHTML(true);
-        $mail->Subject = '⚠️ Tentatives de connexion suspectes sur votre compte MonRevenu';
+        $mail->Subject = 'Tentatives de connexion suspectes sur votre compte MonRevenu';
         $mail->Body    = construireContenuAlerteConnexion($nom, $telephone, $dureeBlocageMinutes);
         $mail->AltBody = "Plusieurs tentatives de connexion incorrectes ont été détectées sur votre compte MonRevenu (numéro $telephone). "
             . "Le compte a été bloqué temporairement pendant $dureeBlocageMinutes minutes par mesure de sécurité. "
@@ -172,22 +193,16 @@ function envoyerAlerteTentativesConnexion(string $destinataire, string $nom, str
 
 function construireContenuAlerteConnexion(string $nom, string $telephone, int $dureeBlocageMinutes): string
 {
-    $salutation = $nom ? htmlspecialchars($nom, ENT_QUOTES, 'UTF-8') : 'Bonjour';
+    $salutation = $nom ? 'Bonjour ' . htmlspecialchars($nom, ENT_QUOTES, 'UTF-8') . ',' : 'Bonjour,';
     $telephone  = htmlspecialchars($telephone, ENT_QUOTES, 'UTF-8');
-    return "
-        <div style='font-family:Arial,sans-serif; max-width:480px; margin:0 auto; padding:24px; background:#f8fafc; border-radius:12px;'>
-            <h2 style='color:#dc2626; margin-bottom:8px;'>⚠️ Activité suspecte détectée</h2>
-            <p>Bonjour {$salutation},</p>
-            <p>Nous avons détecté <strong>plusieurs tentatives de connexion échouées</strong> sur votre compte MonRevenu associé au numéro <strong>{$telephone}</strong>.</p>
-            <p>Par mesure de sécurité, ce compte a été bloqué temporairement pendant <strong>{$dureeBlocageMinutes} minutes</strong>.</p>
-            <div style='background:#fff; border-left:4px solid #dc2626; padding:12px 16px; border-radius:6px; margin:16px 0;'>
-                <p style='margin:0; font-weight:600; color:#1e3a8a;'>Est-ce bien vous qui avez essayé de vous connecter ?</p>
-                <p style='margin:8px 0 0; font-size:13px; color:#64748b;'>
-                    — Si <strong>oui</strong>, vous pouvez simplement réessayer une fois le blocage terminé.<br>
-                    — Si <strong>non</strong>, quelqu'un essaie peut-être d'accéder à votre compte. Nous vous conseillons de réinitialiser votre code secret dès que possible via « Mot de passe oublié ».
-                </p>
-            </div>
-            <p style='color:#64748b; font-size:12px;'>Cet email est automatique, merci de ne pas y répondre directement.</p>
-        </div>
-    ";
+    $base       = rtrim((string) (function_exists('env') ? env('APP_URL', 'https://monrevenu.xyz') : 'https://monrevenu.xyz'), '/');
+    return gabaritEmail(
+        'Tentatives de connexion refusées',
+        "<p style='margin:0 0 8px;'>{$salutation}</p>"
+        . "<p style='margin:0 0 12px;'>Plusieurs tentatives de connexion avec un mauvais code ont été faites sur votre compte MonRevenu associé au numéro <strong style='color:#141A24;'>{$telephone}</strong>.</p>"
+        . "<p style='margin:0 0 12px;'>Par sécurité, le compte est bloqué pendant <strong style='color:#141A24;'>{$dureeBlocageMinutes} minutes</strong>.</p>"
+        . "<p style='margin:0 0 4px;'><strong style='color:#141A24;'>C'était vous ?</strong> Réessayez une fois le blocage terminé.</p>"
+        . "<p style='margin:0;'><strong style='color:#141A24;'>Ce n'était pas vous ?</strong> Changez votre code secret dès maintenant.</p>",
+        ['Changer mon code secret', $base . '/mot_de_passe_oublie.php']
+    );
 }

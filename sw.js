@@ -1,14 +1,35 @@
-const CACHE_NAME = 'monrevenu-v1';
+const CACHE_NAME = 'monrevenu-actifs-v2';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys()
+      .then((cles) => Promise.all(cles.filter((c) => c !== CACHE_NAME).map((c) => caches.delete(c))))
+      .then(() => self.clients.claim())
+  );
 });
 
-// Réception d'une notification push (commissions, ventes, retraits/transferts...)
+// Cache limite aux fichiers statiques de /assets/ (CSS versionne, polices, icones, scripts).
+// Les pages PHP et les reponses authentifiees ne sont jamais mises en cache.
+self.addEventListener('fetch', (event) => {
+  const requete = event.request;
+  if (requete.method !== 'GET') return;
+  const url = new URL(requete.url);
+  if (url.origin !== self.location.origin || !url.pathname.startsWith('/assets/')) return;
+  event.respondWith(
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.match(requete).then((trouve) => trouve || fetch(requete).then((reponse) => {
+        if (reponse.ok) cache.put(requete, reponse.clone());
+        return reponse;
+      }))
+    )
+  );
+});
+
+// Réception d'une notification push (commissions, ventes, retraits)
 self.addEventListener('push', (event) => {
   const data = event.data ? event.data.json() : {};
   const title = data.title || 'MonRevenu';

@@ -106,7 +106,7 @@ if (!function_exists('drapeauHtml')) {
     function drapeauHtml(?string $codePays, string $classesSupplémentaires = ''): string
     {
         if (!$codePays) {
-            return '<span class="text-slate-300 text-xs" title="Pays inconnu">🌐</span>';
+            return '<span class="text-slate-300 text-xs" title="Pays inconnu">Inconnu</span>';
         }
         $code = strtolower(htmlspecialchars($codePays));
         return '<span class="fi fi-' . $code . ' ' . htmlspecialchars($classesSupplémentaires) . '" title="' . htmlspecialchars($codePays) . '"></span>';

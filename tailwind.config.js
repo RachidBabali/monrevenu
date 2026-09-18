@@ -59,5 +59,16 @@ module.exports = {
       transitionTimingFunction: { DEFAULT: 'cubic-bezier(0.16, 1, 0.3, 1)' },
     },
   },
+  corePlugins: {
+    ringWidth: false, ringColor: false, ringOffsetWidth: false, ringOffsetColor: false, ringOpacity: false,
+    blur: false, brightness: false, contrast: false, dropShadow: false, grayscale: false, hueRotate: false,
+    invert: false, saturate: false, sepia: false, filter: false,
+    backdropBlur: false, backdropBrightness: false, backdropContrast: false, backdropGrayscale: false,
+    backdropHueRotate: false, backdropInvert: false, backdropOpacity: false, backdropSaturate: false,
+    backdropSepia: false, backdropFilter: false,
+    touchAction: false, scrollSnapType: false, scrollSnapAlign: false, borderSpacing: false,
+    fontVariantNumeric: false, gradientColorStops: false, backgroundImage: false,
+    textOpacity: false, backgroundOpacity: false, borderOpacity: false, divideOpacity: false, placeholderOpacity: false,
+  },
   plugins: [],
 };
