@@ -14,12 +14,12 @@ $success = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_demander_reset'])) {
 
     if (empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-        $error = 'Session expirée, merci de réessayer.';
+        $error = 'Votre session a expiré. Rechargez la page puis recommencez.';
     } else {
         $email = trim(strtolower($_POST['email'] ?? ''));
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $error = "Merci de saisir une adresse email valide.";
+            $error = "Adresse email invalide. Exemple : nom@exemple.com.";
         } else {
             try {
                 $stmt = $pdo->prepare("SELECT id, fullname, email, is_active, status FROM users_monrevenu WHERE email = ? LIMIT 1");
@@ -46,92 +46,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_demander_reset
                         exit();
                     } else {
                         error_log('Erreur envoi email reset pour ' . $email . ' : ' . ($resultat['error'] ?? 'Erreur inconnue'));
-                        $error = "Une erreur est survenue lors de l'envoi. Merci de réessayer.";
+                        $error = "L'email n'a pas pu être envoyé. Réessayez dans un instant.";
                     }
                 } else {
                     // Compte inexistant, inactif ou bloqué : même message que le cas normal
-                    $success = "Si un compte existe avec cette adresse, un code de réinitialisation vient d'être envoyé par email.";
+                    $success = "Si un compte existe avec cette adresse, un code de réinitialisation vient d'y être envoyé. Pensez à regarder dans les courriers indésirables.";
                 }
             } catch (\Throwable $e) {
                 error_log('Erreur mot de passe oublié : ' . $e->getMessage());
-                $error = "Une erreur est survenue. Merci de réessayer.";
+                $error = "La demande a échoué pour une raison technique. Réessayez dans un instant.";
             }
         }
     }
 }
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/ui.php';
+$titre_page = 'Mot de passe oublié';
+include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_public_debut.php';
 ?>
-<!DOCTYPE html>
-<html lang="fr" class="light">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>MonRevenu – Mot de passe oublié</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { sora: ['Sora', 'sans-serif'] },
-          colors: { brand: { DEFAULT: '#1246A0', mid: '#1A5FCC', light: '#3B82F6', soft: '#EEF4FF' } }
-        }
-      }
-    }
-  </script>
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <style>body { font-family: 'Sora', sans-serif; }</style>
-</head>
-<body class="bg-[#F8F9FB] text-slate-900 min-h-screen flex items-center justify-center px-4">
+    <h1 class="text-2xl font-semibold">Mot de passe oublié</h1>
+    <p class="mt-2 text-text-2">Indiquez l'adresse email de votre compte. Nous vous envoyons un code à 6 chiffres, valable 10 minutes, pour choisir un nouveau mot de passe.</p>
 
-  <div class="w-full max-w-sm">
+    <?php if ($error): ?>
+      <p class="alerte alerte-danger mt-5" role="alert"><?= ico('circle-alert') ?><span><?= e($error) ?></span></p>
+    <?php endif; ?>
+    <?php if ($success): ?>
+      <p class="alerte alerte-succes mt-5" role="status"><?= ico('mail') ?><span><?= e($success) ?></span></p>
+    <?php endif; ?>
 
-    <div class="flex flex-col items-center mb-6">
-      <div class="w-14 h-14 rounded-2xl bg-brand flex items-center justify-center mb-3">
-        <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-        </svg>
-      </div>
-      <h1 class="font-extrabold text-[20px] text-slate-800">Mot de passe oublié</h1>
-      <p class="text-[13px] text-slate-400 text-center mt-1">
-        Entrez votre adresse email, on vous envoie un code pour réinitialiser votre mot de passe.
-      </p>
-    </div>
-
-    <div class="bg-white rounded-[24px] shadow-sm border border-slate-100 p-6">
-
-      <?php if ($error): ?>
-        <div class="bg-red-50 border border-red-200 text-red-600 rounded-xl p-3 mb-4 text-[12px] font-semibold text-center">
-          ❌ <?= htmlspecialchars($error) ?>
+    <?php if (!$success): ?>
+      <form method="POST" action="" class="mt-6 flex flex-col gap-4">
+        <input type="hidden" name="csrf_token" value="<?= e($_SESSION['csrf_token']) ?>">
+        <div class="champ">
+          <label class="champ-label" for="email-reset">Adresse email</label>
+          <input class="champ-saisie" type="email" id="email-reset" name="email" required autofocus autocomplete="email" inputmode="email" placeholder="nom@exemple.com" value="<?= e($_POST['email'] ?? '') ?>">
         </div>
-      <?php endif; ?>
-      <?php if ($success): ?>
-        <div class="bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl p-3 mb-4 text-[12px] font-semibold text-center">
-          ✅ <?= htmlspecialchars($success) ?>
-        </div>
-      <?php endif; ?>
-
-      <?php if (!$success): ?>
-      <form method="POST" action="">
-        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
-
-        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-2">Adresse email</label>
-        <input type="email" name="email" required autofocus
-               placeholder="exemple@domaine.com"
-               class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-[14px] focus:outline-none focus:border-brand transition-all mb-4">
-
-        <button type="submit" name="action_demander_reset"
-                class="w-full bg-brand hover:bg-brand-mid text-white font-bold text-[14px] py-3 rounded-xl transition-all shadow-md shadow-blue-500/20">
-          Envoyer le code
-        </button>
+        <button type="submit" name="action_demander_reset" class="btn btn-primaire btn-bloc"><?= ico('loader-circle', 'ico-charge') ?><span data-libelle>Recevoir le code</span></button>
       </form>
-      <?php endif; ?>
+    <?php endif; ?>
 
-      <div class="bottom-note text-center mt-4">
-        <a href="/index.php" class="text-[12px] text-brand font-semibold hover:underline">← Retour à la connexion</a>
-      </div>
-    </div>
-
-  </div>
-
-</body>
-</html>
+    <p class="mt-6 text-center text-sm"><a class="lien" href="/index.php#connexion">Retour à la connexion</a></p>
+<?php include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_public_fin.php'; ?>

@@ -630,6 +630,33 @@
     @apply ml-auto text-text-3;
   }
 
+  /* Pages de lecture (textes legaux) */
+  .lecture {
+    @apply max-w-lecture text-base text-text;
+    line-height: 1.65;
+  }
+  .lecture h2 {
+    @apply mt-10 scroll-mt-20 text-xl font-semibold;
+  }
+  .lecture h2:first-child {
+    @apply mt-0;
+  }
+  .lecture p, .lecture ul, .lecture ol {
+    @apply mt-3 text-text-2;
+  }
+  .lecture ul {
+    @apply list-disc pl-5;
+  }
+  .lecture li + li {
+    @apply mt-1;
+  }
+  .lecture a {
+    @apply font-medium text-primary-ink underline;
+  }
+  .lecture strong {
+    @apply font-semibold text-text;
+  }
+
   /* Accordeon (FAQ) */
   .accordeon > summary {
     @apply flex min-h-[52px] cursor-pointer list-none items-center justify-between gap-4 py-3 text-base font-medium text-text;

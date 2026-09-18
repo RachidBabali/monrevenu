@@ -1,30 +1,23 @@
-<!-- ================= FOOTER ================= -->
-<footer class="bg-white pt-14 pb-8 border-t border-slate-100">
-  <div class="max-w-7xl mx-auto px-5 md:px-8">
-    <div class="flex flex-col md:flex-row md:items-start justify-between gap-10 mb-10">
-
-      <div class="max-w-xs">
-        <div class="flex items-center gap-2 mb-2">
-          <img src="assets/img/icon-192.png" alt="MonRevenu" class="h-7 w-7 object-contain"/>
-          <span class="font-extrabold text-mr-blue text-base">MonRevenu</span>
-        </div>
-        <p class="text-sm text-mr-navy-soft">Votre revenu, notre mission.</p>
-      </div>
-
-      <nav class="grid grid-cols-2 sm:flex sm:flex-wrap gap-x-10 gap-y-3 text-sm font-semibold text-mr-navy-soft">
-        <a href="#accueil" class="hover:text-mr-navy transition-colors">Accueil</a>
-        <a href="#fonctionnalites" class="hover:text-mr-navy transition-colors">Fonctionnalités</a>
-        <a href="#comment" class="hover:text-mr-navy transition-colors">Comment ça marche</a>
-        <a href="#apropos" class="hover:text-mr-navy transition-colors">À propos</a>
-        <a href="/contact.php" class="hover:text-mr-navy transition-colors">Contact</a>
-        <a href="/conditions.php" class="hover:text-mr-navy transition-colors">Conditions d'utilisation</a>
-        <a href="/confidentialite.php" class="hover:text-mr-navy transition-colors">Politique de confidentialité</a>
-        <a href="/suppression-donnees.php" class="hover:text-mr-navy transition-colors">Suppression des données</a>
-      </nav>
+<footer class="bg-surface">
+  <div class="conteneur flex flex-col gap-6 py-10 md:flex-row md:items-start md:justify-between">
+    <div class="flex max-w-sm flex-col gap-3">
+      <a href="/" class="flex items-center gap-2" aria-label="MonRevenu, accueil">
+        <img src="/assets/img/logo-64.png" alt="" width="28" height="28" class="h-7 w-7" loading="lazy">
+        <span class="font-semibold text-primary-ink">MonRevenu</span>
+      </a>
+      <p class="text-sm text-text-2">Plateforme d'affiliation : partagez les produits de commerçants partenaires et touchez une commission fixe sur chaque vente validée.</p>
     </div>
-
-    <div class="pt-6 border-t border-slate-100 text-xs text-mr-navy-soft">
-      © <?= date('Y') ?> MonRevenu. Tous droits réservés.
-    </div>
+    <nav class="grid grid-cols-2 gap-x-10 gap-y-2 text-sm" aria-label="Liens du pied de page">
+      <a class="text-text-2 hover:text-primary-ink" href="#fonctionnement">Fonctionnement</a>
+      <a class="text-text-2 hover:text-primary-ink" href="/conditions.php">Conditions générales</a>
+      <a class="text-text-2 hover:text-primary-ink" href="#remuneration">Rémunération</a>
+      <a class="text-text-2 hover:text-primary-ink" href="/confidentialite.php">Confidentialité</a>
+      <a class="text-text-2 hover:text-primary-ink" href="#questions">Questions</a>
+      <a class="text-text-2 hover:text-primary-ink" href="/suppression-donnees.php">Suppression des données</a>
+      <a class="text-text-2 hover:text-primary-ink" href="mailto:contact@monrevenu.xyz">Contact</a>
+    </nav>
+  </div>
+  <div class="border-t border-line">
+    <p class="conteneur py-4 text-xs text-text-3">&copy; <?= date('Y') ?> MonRevenu</p>
   </div>
 </footer>

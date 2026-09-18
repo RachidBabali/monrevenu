@@ -1,43 +1,22 @@
-<!-- ================= AVANTAGES / CONFIANCE ================= -->
-<section class="py-14 md:py-20 bg-mr-bg border-y border-slate-100">
-  <div class="max-w-7xl mx-auto px-5 md:px-8">
-    <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-8 text-center">
-
-      <div>
-        <span class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-mr-blue-pale mb-3 mx-auto">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="14" rx="2" stroke="#1465e0" stroke-width="2"/><path d="M3 9h18M8 18v2M16 18v2" stroke="#1465e0" stroke-width="2" stroke-linecap="round"/></svg>
-        </span>
-        <p class="text-sm font-bold text-mr-navy">Interface simple</p>
+<section class="border-b border-line" aria-labelledby="titre-confiance">
+  <div class="conteneur py-12 lg:py-16">
+    <h2 id="titre-confiance" class="text-2xl font-semibold lg:text-3xl">Vos données et vos contacts</h2>
+    <div class="mt-6 grid gap-6 md:grid-cols-2">
+      <div class="flex flex-col gap-3">
+        <p class="text-text-2">Les règles du service et le traitement de vos données sont décrits dans nos pages légales. Vous pouvez supprimer votre compte à tout moment depuis votre profil.</p>
+        <ul class="carte liste-nav">
+          <li><a class="liste-nav-lien" href="/conditions.php"><?= ico('file-text') ?>Conditions générales d'utilisation<?= ico('chevron-right', 'ico-16') ?></a></li>
+          <li><a class="liste-nav-lien" href="/confidentialite.php"><?= ico('shield') ?>Politique de confidentialité<?= ico('chevron-right', 'ico-16') ?></a></li>
+          <li><a class="liste-nav-lien" href="/suppression-donnees.php"><?= ico('trash-2') ?>Suppression du compte et des données<?= ico('chevron-right', 'ico-16') ?></a></li>
+        </ul>
       </div>
-
-      <div>
-        <span class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-mr-blue-pale mb-3 mx-auto">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 19h16M7 19v-6M12 19V7M17 19v-9" stroke="#1465e0" stroke-width="2.2" stroke-linecap="round"/></svg>
-        </span>
-        <p class="text-sm font-bold text-mr-navy">Suivi transparent</p>
+      <div class="flex flex-col gap-3">
+        <p class="text-text-2">Une question sur une commande, une commission ou un retrait ? Écrivez-nous.</p>
+        <ul class="carte liste-nav">
+          <li><a class="liste-nav-lien" href="mailto:contact@monrevenu.xyz"><?= ico('mail') ?><span>contact@monrevenu.xyz</span><?= ico('chevron-right', 'ico-16') ?></a></li>
+          <li><a class="liste-nav-lien" href="https://wa.me/<?= e($numero_wa_me) ?>" target="_blank" rel="noopener"><?= ico('whatsapp') ?><span>WhatsApp <span class="whitespace-nowrap"><?= e($numero_whatsapp) ?></span></span><?= ico('chevron-right', 'ico-16') ?></a></li>
+        </ul>
       </div>
-
-      <div>
-        <span class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-mr-blue-pale mb-3 mx-auto">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 3.5v6c0 5-3.4 8.6-8 10.5-4.6-1.9-8-5.5-8-10.5v-6L12 2z" stroke="#1465e0" stroke-width="2"/></svg>
-        </span>
-        <p class="text-sm font-bold text-mr-navy">Données protégées</p>
-      </div>
-
-      <div>
-        <span class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-mr-blue-pale mb-3 mx-auto">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="6" y="2" width="12" height="20" rx="2" stroke="#1465e0" stroke-width="2"/><path d="M11 18h2" stroke="#1465e0" stroke-width="2" stroke-linecap="round"/></svg>
-        </span>
-        <p class="text-sm font-bold text-mr-navy">Accessible sur mobile</p>
-      </div>
-
-      <div class="sm:col-span-2 lg:col-span-1">
-        <span class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-mr-blue-pale mb-3 mx-auto">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#1465e0" stroke-width="2"/><path d="M12 7v5l3.5 2" stroke="#1465e0" stroke-width="2" stroke-linecap="round"/></svg>
-        </span>
-        <p class="text-sm font-bold text-mr-navy">Gestion centralisée</p>
-      </div>
-
     </div>
   </div>
 </section>

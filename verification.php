@@ -258,7 +258,7 @@ if (
                     ]);
 
                     $success =
-                        'Nouveau code envoyé par ' . $libelleCanal . ' !';
+                        'Nouveau code envoyé par ' . $libelleCanal . '.';
 
                     /*
                      * Recharge les données utilisateur.
@@ -532,12 +532,12 @@ function masquerEmail(string $email): string
     $longueur = mb_strlen($local);
 
     if ($longueur <= 2) {
-        $masque = mb_substr($local, 0, 1) . '••';
+        $masque = mb_substr($local, 0, 1) . '**';
     } else {
         $masque =
             mb_substr($local, 0, 2)
             . str_repeat(
-                '•',
+                '*',
                 max($longueur - 2, 2)
             );
     }
@@ -562,7 +562,7 @@ function masquerTelephone(string $telephone): string
     $debut     = mb_substr($telephone, 3, 1);       // premier chiffre local
     $fin       = mb_substr($telephone, -2);         // 2 derniers chiffres
 
-    return '+' . $indicatif . ' ' . $debut . str_repeat('•', $longueur - 6) . $fin;
+    return '+' . $indicatif . ' ' . $debut . str_repeat('*', $longueur - 6) . $fin;
 }
 
 /*
@@ -575,219 +575,39 @@ if ($methode === 'whatsapp') {
     $contact_masque = masquerEmail($user['email']);
 }
 
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/ui.php';
+$titre_page = $methode === 'whatsapp' ? 'Vérifier votre WhatsApp' : 'Vérifier votre email';
+include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_public_debut.php';
 ?>
-<!DOCTYPE html>
-<html lang="fr" class="light">
+    <span class="flex h-11 w-11 items-center justify-center rounded-full bg-primary-soft text-primary-ink"><?= ico($methode === 'whatsapp' ? 'whatsapp' : 'mail', 'ico-24') ?></span>
+    <h1 class="mt-4 text-2xl font-semibold"><?= $methode === 'whatsapp' ? 'Vérifiez votre WhatsApp' : 'Vérifiez votre email' ?></h1>
+    <p class="mt-2 text-text-2">
+      Un code à 6 chiffres a été envoyé <?= $methode === 'whatsapp' ? 'par WhatsApp au' : 'par email à' ?>
+      <strong class="whitespace-nowrap font-medium text-text"><?= e($contact_masque) ?></strong>. Saisissez-le pour activer votre compte.
+    </p>
 
-<head>
+    <?php if ($error): ?>
+      <p class="alerte alerte-danger mt-5" role="alert"><?= ico('circle-alert') ?><span><?= e($error) ?></span></p>
+    <?php endif; ?>
+    <?php if ($success): ?>
+      <p class="alerte alerte-succes mt-5" role="status"><?= ico('circle-check') ?><span><?= e($success) ?></span></p>
+    <?php endif; ?>
 
-    <meta charset="UTF-8"/>
+    <form method="POST" action="" class="mt-6 flex flex-col gap-4">
+      <input type="hidden" name="csrf_token" value="<?= e($_SESSION['csrf_token']) ?>">
+      <div class="champ">
+        <label class="champ-label" for="code-verification">Code de vérification</label>
+        <input class="champ-saisie chiffres text-center font-mono text-xl tracking-[.4em]" type="text" id="code-verification" name="code" required maxlength="6" minlength="6"
+               inputmode="numeric" pattern="[0-9]{6}" autocomplete="one-time-code" autofocus placeholder="000000">
+      </div>
+      <button type="submit" name="action_verifier" class="btn btn-primaire btn-bloc"><?= ico('loader-circle', 'ico-charge') ?><span data-libelle>Vérifier le code</span></button>
+    </form>
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    />
-
-    <title>MonRevenu – Vérification</title>
-
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sora: ['Sora', 'sans-serif']
-                    },
-                    colors: {
-                        brand: {
-                            DEFAULT: '#1246A0',
-                            mid: '#1A5FCC',
-                            light: '#3B82F6',
-                            soft: '#EEF4FF'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-
-    <link
-        href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet"
-    />
-
-    <style>
-        body {
-            font-family: 'Sora', sans-serif;
-        }
-    </style>
-
-</head>
-
-<body class="bg-[#F8F9FB] text-slate-900 min-h-screen flex items-center justify-center px-4">
-
-<div class="w-full max-w-sm">
-
-    <!-- En-tête -->
-
-    <div class="flex flex-col items-center mb-6">
-
-        <?php if ($methode === 'whatsapp'): ?>
-
-            <div class="w-14 h-14 rounded-2xl bg-[#25D366] flex items-center justify-center mb-3">
-                <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.39 1.26 4.81L2 22l5.42-1.36a9.9 9.9 0 0 0 4.62 1.14h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2Zm0 18.06h-.01a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.83.83-3.05-.2-.31a8.16 8.16 0 0 1-1.26-4.36c0-4.52 3.68-8.2 8.21-8.2 2.19 0 4.25.86 5.8 2.4a8.15 8.15 0 0 1 2.4 5.8c0 4.53-3.68 8.22-8.16 8.22Zm4.5-6.15c-.25-.12-1.46-.72-1.68-.8-.23-.08-.39-.12-.56.12-.16.25-.64.8-.78.96-.14.16-.29.18-.53.06-.25-.12-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.39-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.12-.14.16-.25.25-.41.08-.16.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.42h-.48c-.16 0-.42.06-.64.31-.22.25-.84.82-.84 2s.86 2.32.98 2.48c.12.16 1.7 2.6 4.13 3.64.58.25 1.03.4 1.38.51.58.18 1.11.16 1.53.1.47-.07 1.46-.6 1.66-1.17.21-.58.21-1.08.14-1.17-.06-.1-.22-.16-.47-.28Z"/>
-                </svg>
-            </div>
-
-            <h1 class="font-extrabold text-[20px] text-slate-800">
-                Vérifiez votre WhatsApp
-            </h1>
-
-            <p class="text-[13px] text-slate-400 text-center mt-1">
-                Un code à 6 chiffres a été envoyé par WhatsApp au<br>
-                <span class="font-bold text-slate-700">
-                    <?= htmlspecialchars($contact_masque, ENT_QUOTES, 'UTF-8') ?>
-                </span>
-            </p>
-
-        <?php else: ?>
-
-            <div class="w-14 h-14 rounded-2xl bg-brand flex items-center justify-center mb-3">
-                <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="2" y="4" width="20" height="16" rx="2"/>
-                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-                </svg>
-            </div>
-
-            <h1 class="font-extrabold text-[20px] text-slate-800">
-                Vérifiez votre email
-            </h1>
-
-            <p class="text-[13px] text-slate-400 text-center mt-1">
-                Un code à 6 chiffres a été envoyé par email à<br>
-                <span class="font-bold text-slate-700">
-                    <?= htmlspecialchars($contact_masque, ENT_QUOTES, 'UTF-8') ?>
-                </span>
-            </p>
-
-        <?php endif; ?>
-
-    </div>
-
-    <!-- Carte -->
-
-    <div class="bg-white rounded-[24px] shadow-sm border border-slate-100 p-6">
-
-        <!-- Erreur -->
-
-        <?php if ($error): ?>
-
-            <div class="bg-red-50 border border-red-200 text-red-600 rounded-xl p-3 mb-4 text-[12px] font-semibold text-center">
-
-                ❌ <?= htmlspecialchars(
-                    $error,
-                    ENT_QUOTES,
-                    'UTF-8'
-                ) ?>
-
-            </div>
-
-        <?php endif; ?>
-
-        <!-- Succès -->
-
-        <?php if ($success): ?>
-
-            <div class="bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl p-3 mb-4 text-[12px] font-semibold text-center">
-
-                ✅ <?= htmlspecialchars(
-                    $success,
-                    ENT_QUOTES,
-                    'UTF-8'
-                ) ?>
-
-            </div>
-
-        <?php endif; ?>
-
-        <!-- Formulaire vérification -->
-
-        <form method="POST" action="">
-
-            <input
-                type="hidden"
-                name="csrf_token"
-                value="<?= htmlspecialchars(
-                    $_SESSION['csrf_token'],
-                    ENT_QUOTES,
-                    'UTF-8'
-                ) ?>"
-            >
-
-            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-2 text-center">
-
-                Code de vérification
-
-            </label>
-
-            <input
-                type="text"
-                name="code"
-                required
-                maxlength="6"
-                minlength="6"
-                inputmode="numeric"
-                pattern="[0-9]{6}"
-                autocomplete="one-time-code"
-                autofocus
-                placeholder="000000"
-                class="w-full text-center tracking-[0.5em] font-mono font-extrabold text-[24px] px-4 py-3 rounded-xl border-2 border-slate-200 bg-slate-50 focus:outline-none focus:border-brand transition-all mb-4"
-            >
-
-            <button
-                type="submit"
-                name="action_verifier"
-                class="w-full bg-brand hover:bg-brand-mid text-white font-bold text-[14px] py-3 rounded-xl transition-all shadow-md shadow-blue-500/20"
-            >
-
-                Vérifier
-
-            </button>
-
-        </form>
-
-        <!-- Renvoyer -->
-
-        <form method="POST" action="" class="mt-3">
-
-            <input
-                type="hidden"
-                name="csrf_token"
-                value="<?= htmlspecialchars(
-                    $_SESSION['csrf_token'],
-                    ENT_QUOTES,
-                    'UTF-8'
-                ) ?>"
-            >
-
-            <button
-                type="submit"
-                name="action_renvoyer"
-                class="w-full text-brand font-semibold text-[12px] py-2 hover:underline"
-            >
-
-                Je n'ai rien reçu — renvoyer le code
-
-            </button>
-
-        </form>
-
-    </div>
-
-</div>
-
-</body>
-
-</html>
+    <form method="POST" action="" class="mt-3">
+      <input type="hidden" name="csrf_token" value="<?= e($_SESSION['csrf_token']) ?>">
+      <button type="submit" name="action_renvoyer" class="btn btn-discret btn-bloc">Je n'ai rien reçu : renvoyer le code</button>
+    </form>
+    <?php if ($methode !== 'whatsapp'): ?>
+      <p class="mt-4 text-center text-sm text-text-3">Pensez à regarder dans les courriers indésirables.</p>
+    <?php endif; ?>
+<?php include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_public_fin.php'; ?>

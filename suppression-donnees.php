@@ -5,111 +5,85 @@
  * À placer à la racine du projet.
  */
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Suppression des données — MonRevenu</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        fontFamily: {
-          display: ['"Sora"', 'sans-serif'],
-          sans: ['"Inter"', 'sans-serif']
-        },
-        colors: {
-          ink: { DEFAULT: '#12213D', soft: '#3A4A6B' },
-          paper: '#F5F7FB',
-          line: '#E1E6F0',
-          brand: { DEFAULT: '#1E3F8F', dark: '#152C66', light: '#2F62D6', soft: '#E8EEFC' },
-          ok: { DEFAULT: '#137A55', soft: '#E3F5EC' },
-          warn: { DEFAULT: '#B4720F', soft: '#FBF0DA' }
-        }
-      }
-    }
-  }
-</script>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<style>
-  body { font-family: 'Inter', sans-serif; }
-  .font-display { font-family: 'Sora', sans-serif; }
-</style>
-</head>
-<body class="bg-paper text-ink min-h-screen">
-
-<div class="max-w-3xl mx-auto px-5 md:px-8 py-10 md:py-14">
-
-  <a href="/index.php" class="inline-flex items-center gap-1.5 text-brand font-semibold text-[13px] mb-8 hover:underline">
-    ← Retour à MonRevenu
-  </a>
-
-  <h1 class="font-display font-bold text-[26px] md:text-[30px] text-ink mb-1">Suppression de vos données</h1>
-  <p class="text-ink/45 text-[13px] mb-8">Dernière mise à jour : <?= date('d/m/Y') ?></p>
-
-  <div class="bg-white rounded-2xl border border-line p-6 md:p-8 flex flex-col gap-7">
-
-    <section>
-      <h2 class="font-display font-bold text-[16px] text-brand mb-2">Quelles données sont collectées</h2>
-      <p class="text-[13.5px] text-ink/70 leading-relaxed mb-3">Lorsque vous créez un compte et utilisez MonRevenu, nous collectons :</p>
-      <ul class="list-disc pl-5 text-[13.5px] text-ink/70 leading-relaxed space-y-1">
+<?php
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/ui.php';
+$titre_page    = "Suppression de vos données";
+$page_publique = true;
+include $_SERVER['DOCUMENT_ROOT'] . '/includs/head.php';
+?>
+<body class="bg-surface">
+<a class="lien-evitement" href="#contenu">Aller au contenu</a>
+<header class="border-b border-line">
+  <div class="conteneur flex h-14 items-center justify-between gap-3">
+    <a href="/" class="flex items-center gap-2" aria-label="MonRevenu, accueil">
+      <img src="/assets/img/logo-64.png" alt="" width="28" height="28" class="h-7 w-7">
+      <span class="font-semibold text-primary-ink">MonRevenu</span>
+    </a>
+    <a class="lien text-sm" href="/">Retour à l'accueil</a>
+  </div>
+</header>
+<main id="contenu" class="conteneur grid gap-8 py-8 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-x-16 lg:py-14">
+  <div class="lg:col-start-2">
+    <h1 class="text-2xl font-semibold lg:text-3xl">Suppression de vos données</h1>
+    <p class="mt-2 text-sm text-text-3">Dernière mise à jour : <?= date('d/m/Y') ?></p>
+  </div>
+  <nav class="lg:sticky lg:top-8 lg:row-start-2 lg:self-start" aria-labelledby="titre-sommaire">
+    <p id="titre-sommaire" class="text-sm font-semibold text-text">Sommaire</p>
+    <ol class="mt-3 flex flex-col gap-2 border-l border-line pl-4 text-sm text-text-2">
+          <li><a class="hover:text-primary-ink" href="#quelles-donnees-sont-collectees">Quelles données sont collectées</a></li>
+          <li><a class="hover:text-primary-ink" href="#pourquoi-ces-donnees">Pourquoi ces données</a></li>
+          <li><a class="hover:text-primary-ink" href="#combien-de-temps-sont-elles-conservees">Combien de temps sont-elles conservées</a></li>
+          <li><a class="hover:text-primary-ink" href="#ce-qui-est-conserve-malgre-la-suppression">Ce qui est conservé malgré la suppression</a></li>
+          <li><a class="hover:text-primary-ink" href="#comment-demander-la-suppression">Comment demander la suppression</a></li>
+    </ol>
+  </nav>
+  <article class="lg:row-start-2">
+    <div class="lecture">
+<h2 id="quelles-donnees-sont-collectees">Quelles données sont collectées</h2>
+      <p>Lorsque vous créez un compte et utilisez MonRevenu, nous collectons :</p>
+      <ul>
         <li>Votre nom complet et votre adresse email</li>
         <li>Votre numéro de téléphone WhatsApp, utilisé pour vérifier votre identité</li>
         <li>Votre historique de ventes, de commissions et de retraits</li>
       </ul>
-    </section>
-
-    <section>
-      <h2 class="font-display font-bold text-[16px] text-brand mb-2">Pourquoi ces données</h2>
-      <p class="text-[13.5px] text-ink/70 leading-relaxed">
+    <h2 id="pourquoi-ces-donnees">Pourquoi ces données</h2>
+      <p>
         Elles servent à créer et sécuriser votre compte, vérifier votre numéro WhatsApp, calculer et verser vos commissions
         d'affiliation, et traiter vos demandes de retrait.
       </p>
-    </section>
-
-    <section>
-      <h2 class="font-display font-bold text-[16px] text-brand mb-2">Combien de temps sont-elles conservées</h2>
-      <p class="text-[13.5px] text-ink/70 leading-relaxed">
+    <h2 id="combien-de-temps-sont-elles-conservees">Combien de temps sont-elles conservées</h2>
+      <p>
         Tant que votre compte est actif. Si vous demandez la suppression de votre compte, vos données personnelles
         (nom, email, numéro de téléphone, code de vérification WhatsApp) sont effacées sous 30 jours.
       </p>
-    </section>
-
-    <section>
-      <h2 class="font-display font-bold text-[16px] text-brand mb-2">Ce qui est conservé malgré la suppression</h2>
-      <p class="text-[13.5px] text-ink/70 leading-relaxed">
+    <h2 id="ce-qui-est-conserve-malgre-la-suppression">Ce qui est conservé malgré la suppression</h2>
+      <p>
         Pour des raisons comptables et légales, l'historique de vos ventes, commissions et retraits déjà effectués est
         conservé, mais il est dissocié de votre identité : votre nom, email et téléphone ne restent associés à aucune
         de ces lignes après suppression.
       </p>
-    </section>
-
-    <section>
-      <h2 class="font-display font-bold text-[16px] text-brand mb-3">Comment demander la suppression</h2>
-      <div class="grid sm:grid-cols-2 gap-3">
-        <div class="bg-brand-soft rounded-xl p-4">
-          <p class="font-display font-semibold text-[13.5px] text-ink mb-1">Depuis votre compte</p>
-          <p class="text-[12.5px] text-ink/60 leading-relaxed mb-2">
+    <h2 id="comment-demander-la-suppression">Comment demander la suppression</h2>
+      <p>Depuis votre compte</p>
+          <p>
             Connectez-vous, ouvrez votre profil, puis « Supprimer mon compte » en bas de page.
           </p>
-          <a href="/page/profil.php#supprimer-compte" class="text-[12.5px] font-semibold text-brand hover:underline">Aller à mon profil →</a>
-        </div>
-        <div class="bg-warn-soft rounded-xl p-4">
-          <p class="font-display font-semibold text-[13.5px] text-ink mb-1">Par email</p>
-          <p class="text-[12.5px] text-ink/60 leading-relaxed mb-2">
+          <a href="/page/profil.php#supprimer-compte">Aller à mon profil</a>
+        <p>Par email</p>
+          <p>
             Écrivez-nous en précisant le numéro de téléphone ou l'email associé au compte à supprimer.
           </p>
-          <a href="mailto:contact@monrevenu.xyz?subject=Demande%20de%20suppression%20de%20compte" class="text-[12.5px] font-semibold text-warn hover:underline">contact@monrevenu.xyz</a>
-        </div>
-      </div>
-      <p class="text-[12px] text-ink/45 mt-3">Délai de traitement annoncé : sous 30 jours à compter de la demande.</p>
-    </section>
-
+          <a href="mailto:contact@monrevenu.xyz?subject=Demande%20de%20suppression%20de%20compte">contact@monrevenu.xyz</a>
+        <p>Délai de traitement annoncé : sous 30 jours à compter de la demande.</p>
+    </div>
+  </article>
+</main>
+<footer class="border-t border-line">
+  <div class="conteneur flex flex-wrap gap-x-6 gap-y-2 py-6 text-sm text-text-3">
+    <a class="hover:text-primary-ink" href="/conditions.php">Conditions générales</a>
+    <a class="hover:text-primary-ink" href="/confidentialite.php">Confidentialité</a>
+    <a class="hover:text-primary-ink" href="/suppression-donnees.php">Suppression des données</a>
+    <a class="hover:text-primary-ink" href="mailto:contact@monrevenu.xyz">contact@monrevenu.xyz</a>
   </div>
-
-</div>
-
+</footer>
 </body>
 </html>

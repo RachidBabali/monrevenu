@@ -37,7 +37,7 @@ $erreur = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-        $erreur = 'Session expirée, veuillez recharger la page.';
+        $erreur = 'Votre session a expiré. Rechargez la page puis recommencez.';
     } else {
         $phone_brut    = trim($_POST['phone'] ?? '');
         $phone_country = trim($_POST['phone_country'] ?? 'KM');
@@ -104,62 +104,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             } catch (PDOException $e) {
                 error_log('completer-telephone.php : ' . $e->getMessage());
-                $erreur = 'Erreur serveur, veuillez réessayer.';
+                $erreur = "L'envoi a échoué pour une raison technique. Réessayez dans un instant.";
             }
         }
     }
 }
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/ui.php';
+$titre_page = 'Numéro WhatsApp';
+include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_public_debut.php';
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>MonRevenu – Complétez votre profil</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <style>body{font-family:'Sora',sans-serif;}</style>
-</head>
-<body class="bg-[#f7faff] min-h-screen flex items-center justify-center px-5 py-10">
-  <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-7 md:p-8">
-    <div class="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center mb-5">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.21 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </div>
-    <h1 class="text-lg font-extrabold text-[#0f2547] mb-1">Encore une étape, <?= htmlspecialchars(explode(' ', $user['fullname'])[0]) ?> !</h1>
-    <p class="text-sm text-[#5c6c80] mb-6">
-      Votre compte a été créé avec Google. Pour promouvoir des produits et recevoir vos commissions, nous devons vérifier un numéro de téléphone comorien ou sénégalais qui vous appartient.
-    </p>
+    <h1 class="text-2xl font-semibold">Bonjour, <?= e(explode(' ', $user['fullname'])[0]) ?></h1>
+    <p class="mt-2 text-text-2">Votre compte a été créé avec Google. Pour accéder au catalogue et à vos liens d'affiliation, indiquez un numéro WhatsApp à votre nom. Nous y envoyons un code de vérification.</p>
 
     <?php if ($erreur): ?>
-      <div class="text-xs font-semibold text-red-700 bg-red-50 border border-red-200 rounded-xl px-3.5 py-2.5 mb-4"><?= htmlspecialchars($erreur) ?></div>
+      <p class="alerte alerte-danger mt-5" role="alert"><?= ico('circle-alert') ?><span><?= e($erreur) ?></span></p>
     <?php endif; ?>
 
-    <form method="POST" class="space-y-4">
-      <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
-
-      <div>
-        <label class="block text-xs font-bold text-[#5c6c80] uppercase tracking-wide mb-1.5">Numéro de téléphone</label>
-        <div class="flex items-center gap-2 border border-slate-200 rounded-xl px-2 py-1 focus-within:border-[#1465e0] transition-shadow">
-          <select name="phone_country" class="text-sm font-bold text-[#0f2547] bg-transparent outline-none py-2 pl-1.5 pr-1 shrink-0">
-            <option value="KM">🇰🇲 +269</option>
-            <option value="SN">🇸🇳 +221</option>
+    <form method="POST" class="mt-6 flex flex-col gap-4">
+      <input type="hidden" name="csrf_token" value="<?= e($_SESSION['csrf_token']) ?>">
+      <div class="champ">
+        <label class="champ-label" for="tel-complet">Numéro WhatsApp</label>
+        <div class="champ-groupe">
+          <label class="sr-only" for="pays-complet">Pays</label>
+          <select class="champ-saisie w-[118px] shrink-0 rounded-r-none border-r-0 pr-8" id="pays-complet" name="phone_country" autocomplete="tel-country-code">
+            <option value="SN">SN +221</option>
+            <option value="KM">KM +269</option>
           </select>
-          <span class="w-px h-5 bg-slate-200 shrink-0"></span>
-          <input type="tel" name="phone" placeholder="3000000 ou 4000000" required
-                 inputmode="numeric" maxlength="9"
-                 class="flex-1 min-w-0 outline-none text-sm text-[#0f2547] bg-transparent placeholder:text-slate-300 py-2">
+          <input class="champ-saisie" type="tel" id="tel-complet" name="phone" required inputmode="numeric" maxlength="12" autocomplete="tel-national" placeholder="77 123 45 67" aria-describedby="aide-tel-complet">
         </div>
-        <p class="text-[11px] text-slate-400 mt-1.5">Un code vous sera envoyé par WhatsApp sur ce numéro.</p>
+        <p class="champ-aide" id="aide-tel-complet">Sénégal : 9 chiffres commençant par 7. Comores : 7 chiffres commençant par 3 ou 4.</p>
       </div>
-
-      <button type="submit" class="w-full bg-[#1465e0] hover:bg-[#0d47ad] text-white font-bold text-sm py-3.5 rounded-full transition-colors">
-        Recevoir mon code de vérification
-      </button>
+      <button type="submit" class="btn btn-primaire btn-bloc"><?= ico('loader-circle', 'ico-charge') ?><span data-libelle>Recevoir le code sur WhatsApp</span></button>
     </form>
-
-    <p class="text-center text-xs text-slate-400 mt-6">
-      Ce numéro doit vous appartenir personnellement — c'est celui qui recevra vos commissions.
-    </p>
-  </div>
-</body>
-</html>
+    <p class="mt-4 text-sm text-text-3">Le numéro doit être le vôtre : il sert à vérifier votre compte et à vous contacter.</p>
+<?php include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_public_fin.php'; ?>
