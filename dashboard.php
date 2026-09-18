@@ -53,7 +53,7 @@ try {
 
     $st = $pdo->prepare(
         "SELECT COALESCE(SUM(commission_earn), 0) AS attente, COUNT(*) AS nb_attente
-         FROM vendeur_ventes WHERE vendeur_id = ? AND statut = 'en_attente'"
+         FROM vendeur_ventes WHERE vendeur_id = ? AND statut IN ('en_attente', 'contacte', 'colis_recu')"
     );
     $st->execute([$user_id]);
     $indic = array_merge($indic, $st->fetch() ?: []);

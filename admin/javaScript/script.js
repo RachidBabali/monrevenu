@@ -13,7 +13,16 @@
         document.querySelectorAll('.nav-btn, .mobile-tab-btn').forEach(btn => {
             const estCetOnglet = btn.getAttribute('onclick') && btn.getAttribute('onclick').includes("'" + tabId + "'");
             btn.classList.toggle('is-active', estCetOnglet);
+            if (estCetOnglet) {
+                btn.setAttribute('aria-current', 'page');
+            } else {
+                btn.removeAttribute('aria-current');
+            }
         });
+        if (clickedBtn && clickedBtn.classList.contains('mobile-tab-btn')) {
+            clickedBtn.scrollIntoView({ block: 'nearest', inline: 'center' });
+        }
+        window.scrollTo({ top: 0 });
 
         // Mémorise l'onglet actif : sans ça, chaque soumission de formulaire
         // (qui recharge entièrement la page) revient toujours sur "Produits"

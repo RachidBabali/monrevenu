@@ -101,7 +101,7 @@ if (!function_exists('badgeStatut')) {
     {
         $code = strtolower(trim((string) $code));
         $table = [
-            'commission'  => ['en_attente' => ['En attente', 'attente'], 'validee' => ['Créditée', 'succes'], 'annulee' => ['Annulée', 'danger']],
+            'commission'  => ['en_attente' => ['En attente', 'attente'], 'contacte' => ['Client contacté', 'attente'], 'colis_recu' => ['Colis reçu', 'info'], 'validee' => ['Créditée', 'succes'], 'annulee' => ['Annulée', 'danger']],
             'retrait'     => ['en_attente' => ['En attente', 'attente'], 'valide' => ['Payé', 'succes'], 'rejete' => ['Refusé', 'danger']],
             'transaction' => ['en_attente' => ['En attente', 'attente'], 'complete' => ['Effectuée', 'succes'], 'echoue' => ['Échouée', 'danger']],
             'compte'      => ['active' => ['Actif', 'succes'], 'suspended' => ['Suspendu', 'danger'], 'deleted' => ['Supprimé', 'neutre'], 'pending' => ['À vérifier', 'attente']],
@@ -164,5 +164,24 @@ if (!function_exists('actif')) {
     {
         $v = @filemtime(__DIR__ . '/..' . $chemin);
         return $chemin . ($v ? '?v=' . $v : '');
+    }
+}
+
+if (!function_exists('numeroWhatsapp')) {
+    /** Numero au format wa.me (chiffres avec indicatif) : Senegal 221, Comores 269. */
+    function numeroWhatsapp(?string $tel): string
+    {
+        $n = preg_replace('/\D/', '', (string) $tel);
+        $n = preg_replace('/^00/', '', $n);
+        if (preg_match('/^(221|269)\d{7,9}$/', $n)) {
+            return $n;
+        }
+        if (preg_match('/^7\d{8}$/', $n)) {
+            return '221' . $n;
+        }
+        if (preg_match('/^[34]\d{6}$/', $n)) {
+            return '269' . $n;
+        }
+        return $n;
     }
 }

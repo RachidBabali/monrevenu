@@ -9,6 +9,7 @@ require_once '../includs/env_loader.php';
 require_once '../includs/r2_uploader.php';
 require_once '../includs/image_helper.php';
 require_once 'auth_middleware.php';
+require_once '../includs/ui.php';
 
 
 // Sécurité d'accès strict à l'administrateur
@@ -41,12 +42,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($fichier['error'] !== UPLOAD_ERR_OK) {
                 $uploadOk = false;
-                $error = "❌ Erreur lors de l'envoi du fichier (code " . $fichier['error'] . ").";
+                $error = "Erreur lors de l'envoi du fichier (code " . $fichier['error'] . ").";
             }
 
             if ($uploadOk && $fichier['size'] > 2 * 1024 * 1024) {
                 $uploadOk = false;
-                $error = "❌ L'image dépasse la taille maximale autorisée (2 Mo).";
+                $error = "L'image dépasse la taille maximale autorisée (2 Mo).";
             }
 
             $typesAutorises = [
@@ -60,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($uploadOk && !array_key_exists($mimeReel, $typesAutorises)) {
                 $uploadOk = false;
-                $error = "❌ Format de fichier non autorisé. Utilisez JPG, PNG ou WEBP.";
+                $error = "Format de fichier non autorisé. Utilisez JPG, PNG ou WEBP.";
             }
 
             if ($uploadOk) {
@@ -73,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $image = $resultat['url'];
                 } else {
                     $uploadOk = false;
-                    $error = "❌ " . $resultat['error'];
+                    $error = "" . $resultat['error'];
                 }
             }
         }
@@ -81,9 +82,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($uploadOk && !empty($nom) && $prix > 0) {
             $stmt = $pdo->prepare("INSERT INTO vendeur_produits (vendeur_id, nom_produit, description, image, prix_vente, commission_pct) VALUES (?, ?, ?, ?, ?, ?)");
             if ($stmt->execute([$admin['id'], $nom, $description, $image, $prix, $commission])) {
-                $message = "✅ Le produit a été publié avec succès au catalogue !";
+                $message = "Le produit a été publié avec succès au catalogue.";
             } else {
-                $error = "❌ Une erreur est survenue lors de la création du produit.";
+                $error = "Une erreur est survenue lors de la création du produit.";
             }
         }
     }
@@ -114,14 +115,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     "INSERT INTO messages (user_id, expediteur, message, statut)
                      VALUES (?, 'MonRevenu', ?, 'non_lu')"
                 );
-                $texteNotifComm = "💰 Une commission de " . number_format($montant, 0, ',', ' ') . " KMF vous a été créditée. Motif : " . $description;
+                $texteNotifComm = "Une commission de " . number_format($montant, 0, ',', ' ') . " FCFA vous a été créditée. Motif : " . $description;
                 $stmtNotifComm->execute([$user_id, $texteNotifComm]);
 
                 $pdo->commit();
-                $message = "✅ La commission de " . $montant . " KMF a bien été créditée à l'utilisateur.";
+                $message = "La commission de " . $montant . " FCFA a bien été créditée à l'utilisateur.";
             } catch (Exception $e) {
                 $pdo->rollBack();
-                $error = "❌ Échec du transfert de commission : " . $e->getMessage();
+                $error = "Échec du transfert de commission : " . $e->getMessage();
             }
         }
     }
@@ -164,11 +165,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
 
                     $libelles_notif_statut = [
-                        'en_attente' => "⏳ Votre vente #" . $vente_id . " est en attente de traitement.",
-                        'contacte'   => "📞 Le client de votre vente #" . $vente_id . " a été contacté. En attente de confirmation.",
-                        'colis_recu' => "📦 Le client de votre vente #" . $vente_id . " a bien reçu son colis. Le paiement de votre commission suit très vite !",
-                        'validee'    => "💰 Vente #" . $vente_id . " validée ! " . number_format((float) $vente['commission_earn'], 0, ',', ' ') . " KMF ont été crédités sur votre solde.",
-                        'annulee'    => "❌ Votre vente #" . $vente_id . " a été annulée.",
+                        'en_attente' => "Votre vente #" . $vente_id . " est en attente de traitement.",
+                        'contacte'   => "Le client de votre vente #" . $vente_id . " a été contacté. En attente de confirmation.",
+                        'colis_recu' => "Le client de votre vente #" . $vente_id . " a bien reçu son colis. Le paiement de votre commission suit très vite.",
+                        'validee'    => "Vente #" . $vente_id . " validée. " . number_format((float) $vente['commission_earn'], 0, ',', ' ') . " FCFA ont été crédités sur votre solde.",
+                        'annulee'    => "Votre vente #" . $vente_id . " a été annulée.",
                     ];
                     require_once __DIR__ . '/../includs/notifications.php';
                     $titres_notif_statut = [
@@ -187,14 +188,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     );
 
                     $pdo->commit();
-                    $message = "✅ Statut de la vente mis à jour.";
+                    $message = "Statut de la vente mis à jour.";
                 } else {
                     $pdo->rollBack();
-                    $error = "❌ Vente introuvable.";
+                    $error = "Vente introuvable.";
                 }
             } catch (Exception $e) {
                 $pdo->rollBack();
-                $error = "❌ Échec de la mise à jour : " . $e->getMessage();
+                $error = "Échec de la mise à jour : " . $e->getMessage();
             }
         }
     }
@@ -233,20 +234,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     envoyerNotification(
                         $pdo,
                         (int) $vente['vendeur_id'],
-                        "💰 Commission envoyée ! " . number_format((float) $vente['commission_earn'], 0, ',', ' ') . " KMF ont été crédités sur votre solde pour la vente #" . $vente_id . ".",
+                        "Commission envoyée. " . number_format((float) $vente['commission_earn'], 0, ',', ' ') . " FCFA ont été crédités sur votre solde pour la vente #" . $vente_id . ".",
                         'Commission créditée',
                         '/page/historique.php'
                     );
 
                     $pdo->commit();
-                    $message = "✅ Commission envoyée avec succès !";
+                    $message = "Commission envoyée avec succès.";
                 } else {
                     $pdo->rollBack();
-                    $error = "❌ Cette commission a déjà été envoyée ou la vente est introuvable.";
+                    $error = "Cette commission a déjà été envoyée ou la vente est introuvable.";
                 }
             } catch (Exception $e) {
                 $pdo->rollBack();
-                $error = "❌ Échec de l'envoi de la commission : " . $e->getMessage();
+                $error = "Échec de l'envoi de la commission : " . $e->getMessage();
             }
         }
     }
@@ -273,18 +274,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         "INSERT INTO messages (user_id, expediteur, message, statut)
                          VALUES (?, 'MonRevenu', ?, 'non_lu')"
                     );
-                    $texteNotifW = "✅ Votre retrait de " . number_format((float) $w['amount'], 0, ',', ' ') . " KMF a été envoyé avec succès !";
+                    $texteNotifW = "Votre retrait de " . number_format((float) $w['amount'], 0, ',', ' ') . " FCFA a été envoyé avec succès.";
                     $stmtNotifW->execute([$w['user_id'], $texteNotifW]);
 
                     $pdo->commit();
-                    $message = "✅ Retrait validé et marqué comme envoyé.";
+                    $message = "Retrait validé et marqué comme envoyé.";
                 } else {
                     $pdo->rollBack();
-                    $error = "❌ Cette demande a déjà été traitée ou est introuvable.";
+                    $error = "Cette demande a déjà été traitée ou est introuvable.";
                 }
             } catch (Exception $e) {
                 $pdo->rollBack();
-                $error = "❌ Échec de la validation : " . $e->getMessage();
+                $error = "Échec de la validation : " . $e->getMessage();
             }
         }
     }
@@ -314,18 +315,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         "INSERT INTO messages (user_id, expediteur, message, statut)
                          VALUES (?, 'MonRevenu', ?, 'non_lu')"
                     );
-                    $texteNotifW = "❌ Votre retrait de " . number_format((float) $w['amount'], 0, ',', ' ') . " KMF a été refusé. Le montant a été recrédité sur votre solde.";
+                    $texteNotifW = "Votre retrait de " . number_format((float) $w['amount'], 0, ',', ' ') . " FCFA a été refusé. Le montant a été recrédité sur votre solde.";
                     $stmtNotifW->execute([$w['user_id'], $texteNotifW]);
 
                     $pdo->commit();
-                    $message = "✅ Retrait refusé, montant recrédité à l'utilisateur.";
+                    $message = "Retrait refusé, montant recrédité à l'utilisateur.";
                 } else {
                     $pdo->rollBack();
-                    $error = "❌ Cette demande a déjà été traitée ou est introuvable.";
+                    $error = "Cette demande a déjà été traitée ou est introuvable.";
                 }
             } catch (Exception $e) {
                 $pdo->rollBack();
-                $error = "❌ Échec du refus : " . $e->getMessage();
+                $error = "Échec du refus : " . $e->getMessage();
             }
         }
     }
@@ -343,12 +344,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 "UPDATE vendeur_produits SET nom_produit = ?, description = ?, prix_vente = ?, commission_pct = ? WHERE id = ?"
             );
             if ($stmtEditProduit->execute([$nom, $description, $prix, $commission, $produit_id])) {
-                $message = "✅ Produit mis à jour.";
+                $message = "Produit mis à jour.";
             } else {
-                $error = "❌ Impossible de mettre à jour ce produit.";
+                $error = "Impossible de mettre à jour ce produit.";
             }
         } else {
-            $error = "❌ Nom et prix valides sont obligatoires.";
+            $error = "Nom et prix valides sont obligatoires.";
         }
     }
 
@@ -359,13 +360,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmtCheckVentes = $pdo->prepare("SELECT COUNT(*) FROM vendeur_ventes WHERE produit_id = ?");
             $stmtCheckVentes->execute([$produit_id]);
             if ((int) $stmtCheckVentes->fetchColumn() > 0) {
-                $error = "❌ Impossible de supprimer : ce produit a déjà des ventes enregistrées. Modifiez-le plutôt, ou contactez le support technique.";
+                $error = "Impossible de supprimer : ce produit a déjà des ventes enregistrées. Modifiez-le plutôt, ou contactez le support technique.";
             } else {
                 $stmtDelProduit = $pdo->prepare("DELETE FROM vendeur_produits WHERE id = ?");
                 if ($stmtDelProduit->execute([$produit_id])) {
-                    $message = "✅ Produit supprimé.";
+                    $message = "Produit supprimé.";
                 } else {
-                    $error = "❌ Impossible de supprimer ce produit.";
+                    $error = "Impossible de supprimer ce produit.";
                 }
             }
         }
@@ -376,15 +377,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $target_user_id = (int) ($_POST['target_user_id'] ?? 0);
 
         if ($target_user_id === (int) $admin['id']) {
-            $error = "❌ Vous ne pouvez pas bloquer votre propre compte.";
+            $error = "Vous ne pouvez pas bloquer votre propre compte.";
         } elseif ($target_user_id > 0) {
             $stmtToggleUser = $pdo->prepare(
                 "UPDATE users_monrevenu SET is_active = 1 - is_active, status = IF(is_active = 1, 'suspended', 'active') WHERE id = ?"
             );
             if ($stmtToggleUser->execute([$target_user_id])) {
-                $message = "✅ Statut de l'utilisateur mis à jour.";
+                $message = "Statut de l'utilisateur mis à jour.";
             } else {
-                $error = "❌ Impossible de mettre à jour le statut de cet utilisateur.";
+                $error = "Impossible de mettre à jour le statut de cet utilisateur.";
             }
         }
     }
@@ -394,15 +395,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $target_user_id = (int) ($_POST['target_user_id'] ?? 0);
 
         if ($target_user_id === (int) $admin['id']) {
-            $error = "❌ Vous ne pouvez pas supprimer votre propre compte.";
+            $error = "Vous ne pouvez pas supprimer votre propre compte.";
         } elseif ($target_user_id > 0) {
             $stmtDeleteUser = $pdo->prepare(
                 "UPDATE users_monrevenu SET status = 'deleted', is_active = 0 WHERE id = ?"
             );
             if ($stmtDeleteUser->execute([$target_user_id])) {
-                $message = "✅ Compte utilisateur supprimé (historique conservé pour la comptabilité).";
+                $message = "Compte utilisateur supprimé (historique conservé pour la comptabilité).";
             } else {
-                $error = "❌ Impossible de supprimer cet utilisateur.";
+                $error = "Impossible de supprimer cet utilisateur.";
             }
         }
     }
@@ -421,12 +422,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($fichierStock['error'] !== UPLOAD_ERR_OK) {
                 $uploadOkStock = false;
-                $error = "❌ Erreur lors de l'envoi du fichier (code " . $fichierStock['error'] . ").";
+                $error = "Erreur lors de l'envoi du fichier (code " . $fichierStock['error'] . ").";
             }
 
             if ($uploadOkStock && $fichierStock['size'] > 2 * 1024 * 1024) {
                 $uploadOkStock = false;
-                $error = "❌ L'image dépasse la taille maximale autorisée (2 Mo).";
+                $error = "L'image dépasse la taille maximale autorisée (2 Mo).";
             }
 
             $typesAutorisesStock = [
@@ -442,7 +443,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 if (!array_key_exists($mimeStock, $typesAutorisesStock)) {
                     $uploadOkStock = false;
-                    $error = "❌ Format de fichier non autorisé. Utilisez JPG, PNG ou WEBP.";
+                    $error = "Format de fichier non autorisé. Utilisez JPG, PNG ou WEBP.";
                 }
             }
 
@@ -456,7 +457,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $image_produit_stock = $resultat['url'];
                 } else {
                     $uploadOkStock = false;
-                    $error = "❌ " . $resultat['error'];
+                    $error = "" . $resultat['error'];
                 }
             }
         }
@@ -466,12 +467,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 "INSERT INTO produits_stock (nom_produit, image, prix_vente, commission_fixe) VALUES (?, ?, ?, ?)"
             );
             if ($stmtCreerProduitStock->execute([$nom_produit_stock, $image_produit_stock, $prix_produit_stock, $commission_produit_stock])) {
-                $message = "✅ Produit ajouté au catalogue de stock !";
+                $message = "Produit ajouté au catalogue de stock.";
             } else {
-                $error = "❌ Une erreur est survenue lors de la création du produit.";
+                $error = "Une erreur est survenue lors de la création du produit.";
             }
         } elseif ($uploadOkStock) {
-            $error = "❌ Nom et prix valides sont obligatoires.";
+            $error = "Nom et prix valides sont obligatoires.";
         }
     }
 
@@ -515,19 +516,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     "INSERT INTO messages (user_id, expediteur, message, statut) VALUES (?, 'MonRevenu', ?, 'non_lu')"
                 )->execute([
                     $stock_user_id,
-                    "📦 " . $stock_quantite . " unité(s) de " . $nomProduitAttribue . " ont été ajoutées à votre stock."
+                    "" . $stock_quantite . " unité(s) de " . $nomProduitAttribue . " ont été ajoutées à votre stock."
                 ]);
 
                 $pdo->commit();
-                $message = "✅ Stock attribué avec succès.";
+                $message = "Stock attribué avec succès.";
             } catch (\Throwable $e) {
                 if ($pdo->inTransaction()) {
                     $pdo->rollBack();
                 }
-                $error = "❌ Impossible d'attribuer le stock : " . $e->getMessage();
+                $error = "Impossible d'attribuer le stock : " . $e->getMessage();
             }
         } else {
-            $error = "❌ Merci de choisir un utilisateur, un produit et une quantité valide.";
+            $error = "Merci de choisir un utilisateur, un produit et une quantité valide.";
         }
     }
 
@@ -564,20 +565,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         "INSERT INTO messages (user_id, expediteur, message, statut) VALUES (?, 'MonRevenu', ?, 'non_lu')"
                     )->execute([
                         $venteStock['user_id'],
-                        "💰 Commission envoyée ! " . number_format((float) $venteStock['commission_montant'], 0, ',', ' ') . " KMF ont été crédités sur votre solde."
+                        "Commission envoyée. " . number_format((float) $venteStock['commission_montant'], 0, ',', ' ') . " FCFA ont été crédités sur votre solde."
                     ]);
 
                     $pdo->commit();
-                    $message = "✅ Commission envoyée avec succès !";
+                    $message = "Commission envoyée avec succès.";
                 } else {
                     $pdo->rollBack();
-                    $error = "❌ Cette commission a déjà été envoyée ou la vente est introuvable.";
+                    $error = "Cette commission a déjà été envoyée ou la vente est introuvable.";
                 }
             } catch (\Throwable $e) {
                 if ($pdo->inTransaction()) {
                     $pdo->rollBack();
                 }
-                $error = "❌ Échec de l'envoi : " . $e->getMessage();
+                $error = "Échec de l'envoi : " . $e->getMessage();
             }
         }
     }
@@ -726,97 +727,38 @@ $libelles_roles = [
 $admin_prenom = explode(' ', trim($admin['fullname'] ?? 'Admin'))[0] ?? 'Admin';
 $admin_initiales = strtoupper(substr($admin['fullname'] ?? 'A', 0, 1) . substr(strrchr(' ' . ($admin['fullname'] ?? ''), ' '), 1, 1));
 ?>
-<!DOCTYPE html>
-<html lang="fr" class="light">
+<?php
+$titre_page = 'Administration';
+$head_supp  = '<meta name="robots" content="noindex">';
+include __DIR__ . '/../includs/head.php';
+$message_affiche = nettoyerPictogrammes(strip_tags((string) ($message ?? '')));
+$erreur_affichee = nettoyerPictogrammes(strip_tags((string) ($error ?? '')));
+?>
+<body class="admin">
+<a class="lien-evitement" href="#contenu">Aller au contenu</a>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panneau d'Administration · MonRevenu</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Roboto+Mono:wght@500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/styles.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Plus Jakarta Sans', 'sans-serif'],
-                        mono: ['Roboto Mono', 'monospace']
-                    },
-                    colors: {
-                        ink: '#191A3C',
-                        primary: {
-                            DEFAULT: '#5B4FE9',
-                            dark: '#4638D1',
-                            soft: '#EEECFF'
-                        },
-                        mint: {
-                            DEFAULT: '#00C2A8',
-                            soft: '#E3FBF7'
-                        },
-                        canvas: '#F4F5FC'
-                    },
-                    boxShadow: {
-                        card: '0 1px 2px rgba(25,26,60,0.04), 0 8px 24px -12px rgba(25,26,60,0.10)',
-                        cardHover: '0 2px 4px rgba(25,26,60,0.06), 0 14px 32px -14px rgba(25,26,60,0.16)'
-                    }
-                }
-            }
-        }
-    </script>
+<?php include 'sections/sidebar.php'; ?>
 
-</head>
+<div class="contenu-app pb-8">
+  <?php include 'sections/Topbar.php'; ?>
+  <?php include 'sections/mobile_sidebar.php'; ?>
 
-<body class="bg-canvas text-ink min-h-screen">
+  <main id="contenu" class="conteneur flex max-w-[1400px] flex-col gap-6 py-4 lg:py-6">
+    <?php include 'sections/MESSAGES_FLASH.php'; ?>
+    <?php include 'sections/bandeau_accueil.php'; ?>
+    <?php include 'sections/utilisateurs.php'; ?>
+    <?php include 'sections/produits.php'; ?>
+    <?php include 'sections/edition-produit.php'; ?>
+    <?php include 'sections/ventes.php'; ?>
+    <?php include 'sections/commissions.php'; ?>
+    <?php include 'sections/stock_revendeurs.php'; ?>
+    <?php include 'sections/retraits.php'; ?>
+    <?php include 'sections/historique.php'; ?>
+  </main>
+</div>
 
-    <div class="flex min-h-screen">
-
-        <!-- ============================ SIDEBAR ============================ -->
-        <?php include 'sections/sidebar.php'; ?>
-
-        <!-- ============================ CONTENU PRINCIPAL ============================ -->
-        <div class="flex-1 lg:pl-64 flex flex-col min-w-0">
-
-            <!-- Topbar -->
-            <?php include 'sections/Topbar.php'; ?>
-
-            <main class="flex-1 p-5 lg:p-8 space-y-6 max-w-6xl w-full mx-auto">
-
-                <!-- ============================ BANDEAU D'ACCUEIL ============================ -->
-                <?php include 'sections/bandeau_accueil.php'; ?>
-
-                <!-- ============================ MESSAGES FLASH ============================ -->
-                <?php include 'sections/MESSAGES_FLASH.php'; ?>
-                <!-- Onglets mobile (sidebar cachée en dessous de lg) -->
-                <?php include 'sections/mobile_sidebar.php'; ?>
-
-                <!-- ============================ SECTION UTILISATEURS ============================ -->
-                <?php include 'sections/utilisateurs.php'; ?>
-                <!-- ============================ SECTION PRODUITS ============================ -->
-                <?php include 'sections/produits.php'; ?>
-                <!-- Modale d'édition produit (partagée, remplie en JS au clic sur "Modifier") -->
-                <?php include 'sections/edition-produit.php'; ?>
-                <!-- ============================ SECTION VENTES ============================ -->
-                <?php include 'sections/ventes.php'; ?>
-                <!-- ============================ SECTION FORMATIONS ============================ -->
-                <!-- ============================ SECTION COMMISSIONS ============================ -->
-                <?php include 'sections/commissions.php'; ?>
-                <!-- ============================ SECTION STOCK REVENDEURS ============================ -->
-                <?php include 'sections/stock_revendeurs.php'; ?>
-                <!-- ============================ SECTION PUBLICITÉS ============================ -->
-                <!-- ============================ SECTION RETRAITS ============================ -->
-                <?php include 'sections/retraits.php'; ?>
-                <!-- ============================ SECTION HISTORIQUE ============================ -->
-                <?php include 'sections/historique.php'; ?>
-
-            </main>
-        </div>
-    </div>
-    <script src="javaScript/script.js"></script>
+<div id="toasts" class="toasts" role="status" aria-live="polite"></div>
+<script src="<?= e(actif('/assets/js/app-shell.js')) ?>"></script>
+<script src="javaScript/script.js?v=<?= (int) @filemtime(__DIR__ . '/javaScript/script.js') ?>"></script>
 </body>
-
 </html>
