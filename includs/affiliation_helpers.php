@@ -19,7 +19,7 @@ if (!defined('SECRET_AFFILIATION')) {
     define('SECRET_AFFILIATION', env('AFFILIATION_SECRET', 'change-moi-avec-une-longue-cle-aleatoire-unique'));
 
     if (env('AFFILIATION_SECRET') === null) {
-        error_log('[affiliation_helpers] AFFILIATION_SECRET absent du .env — clé de repli utilisée, à corriger avant mise en production.');
+        error_log('[affiliation_helpers] AFFILIATION_SECRET absent du .env : clé de repli utilisée, à corriger avant mise en production.');
     }
 }
 

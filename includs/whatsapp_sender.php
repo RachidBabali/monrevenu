@@ -41,7 +41,7 @@ function envoyerCodeWhatsApp(string $telephone, string $code): array
 {
     // Garde-fou : configuration non renseignée (variables d'environnement absentes)
     if (WHATSAPP_PHONE_NUMBER_ID === '' || WHATSAPP_ACCESS_TOKEN === '') {
-        error_log("[whatsapp_sender] Configuration manquante — code non envoyé (mode test). Code pour {$telephone} : {$code}");
+        error_log("[whatsapp_sender] Configuration manquante : code non envoyé (mode test). Code pour {$telephone} : {$code}");
         return ['ok' => false, 'erreur' => 'Service WhatsApp non configuré.'];
     }
 

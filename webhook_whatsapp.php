@@ -7,11 +7,11 @@
  * S'abonner au champ "messages".
  *
  * IMPORTANT : ne dépend PAS du numéro sortant configuré (WHATSAPP_ACCESS_TOKEN / PHONE_NUMBER_ID
- * peuvent rester des placeholders) — on ne fait ici QUE de la réception, qui est toujours
+ * peuvent rester des placeholders), on ne fait ici QUE de la réception, qui est toujours
  * gratuite et ne nécessite ni template approuvé ni vérification business.
  *
  * RÈGLE CRITIQUE : le handshake GET (vérification Meta) doit rester la toute première
- * chose exécutée, avant tout require de BD/session/notifications — un plantage dans ces
+ * chose exécutée, avant tout require de BD/session/notifications, un plantage dans ces
  * fichiers (connexion BD indisponible, etc.) ne doit jamais empêcher de répondre le challenge.
  */
 
@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     exit;
 }
 
-// --- 2. Réception des événements (POST) — la BD/les helpers ne sont chargés qu'ici ---
+// --- 2. Réception des événements (POST), la BD/les helpers ne sont chargés qu'ici ---
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     exit;
@@ -95,12 +95,12 @@ try {
                 if ($resultat['success']) {
                     // Réutilise votre système de notifications existant (in-app + push).
                     // Aucun message WhatsApp sortant n'est envoyé, donc aucun coût/quota consommé.
-                    // Ordre des arguments : (pdo, userId, message, titrePush, lienPush) — voir includs/notifications.php.
+                    // Ordre des arguments : (pdo, userId, message, titrePush, lienPush), voir includs/notifications.php.
                     envoyerNotification(
                         $pdo,
                         $resultat['user_id'],
                         'Votre numéro a été confirmé. Les fonctionnalités d\'affiliation sont maintenant débloquées.',
-                        'Compte vérifié ✅',
+                        'Compte vérifié',
                         '/dashboard.php'
                     );
                 }
@@ -109,5 +109,5 @@ try {
     }
 } catch (Throwable $e) {
     error_log('[webhook_whatsapp] Erreur : ' . $e->getMessage());
-    // On a déjà répondu 200 plus haut, donc pas de retry Meta — normal, l'erreur est loguée.
+    // On a déjà répondu 200 plus haut, donc pas de retry Meta, normal, l'erreur est loguée.
 }
