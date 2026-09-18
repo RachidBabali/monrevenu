@@ -19,166 +19,106 @@ try {
 } catch (PDOException $e) {
     $transactions = [];
 }
+
+/* Filtres d'affichage appliques a la liste deja chargee. */
+$filtres = ['tout' => 'Tout', 'commission' => 'Commissions', 'retrait' => 'Retraits', 'autre' => 'Autres'];
+$filtre = $_GET['type'] ?? 'tout';
+if (!isset($filtres[$filtre])) {
+    $filtre = 'tout';
+}
+$recherche = trim((string) ($_GET['q'] ?? ''));
+$credits = ['depot', 'commission', 'jeu_gain'];
+$libelles_type = [
+    'depot' => 'Crédit', 'retrait' => 'Retrait', 'commission' => 'Commission',
+    'achat_service' => 'Achat', 'jeu_gain' => 'Gain', 'jeu_perte' => 'Débit',
+];
+$icones_type = ['commission' => 'hand-coins', 'retrait' => 'banknote', 'depot' => 'arrow-down-left', 'jeu_gain' => 'arrow-down-left'];
+
+$liste = array_values(array_filter($transactions, static function ($tx) use ($filtre, $recherche) {
+    $type = strtolower((string) $tx['type']);
+    if ($filtre === 'commission' && $type !== 'commission') return false;
+    if ($filtre === 'retrait' && $type !== 'retrait') return false;
+    if ($filtre === 'autre' && in_array($type, ['commission', 'retrait'], true)) return false;
+    if ($recherche !== '') {
+        $botte = mb_strtolower(($tx['description'] ?? '') . ' ' . ($tx['reference'] ?? ''));
+        if (!str_contains($botte, mb_strtolower($recherche))) return false;
+    }
+    return true;
+}));
+$par_jour = [];
+foreach ($liste as $tx) {
+    $par_jour[substr((string) $tx['created_at'], 0, 10)][] = $tx;
+}
+
+$titre_page = 'Historique';
+include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
+$lien = static fn(array $params) => '?' . http_build_query(array_filter($params, static fn($v) => $v !== '' && $v !== 'tout'));
 ?>
-<!DOCTYPE html>
-<html lang="fr" class="light">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>MonRevenu – Mes Transactions</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config={
-      darkMode:'class',
-      theme:{
-        extend:{
-          fontFamily:{sora:['Sora','sans-serif']},
-          colors:{brand:{DEFAULT:'#1246A0',mid:'#1A5FCC',light:'#3B82F6',soft:'#EEF4FF'}}
-        }
-      }
-    }
-  </script>
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <style>body{font-family:'Sora',sans-serif;}</style>
-</head>
-<body class="bg-[#F8F9FB] dark:bg-[#0B1120] text-slate-900 dark:text-slate-100 min-h-screen transition-colors duration-300">
 
-<?php include __DIR__ . '/../sections/navbar.php'; ?>
-
-<div class="lg:ml-64 min-h-screen flex flex-col">
-
-  <header class="bg-transparent px-4 lg:px-6 pt-6 pb-2 flex items-center justify-between max-w-2xl w-full mx-auto">
-    <div class="flex items-center gap-3">
-      <!-- Bouton menu burger, visible uniquement sur mobile/tablette -->
-      <button onclick="toggleSidebar()" type="button" aria-label="Ouvrir le menu"
-              class="lg:hidden w-10 h-10 rounded-full bg-white dark:bg-[#141E33] shadow-sm flex items-center justify-center border border-slate-100 dark:border-slate-800 shrink-0">
-        <svg class="w-5 h-5 text-slate-700 dark:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="3" y1="6" x2="21" y2="6"/>
-          <line x1="3" y1="12" x2="21" y2="12"/>
-          <line x1="3" y1="18" x2="21" y2="18"/>
-        </svg>
-      </button>
-
-      <!-- Bouton retour -->
-      <a href="/dashboard.php" aria-label="Retour au dashboard"
-         class="w-10 h-10 rounded-full bg-white dark:bg-[#141E33] shadow-sm flex items-center justify-center border border-slate-100 dark:border-slate-800 shrink-0 hover:border-brand/40 transition-colors">
-        <svg class="w-5 h-5 text-slate-700 dark:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
-        </svg>
-      </a>
-
-      <h1 class="font-bold text-[20px] text-slate-800 dark:text-white">Mon Profil</h1>
-    </div>
-    <button onclick="toggleTheme()" type="button" aria-label="Changer le thème" class="w-10 h-10 rounded-full bg-white dark:bg-[#141E33] shadow-sm flex items-center justify-center border border-slate-100 dark:border-slate-800 shrink-0">
-      <svg class="w-4 h-4 text-slate-700 dark:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg>
-    </button>
-  </header>
-
-  <div class="px-4 lg:px-8 py-4 max-w-2xl w-full mx-auto flex gap-2 overflow-x-auto scrollbar-hide">
-    <span class="bg-[#0F2D37] text-white text-[12px] font-medium px-4 py-2 rounded-full cursor-pointer whitespace-nowrap">Tous</span>
-    <span class="bg-white dark:bg-[#141E33] text-slate-500 text-[12px] font-medium px-4 py-2 rounded-full shadow-sm border border-slate-100 dark:border-slate-800 cursor-pointer whitespace-nowrap">Dépôt de fonds</span>
-    <span class="bg-white dark:bg-[#141E33] text-slate-500 text-[12px] font-medium px-4 py-2 rounded-full shadow-sm border border-slate-100 dark:border-slate-800 cursor-pointer whitespace-nowrap">Retrait</span>
-    <span class="bg-white dark:bg-[#141E33] text-slate-500 text-[12px] font-medium px-4 py-2 rounded-full shadow-sm border border-slate-100 dark:border-slate-800 cursor-pointer whitespace-nowrap">Commissions</span>
-  </div>
-
-  <main class="flex-1 p-4 lg:p-6 max-w-2xl w-full mx-auto">
     <div class="flex flex-col gap-3">
-      
-      <?php if (empty($transactions)): ?>
-        <div class="bg-white dark:bg-[#141E33] rounded-[24px] p-8 text-center shadow-sm border border-slate-100 dark:border-slate-800">
-          <p class="text-slate-400 text-[14px]">Aucune transaction pour le moment.</p>
-        </div>
-      <?php else: ?>
-
-        <?php foreach ($transactions as $tx):
-          // Types qui créditent le solde (argent qui entre) vs qui le débitent (argent qui sort)
-          // Valeurs réelles de l'ENUM `type` : depot, retrait, commission, achat_service, jeu_gain, jeu_perte
-          $isCredit = in_array(strtolower($tx['type']), ['depot', 'commission', 'jeu_gain']);
-          $isFailed = strtolower($tx['status']) === 'echoue';
-          $isPending = strtolower($tx['status']) === 'en_attente';
-
-          $libelles_type = [
-              'depot'         => 'Dépôt de fonds',
-              'retrait'       => 'Retrait',
-              'commission'    => 'Commission',
-              'achat_service' => 'Achat de service',
-              'jeu_gain'      => 'Gain de jeu',
-              'jeu_perte'     => 'Perte de jeu',
-          ];
-          $libelle_type = $libelles_type[strtolower($tx['type'])] ?? ucfirst($tx['type']);
-        ?>
-          
-          <div class="bg-white dark:bg-[#141E33] rounded-[24px] p-4 flex items-center justify-between shadow-sm border border-slate-100/70 dark:border-slate-800/50">
-            <div class="flex items-center gap-4">
-              <?php if($isFailed): ?>
-                <div class="w-11 h-11 rounded-full bg-rose-50 dark:bg-rose-950/20 text-rose-500 flex items-center justify-center flex-shrink-0">
-                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </div>
-              <?php elseif($isCredit): ?>
-                <div class="w-11 h-11 rounded-full bg-[#EEFDF4] dark:bg-emerald-950/20 text-[#22C55E] flex items-center justify-center flex-shrink-0">
-                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="17" y1="7" x2="7" y2="17"/><polyline points="17 17 7 17 7 7"/></svg>
-                </div>
-              <?php else: ?>
-                <div class="w-11 h-11 rounded-full bg-[#F1F3F6] dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center flex-shrink-0">
-                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
-                </div>
-              <?php endif; ?>
-
-              <div>
-                <p class="font-bold text-[14px] text-slate-800 dark:text-slate-100 tracking-wide">
-                  <?= htmlspecialchars($libelle_type) ?>
-                </p>
-                <p class="text-[11px] text-slate-400 font-medium mt-0.5">
-                  <?php if ($isFailed): ?>
-                    Échouée
-                  <?php elseif ($isPending): ?>
-                    En attente
-                  <?php else: ?>
-                    <?= !empty($tx['description']) ? htmlspecialchars($tx['description']) : 'Portefeuille MonRevenu' ?>
-                  <?php endif; ?>
-                </p>
-              </div>
-            </div>
-            
-            <div class="text-right">
-              <p class="font-bold text-[15px] tracking-wide <?= $isCredit && !$isFailed ? 'text-[#22C55E]' : 'text-slate-800 dark:text-white' ?>">
-                <?= $isFailed ? '' : ($isCredit ? '+ ' : '- ') ?><?= number_format($tx['amount'], 0, ',', ' ') ?> KMF
-              </p>
-              <p class="text-[11px] text-slate-400 font-medium mt-0.5">
-                <?= date('d.m.Y', strtotime($tx['created_at'])) ?>
-              </p>
-            </div>
-          </div>
-
+      <nav class="onglets" aria-label="Type d'opération">
+        <?php foreach ($filtres as $cle => $libelle): ?>
+          <a class="onglet" href="<?= e($lien(['type' => $cle, 'q' => $recherche]) ?: '?') ?>"<?= $filtre === $cle ? ' aria-current="page"' : '' ?>><?= e($libelle) ?></a>
         <?php endforeach; ?>
-      <?php endif; ?>
-
+      </nav>
+      <form method="GET" action="" role="search" class="flex gap-2">
+        <?php if ($filtre !== 'tout'): ?><input type="hidden" name="type" value="<?= e($filtre) ?>"><?php endif; ?>
+        <div class="relative flex-1">
+          <label class="sr-only" for="recherche-historique">Rechercher une opération</label>
+          <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-3"><?= ico('search') ?></span>
+          <input class="champ-saisie pl-10" type="search" id="recherche-historique" name="q" value="<?= e($recherche) ?>" placeholder="Référence ou libellé" autocomplete="off" enterkeyhint="search">
+        </div>
+        <button class="btn btn-secondaire" type="submit">Rechercher</button>
+      </form>
     </div>
-  </main>
-  
-  <?php include __DIR__ . '/../sections/navbar.php'; ?>
-</div>
 
-<script>
-function toggleTheme(){
-  document.documentElement.classList.toggle('dark');
-  localStorage.setItem('theme',document.documentElement.classList.contains('dark')?'dark':'light');
-}
-function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebarOverlay');
-    if (sidebar && overlay) {
-        if (sidebar.classList.contains('-translate-x-full')) {
-            sidebar.classList.remove('-translate-x-full');
-            sidebar.classList.add('translate-x-0');
-            overlay.classList.remove('hidden');
-        } else {
-            sidebar.classList.add('-translate-x-full');
-            sidebar.classList.remove('translate-x-0');
-            overlay.classList.add('hidden');
-        }
-    }
-}
-</script>
-</body>
-</html>
+    <?php if (!$par_jour): ?>
+      <div class="carte">
+        <div class="vide">
+          <?= ico('history', 'ico-40') ?>
+          <?php if ($recherche !== '' || $filtre !== 'tout'): ?>
+            <p class="vide-titre">Aucune opération ne correspond</p>
+            <p class="vide-texte">Changez de filtre ou effacez la recherche.</p>
+            <a class="btn btn-sm btn-secondaire mt-2" href="/page/historique.php">Tout afficher</a>
+          <?php else: ?>
+            <p class="vide-titre">Aucune opération pour l'instant</p>
+            <p class="vide-texte">Vos commissions et vos retraits apparaîtront ici.</p>
+            <a class="btn btn-sm btn-primaire mt-2" href="/services/boutique.php">Choisir un produit</a>
+          <?php endif; ?>
+        </div>
+      </div>
+    <?php else: ?>
+      <p class="text-sm text-text-2"><span class="chiffres"><?= count($liste) ?></span> opération<?= count($liste) > 1 ? 's' : '' ?></p>
+      <div class="flex flex-col gap-4">
+        <?php foreach ($par_jour as $jour => $operations): ?>
+          <section class="carte overflow-hidden" aria-label="<?= e(dateFr($jour, 'jour')) ?>">
+            <h2 class="border-b border-line bg-surface-2 px-4 py-2 text-xs font-medium text-text-3"><?= e(dateFr($jour, 'jour')) ?></h2>
+            <?php foreach ($operations as $tx):
+              $type    = strtolower((string) $tx['type']);
+              $credit  = in_array($type, $credits, true);
+              $echoue  = ($tx['status'] ?? '') === 'echoue';
+              $classe  = $echoue ? 'text-text-3 line-through' : ($credit ? 'montant-entrant' : '');
+              $libelle = nettoyerPictogrammes($tx['description'] ?? '') ?: ($libelles_type[$type] ?? ucfirst($type));
+            ?>
+              <div class="ligne-tx">
+                <span class="ligne-tx-icone"><?= ico($icones_type[$type] ?? ($credit ? 'arrow-down-left' : 'arrow-up-right')) ?></span>
+                <div class="ligne-tx-corps">
+                  <p class="ligne-tx-titre"><?= e($libelle) ?></p>
+                  <p class="ligne-tx-meta">
+                    <span><?= e($libelles_type[$type] ?? ucfirst($type)) ?></span>
+                    <span class="chiffres"><?= e(dateFr($tx['created_at'], 'heure_seule')) ?></span>
+                    <?php if (!empty($tx['reference'])): ?><span class="font-mono"><?= e($tx['reference']) ?></span><?php endif; ?>
+                  </p>
+                </div>
+                <div class="ligne-tx-montant">
+                  <?= montant($credit ? (float) $tx['amount'] : -abs((float) $tx['amount']), $credit, $classe) ?>
+                  <div class="mt-1"><?= badgeStatut($tx['status'] ?? '', 'transaction') ?></div>
+                </div>
+              </div>
+            <?php endforeach; ?>
+          </section>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
+
+<?php include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_fin.php'; ?>

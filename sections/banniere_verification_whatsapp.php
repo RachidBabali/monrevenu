@@ -13,107 +13,33 @@
  */
 
 require_once __DIR__ . '/../includs/whatsapp_verif_helpers.php';
+require_once __DIR__ . '/../includs/ui.php';
 
 $verif = genererOuRecupererCodeVerificationWhatsapp($pdo, $_SESSION['user_id']);
 $code = $verif['code'];
 $expireAtTimestamp = strtotime($verif['expire_at']); // pour le compte à rebours JS
 
-// Numéro WhatsApp business à afficher — mettre le vrai numéro dans .env
+// Numéro WhatsApp business à afficher : mettre le vrai numéro dans .env
 $numeroBusinessAffiche = $_ENV['WHATSAPP_BUSINESS_DISPLAY_NUMBER'] ?? '+221 77 876 48 19';
 $numeroBusinessWaMe = preg_replace('/\D/', '', $numeroBusinessAffiche); // format wa.me : chiffres seuls
 
 $lienWaMe = 'https://wa.me/' . $numeroBusinessWaMe . '?text=' . urlencode($code);
 ?>
-<div class="mr-verif-banner" style="background:#fff7e6;border:1px solid #f0c36d;border-radius:10px;padding:16px 20px;margin-bottom:20px;">
-  <p style="margin:0 0 8px;font-weight:600;color:#7a4b00;">
-    ⚠️ Compte non vérifié — les fonctionnalités d'affiliation (boutique, ventes, stock) sont bloquées.
-  </p>
-  <p style="margin:0 0 10px;color:#5c3b00;">
-    Envoyez ce code sur WhatsApp au <strong><?= htmlspecialchars($numeroBusinessAffiche) ?></strong> pour débloquer votre compte&nbsp;:
-  </p>
-  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-    <span id="mr-code-verif" style="font-size:1.4em;font-weight:700;letter-spacing:3px;background:#fff;border:1px dashed #f0c36d;border-radius:6px;padding:6px 14px;">
-      <?= htmlspecialchars($code) ?>
-    </span>
-    <button type="button" id="mr-btn-copier" style="padding:6px 12px;border-radius:6px;border:1px solid #ccc;background:#fff;cursor:pointer;">
-      Copier
-    </button>
-    <a id="mr-lien-wame" href="<?= htmlspecialchars($lienWaMe) ?>" target="_blank" rel="noopener" style="padding:6px 14px;border-radius:6px;background:#25D366;color:#fff;text-decoration:none;font-weight:600;">
-      Ouvrir WhatsApp
-    </a>
-    <button type="button" id="mr-btn-regenerer" style="padding:6px 12px;border-radius:6px;border:1px solid #ccc;background:#fff;cursor:pointer;">
-      🔄 Régénérer le code
-    </button>
+<section class="mr-verif-banner alerte alerte-attention flex-col gap-3" aria-labelledby="mr-verif-titre"
+         data-numero="<?= e($numeroBusinessWaMe) ?>" data-expire="<?= (int) ($expireAtTimestamp * 1000) ?>">
+  <div class="flex items-start gap-3">
+    <?= ico('lock', 'mt-0.5') ?>
+    <div class="flex flex-col gap-1">
+      <h2 id="mr-verif-titre" class="text-sm font-semibold text-text">Vérifiez votre numéro WhatsApp pour débloquer le catalogue</h2>
+      <p class="text-sm text-text-2">Tant que votre numéro n'est pas vérifié, le catalogue, les liens d'affiliation et le stock restent bloqués. Envoyez ce code par WhatsApp au <strong class="whitespace-nowrap font-medium text-text"><?= e($numeroBusinessAffiche) ?></strong>.</p>
+    </div>
   </div>
-  <p style="margin:10px 0 0;font-size:0.85em;color:#8a6d00;">
-    Ce code expire dans <strong><span id="mr-compte-a-rebours"><?= WHATSAPP_VERIF_DUREE_MINUTES ?>:00</span></strong>.
-    Vous serez notifié automatiquement dès validation.
-  </p>
-</div>
-
-<script>
-(function () {
-  const numeroBusiness = <?= json_encode($numeroBusinessWaMe) ?>;
-  let expireAtMs = <?= json_encode($expireAtTimestamp * 1000) ?>;
-
-  const elCode = document.getElementById('mr-code-verif');
-  const elCompteARebours = document.getElementById('mr-compte-a-rebours');
-  const elLienWame = document.getElementById('mr-lien-wame');
-  const btnCopier = document.getElementById('mr-btn-copier');
-  const btnRegenerer = document.getElementById('mr-btn-regenerer');
-
-  function majLienWame(code) {
-    elLienWame.href = 'https://wa.me/' + numeroBusiness + '?text=' + encodeURIComponent(code);
-  }
-
-  function tickCompteARebours() {
-    const restantSec = Math.max(0, Math.round((expireAtMs - Date.now()) / 1000));
-    const m = String(Math.floor(restantSec / 60)).padStart(2, '0');
-    const s = String(restantSec % 60).padStart(2, '0');
-    elCompteARebours.textContent = m + ':' + s;
-
-    if (restantSec === 0) {
-      elCompteARebours.textContent = 'expiré — cliquez sur régénérer';
-      clearInterval(intervalId);
-    }
-  }
-  const intervalId = setInterval(tickCompteARebours, 1000);
-  tickCompteARebours();
-
-  btnCopier.addEventListener('click', function () {
-    navigator.clipboard.writeText(elCode.textContent.trim());
-    btnCopier.textContent = 'Copié !';
-    setTimeout(() => { btnCopier.textContent = 'Copier'; }, 1500);
-  });
-
-  btnRegenerer.addEventListener('click', function () {
-    btnRegenerer.disabled = true;
-    btnRegenerer.textContent = '...';
-
-    fetch('/includs/regenerer_code_whatsapp.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // Adapter au mécanisme CSRF existant du projet (meta csrf-token présent sur dashboard.php)
-        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
-      }
-    })
-      .then(r => r.json())
-      .then(data => {
-        if (data.success) {
-          elCode.textContent = data.code;
-          expireAtMs = data.expire_at_ms;
-          majLienWame(data.code);
-          tickCompteARebours();
-        } else {
-          alert(data.message || "Impossible de régénérer le code pour le moment, réessayez dans quelques secondes.");
-        }
-      })
-      .catch(() => alert("Erreur réseau, réessayez."))
-      .finally(() => {
-        btnRegenerer.disabled = false;
-        btnRegenerer.textContent = '🔄 Régénérer le code';
-      });
-  });
-})();
-</script>
+  <div class="flex flex-wrap items-center gap-2 sm:pl-8">
+    <span id="mr-code-verif" class="rounded border border-line-strong bg-surface px-3 py-2 font-mono text-lg tracking-[.2em] text-text"><?= e($code) ?></span>
+    <button type="button" id="mr-btn-copier" class="btn btn-sm btn-secondaire"><?= ico('copy', 'ico-16') ?><span data-libelle>Copier</span></button>
+    <a id="mr-lien-wame" href="<?= e($lienWaMe) ?>" target="_blank" rel="noopener" class="btn btn-sm btn-primaire"><?= ico('whatsapp', 'ico-16') ?>Envoyer sur WhatsApp</a>
+    <button type="button" id="mr-btn-regenerer" class="btn btn-sm btn-discret"><?= ico('refresh-cw', 'ico-16') ?><span data-libelle>Nouveau code</span></button>
+  </div>
+  <p class="text-xs text-text-2 sm:pl-8">Le code expire dans <strong class="chiffres font-medium text-text" id="mr-compte-a-rebours"><?= WHATSAPP_VERIF_DUREE_MINUTES ?>:00</strong>. Votre compte est débloqué dès la réception du message.</p>
+</section>
+<script src="<?= e(actif('/assets/js/verif-whatsapp.js')) ?>"></script>
