@@ -1,0 +1,63 @@
+/** Configuration unique de Tailwind 3.4 (build local, sortie commitée dans assets/css/app.css). */
+const token = (nom) => `rgb(var(--${nom}) / <alpha-value>)`;
+
+module.exports = {
+  darkMode: 'class',
+  content: [
+    './*.php',
+    './{includs,sections,services,page,admin,joueur,Forms}/**/*.php',
+    './assets/js/**/*.js',
+    './js/**/*.js',
+    './dev/apercu-systeme.html',
+  ],
+  theme: {
+    screens: { sm: '640px', md: '768px', lg: '1024px', xl: '1280px' },
+    colors: {
+      transparent: 'transparent',
+      current: 'currentColor',
+      bg: token('bg'),
+      surface: token('surface'),
+      'surface-2': token('surface-2'),
+      line: token('line'),
+      'line-strong': token('line-strong'),
+      text: token('text'),
+      'text-2': token('text-2'),
+      'text-3': token('text-3'),
+      primary: token('primary'),
+      'primary-hover': token('primary-hover'),
+      'primary-soft': token('primary-soft'),
+      'primary-ink': token('primary-ink'),
+      'on-primary': token('on-primary'),
+      success: token('success'),
+      'success-soft': token('success-soft'),
+      warning: token('warning'),
+      'warning-soft': token('warning-soft'),
+      danger: token('danger'),
+      'danger-soft': token('danger-soft'),
+    },
+    fontFamily: {
+      sans: ['"IBM Plex Sans"', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+      mono: ['"IBM Plex Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+    },
+    fontSize: {
+      xs: ['12px', { lineHeight: '16px' }],
+      sm: ['14px', { lineHeight: '20px' }],
+      base: ['16px', { lineHeight: '24px' }],
+      lg: ['18px', { lineHeight: '24px' }],
+      xl: ['20px', { lineHeight: '28px' }],
+      '2xl': ['24px', { lineHeight: '30px' }],
+      '3xl': ['28px', { lineHeight: '34px' }],
+      '4xl': ['32px', { lineHeight: '38px' }],
+    },
+    fontWeight: { normal: '400', medium: '500', semibold: '600' },
+    borderRadius: { none: '0', sm: '4px', DEFAULT: '6px', md: '8px', lg: '12px', full: '9999px' },
+    boxShadow: { none: 'none', pop: '0 8px 24px rgba(16,24,40,.12)' },
+    extend: {
+      maxWidth: { conteneur: '1200px', lecture: '68ch' },
+      spacing: { 13: '52px', 14: '56px', 58: '232px' },
+      transitionDuration: { DEFAULT: '150ms' },
+      transitionTimingFunction: { DEFAULT: 'cubic-bezier(0.16, 1, 0.3, 1)' },
+    },
+  },
+  plugins: [],
+};
