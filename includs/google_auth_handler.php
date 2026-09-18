@@ -25,12 +25,12 @@ function repondre(bool $success, array $extra = []): void {
     exit();
 }
 
-// ── 1. POST uniquement ───────────────────────────────────────────────────────
+//  1. POST uniquement 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     repondre(false, ['error' => 'Méthode invalide.']);
 }
 
-// ── 2. CSRF ──────────────────────────────────────────────────────────────────
+//  2. CSRF 
 if (
     empty($_POST['csrf_token']) ||
     !hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'])
@@ -38,13 +38,13 @@ if (
     repondre(false, ['error' => 'Session expirée, veuillez recharger la page.']);
 }
 
-// ── 3. Jeton reçu ──────────────────────────────────────────────────────────
+//  3. Jeton reçu 
 $credential = trim($_POST['credential'] ?? '');
 if (!$credential) {
     repondre(false, ['error' => 'Jeton Google manquant.']);
 }
 
-// ── 4. Vérification du jeton auprès de Google ────────────────────────────────
+//  4. Vérification du jeton auprès de Google 
 // On utilise le point de terminaison public tokeninfo : simple, pas besoin
 // d'installer une librairie (google/apiclient) via Composer.
 $ch = curl_init('https://oauth2.googleapis.com/tokeninfo?id_token=' . urlencode($credential));
@@ -79,7 +79,7 @@ if (!$email || !$google_id) {
 }
 
 try {
-    // ── 5. Chercher un compte existant (par google_id, puis par email) ──────
+    //  5. Chercher un compte existant (par google_id, puis par email) 
     $stmt = $pdo->prepare("
         SELECT id, fullname, email, role, is_active, phone_verified
         FROM users_monrevenu
@@ -108,7 +108,7 @@ try {
         $phone_verified = (int) $user['phone_verified'];
 
     } else {
-        // ── 6. Créer un nouveau compte ───────────────────────────────────────
+        //  6. Créer un nouveau compte 
         // Pas de téléphone, pas de code secret : phone_verified reste à 0
         // jusqu'à ce que la personne valide le code WhatsApp affiché en
         // bannière sur le dashboard (webhook_whatsapp.php). Tant que ce
@@ -141,7 +141,7 @@ try {
     $pdo->prepare("UPDATE users_monrevenu SET pays_code = ?, pays_nom = ? WHERE id = ?")
         ->execute([$pays['code'], $pays['nom'], $user_id]);
 
-    // ── 7. Ouvrir la session ─────────────────────────────────────────────────
+    //  7. Ouvrir la session 
     session_regenerate_id(true);
 
     $_SESSION['user_id']       = $user_id;
@@ -155,10 +155,10 @@ try {
 
     try {
         $pdo->prepare("UPDATE users_monrevenu SET last_login = NOW() WHERE id = ?")->execute([$user_id]);
-    } catch (\PDOException $e) { /* colonne last_login absente — ignoré */ }
+    } catch (\PDOException $e) { /* colonne last_login absente, ignoré */ }
 
     // Téléphone non vérifié : direction le dashboard quand même (la bannière
-    // de vérification WhatsApp y prend le relais) — plus de redirection vers
+    // de vérification WhatsApp y prend le relais), plus de redirection vers
     // une page de complétion séparée, quel que soit le rôle.
     if ($phone_verified !== 1) {
         repondre(true, ['redirect' => '/dashboard.php']);

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * ECOSYSTÈME D'ADMINISTRATION CENTRALISÉ — MonRevenu
+ * ECOSYSTÈME D'ADMINISTRATION CENTRALISÉ, MonRevenu
  * Gestion des Produits, Formations, Commissions, Retraits & Ventes d'affiliation
  */
 require_once '../basse_de_donner/monrevenu_bd.php';

@@ -1,12 +1,10 @@
 <?php
 /**
- * ╔══════════════════════════════════════════════════════════╗
- * ║              AUTH MIDDLEWARE — Mon Revenu               ║
- * ║  Sécurité centralisée : sessions, CSRF, rôles           ║
- * ╚══════════════════════════════════════════════════════════╝
+ *               AUTH MIDDLEWARE, Mon Revenu               
+ *   Sécurité centralisée : sessions, CSRF, rôles           
  */
 
-// ─── Configuration sécurisée du cookie de session (avant session_start) ──────
+//  Configuration sécurisée du cookie de session (avant session_start) 
 if (session_status() === PHP_SESSION_NONE) {
     session_set_cookie_params([
         'lifetime' => 0,
@@ -18,19 +16,19 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// ─── En-têtes sécurité ────────────────────────────────────────────────────────
+//  En-têtes sécurité 
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
 header('X-XSS-Protection: 1; mode=block');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 header('X-Permitted-Cross-Domain-Policies: none');
 
-// ─── CSRF token ───────────────────────────────────────────────────────────────
+//  CSRF token 
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-// ─── Vérification session de base ─────────────────────────────────────────────
+//  Vérification session de base 
 function requireLogin(string $redirect = '/index.php'): void {
     if (!isset($_SESSION['user_id'])) {
         header("Location: $redirect"); exit();
@@ -58,7 +56,7 @@ function requireLogin(string $redirect = '/index.php'): void {
     $_SESSION['ip']         = $_SERVER['REMOTE_ADDR'];
 }
 
-// ─── Vérification de rôle ─────────────────────────────────────────────────────
+//  Vérification de rôle 
 function requireRole(PDO $pdo, string $role, string $redirect = '/index.php'): array {
     requireLogin($redirect);
 
@@ -74,12 +72,12 @@ function requireRole(PDO $pdo, string $role, string $redirect = '/index.php'): a
     return $user;
 }
 
-// ─── Vérification CSRF ────────────────────────────────────────────────────────
+//  Vérification CSRF 
 function verifyCsrf(string $token): bool {
     return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
 }
 
-// ─── Helpers globaux ──────────────────────────────────────────────────────────
+//  Helpers globaux 
 function e(mixed $v): string {
     return htmlspecialchars((string)$v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }

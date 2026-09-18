@@ -1,7 +1,7 @@
 <?php
 /**
  * Envoi de notifications push (Web Push / PWA), via la librairie
- * minishlink/web-push (installée par Composer — voir composer.json).
+ * minishlink/web-push (installée par Composer, voir composer.json).
  *
  * Variables .env requises :
  *   VAPID_PUBLIC_KEY   (clé publique VAPID, format base64url)
@@ -22,7 +22,7 @@ if (!function_exists('envoyerNotificationPush')) {
     /**
      * Envoie une notification push à TOUS les abonnements enregistrés pour un
      * utilisateur (il peut en avoir plusieurs : téléphone + ordinateur...).
-     * Ne bloque jamais l'exécution en cas d'échec (log seulement) — une
+     * Ne bloque jamais l'exécution en cas d'échec (log seulement), une
      * notification push est un bonus, pas une opération critique.
      */
     function envoyerNotificationPush(PDO $pdo, int $userId, string $titre, string $corps, string $lien = '/dashboard.php'): void

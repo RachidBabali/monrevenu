@@ -1,13 +1,13 @@
 <?php
 /**
- * migration_r2.php — Migre les images déjà présentes sur le serveur
+ * migration_r2.php, Migre les images déjà présentes sur le serveur
  * (admin/uploads/produits et admin/uploads/produits_stock) vers Cloudflare R2,
  * et met à jour les lignes correspondantes dans vendeur_produits et produits_stock.
  *
- * ⚠️ À placer dans admin/ et exécuter UNE SEULE FOIS en ligne de commande (SSH) :
+ * À placer dans admin/ et exécuter UNE SEULE FOIS en ligne de commande (SSH) :
  *      php migration_r2.php
  *
- * Ne pas déposer ce fichier accessible publiquement en HTTP — il n'a pas
+ * Ne pas déposer ce fichier accessible publiquement en HTTP, il n'a pas
  * de vérification de droits, seulement un garde-fou "CLI uniquement".
  * Supprime-le du serveur une fois la migration terminée.
  */

@@ -8,7 +8,7 @@
  * cache dans la session pour ne faire l'appel qu'une seule fois par visite.
  *
  * Le site étant derrière Cloudflare, $_SERVER['REMOTE_ADDR'] contient
- * l'adresse de l'edge Cloudflare, pas celle du visiteur — on utilise donc
+ * l'adresse de l'edge Cloudflare, pas celle du visiteur, on utilise donc
  * en priorité l'en-tête CF-Connecting-IP que Cloudflare ajoute toujours.
  */
 
@@ -99,8 +99,8 @@ if (!function_exists('enregistrerVisitePays')) {
 if (!function_exists('drapeauHtml')) {
     /**
      * Retourne le HTML d'un drapeau (librairie flag-icons, chargée via CDN
-     * dans les pages concernées — voir <link> flag-icons dans le <head>).
-     * Utilise des SVG, contrairement aux emojis 🇰🇲 qui ne s'affichent pas
+     * dans les pages concernées, voir <link> flag-icons dans le <head>).
+     * Utilise des SVG, contrairement aux emojis qui ne s'affichent pas
      * correctement sur tous les Windows/navigateurs.
      */
     function drapeauHtml(?string $codePays, string $classesSupplémentaires = ''): string

@@ -66,7 +66,7 @@ $code = strtoupper(
     trim($_POST['code'] ?? '')
 );
 
-// Mot de passe (8 caractères minimum, comme Google) — plus de
+// Mot de passe (8 caractères minimum, comme Google), plus de
 // forçage en majuscules, on garde la casse telle que saisie.
 $code = trim(
     $_POST['code'] ?? ''
@@ -163,7 +163,7 @@ if ($age < 18) {
 
 
 /* ============================================================
-   NUMÉRO DE TÉLÉPHONE — Comores ou Sénégal
+   NUMÉRO DE TÉLÉPHONE, Comores ou Sénégal
    ============================================================ */
 
 $phone_nettoye = preg_replace(
@@ -215,7 +215,7 @@ if ($phone_country === 'SN') {
 
     /*
      * Numéro local comorien : (3 ou 4) + 6 chiffres
-     * — 3 pour l'opérateur Huri, 4 pour l'opérateur Yas
+     *, 3 pour l'opérateur Huri, 4 pour l'opérateur Yas
      */
 
     if (!preg_match('/^[34]\d{6}$/', $phone_local)) {
@@ -230,7 +230,7 @@ if ($phone_country === 'SN') {
 
 
 /* ============================================================
-   MOT DE PASSE — 8 caractères minimum, comme Google
+   MOT DE PASSE, 8 caractères minimum, comme Google
    ============================================================ */
 
 if (mb_strlen($code) < 8) {

@@ -1,6 +1,6 @@
 <?php
 /**
- * login.php — Formulaire de connexion sécurisé (en modale)
+ * login.php, Formulaire de connexion sécurisé (en modale)
  * À placer dans : Forms/login.php
  * Inclus depuis : index.php (racine)
  */

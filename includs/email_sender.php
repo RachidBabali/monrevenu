@@ -1,6 +1,6 @@
 <?php
 /**
- * email_sender.php — Envoi du code de vérification par email
+ * email_sender.php, Envoi du code de vérification par email
  * À placer dans : includs/email_sender.php
  *
  * Nécessite PHPMailer. Si vous avez déjà la librairie dans
@@ -19,8 +19,8 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/lib/PHPMailer-master/src/Exception.ph
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// ── Configuration SMTP ───────────────────────────────────────────────
-// Valeurs lues depuis .env — jamais codées en dur ici.
+//  Configuration SMTP 
+// Valeurs lues depuis .env, jamais codées en dur ici.
 define('SMTP_HOST', env('SMTP_HOST', 'smtp.gmail.com'));
 define('SMTP_PORT', (int) env('SMTP_PORT', 587));
 define('SMTP_USER', env('SMTP_USER'));

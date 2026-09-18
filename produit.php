@@ -13,7 +13,7 @@ $protocole = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https
 define('BASE_URL', $protocole . $_SERVER['HTTP_HOST']);
 
 // ============================================================
-// 3. CLÉ SECRÈTE ET RÈGLE DE COMMISSION — partagées avec boutique.php
+// 3. CLÉ SECRÈTE ET RÈGLE DE COMMISSION, partagées avec boutique.php
 //    (includs/affiliation_helpers.php) pour éviter toute divergence.
 // ============================================================
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/affiliation_helpers.php';

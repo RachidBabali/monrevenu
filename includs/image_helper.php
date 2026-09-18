@@ -1,6 +1,6 @@
 <?php
 /**
- * image_helper.php — Image par défaut générée en code, sans fichier externe
+ * image_helper.php, Image par défaut générée en code, sans fichier externe
  * À placer dans : includs/image_helper.php
  *
  * Évite toute dépendance à un fichier "default.jpg" stocké localement ou

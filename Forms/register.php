@@ -1,6 +1,6 @@
 <?php
 /**
- * register.php — Formulaire d'inscription sécurisé (en modale)
+ * register.php, Formulaire d'inscription sécurisé (en modale)
  * À placer dans : Forms/register.php
  * Inclus depuis : index.php (racine)
  */

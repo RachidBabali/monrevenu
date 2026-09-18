@@ -1,6 +1,6 @@
 <?php
 /**
- * confidentialite.php — Politique de Confidentialité
+ * confidentialite.php, Politique de Confidentialité
  * À placer à la racine du projet
  */
 ?>

@@ -21,7 +21,7 @@ if (empty($_SESSION['user_id'])) {
     exit;
 }
 
-// Vérification CSRF — adapter au token déjà généré ailleurs dans le projet.
+// Vérification CSRF, adapter au token déjà généré ailleurs dans le projet.
 $csrfRecu = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
 if (empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $csrfRecu)) {
     http_response_code(403);

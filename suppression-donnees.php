@@ -1,6 +1,6 @@
 <?php
 /**
- * suppression-donnees.php — Page publique de suppression des données
+ * suppression-donnees.php, Page publique de suppression des données
  * Exigée par Meta pour l'app WhatsApp Business. Accessible sans connexion.
  * À placer à la racine du projet.
  */

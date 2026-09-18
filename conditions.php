@@ -1,6 +1,6 @@
 <?php
 /**
- * conditions.php — Conditions Générales d'Utilisation
+ * conditions.php, Conditions Générales d'Utilisation
  * À placer à la racine du projet
  */
 ?>

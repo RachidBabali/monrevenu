@@ -178,7 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Anonymisation en place : l'id reste stable, donc toutes les lignes
             // à valeur comptable (vendeur_ventes, ventes_stock, transactions_monrevenu,
             // withdrawals, agent_commissions...) restent intactes et continuent de
-            // pointer vers cette même ligne, désormais anonymisée — rien à modifier
+            // pointer vers cette même ligne, désormais anonymisée, rien à modifier
             // dans ces tables. status='deleted' + is_active=0 : le numéro/email
             // redeviennent utilisables pour une nouvelle inscription (déjà géré par
             // register_handler.php, qui exclut status='deleted' de la vérification

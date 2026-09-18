@@ -7,7 +7,7 @@
  *
  * Utilisation :
  *   require_once __DIR__ . '/../includs/notifications.php';
- *   envoyerNotification($pdo, $vendeur['id'], "🛒 Nouvelle vente en attente...");
+ *   envoyerNotification($pdo, $vendeur['id'], "Nouvelle vente en attente...");
  */
 
 require_once __DIR__ . '/webpush_sender.php';

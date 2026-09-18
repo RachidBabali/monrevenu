@@ -1,6 +1,6 @@
 <?php
 /**
- * env_loader.php — Charge les variables du fichier .env dans getenv()/$_ENV
+ * env_loader.php, Charge les variables du fichier .env dans getenv()/$_ENV
  * À placer dans : includs/env_loader.php
  *
  * Usage (en tout début de fichier, avant toute autre config) :
@@ -12,7 +12,7 @@ if (!function_exists('chargerEnv')) {
     function chargerEnv(string $cheminFichier): void
     {
         if (!is_file($cheminFichier) || !is_readable($cheminFichier)) {
-            return; // pas de .env (ex: certains environnements de test) — on continue silencieusement
+            return; // pas de .env (ex: certains environnements de test), on continue silencieusement
         }
 
         $lignes = file($cheminFichier, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);

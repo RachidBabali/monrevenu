@@ -1,13 +1,11 @@
 <?php
 
 /**
- * ╔══════════════════════════════════════════════════════════╗
- * ║         LOGIN HANDLER — Mon Revenu                      ║
- * ║  Gère : admin → dashboard_admin / agent → dashboard_agent
- * ║          affilie → dashboard.php                        ║
- * ║  Connexion par : numéro de téléphone + code secret       ║
- * ║  Numéros acceptés : Comores (+269) et Sénégal (+221)     ║
- * ╚══════════════════════════════════════════════════════════╝
+ *          LOGIN HANDLER, Mon Revenu                      
+ *   Gère : admin vers dashboard_admin / agent vers dashboard_agent
+ *           affilie vers dashboard.php                        
+ *   Connexion par : numéro de téléphone + code secret       
+ *   Numéros acceptés : Comores (+269) et Sénégal (+221)     
  * À placer dans : includs/login_handler.php
  *
  * Aucune modification manuelle de la base requise : les deux tables
@@ -24,13 +22,13 @@ $email_sender_disponible = @include_once __DIR__ . '/email_sender.php';
 define('MAX_TENTATIVES', 5);
 define('DUREE_BLOCAGE_SECONDES', 1200); // 20 minutes
 
-// ── 1. POST uniquement ───────────────────────────────────────────────────────
+//  1. POST uniquement 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: /index.php');
     exit();
 }
 
-// ── 2. CSRF ──────────────────────────────────────────────────────────────────
+//  2. CSRF 
 if (
     empty($_POST['csrf_token']) ||
     !hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'])
@@ -39,7 +37,7 @@ if (
     exit();
 }
 
-// ── 3. Créer les tables de protection si elles n'existent pas ────────────────
+//  3. Créer les tables de protection si elles n'existent pas 
 try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS login_attempts (
         ip           VARCHAR(45) NOT NULL PRIMARY KEY,
@@ -56,7 +54,7 @@ try {
     // Tables existent déjà ou autre erreur non bloquante
 }
 
-// ── 4. Récupération des champs ───────────────────────────────────────────────
+//  4. Récupération des champs 
 $identifiant = trim($_POST['identifiant'] ?? '');
 $code = trim($_POST['code'] ?? '');
 
@@ -65,7 +63,7 @@ if (!$identifiant || !$code) {
     exit();
 }
 
-// ── 4bis. Détecter le type d'identifiant : email ou téléphone ────────────────
+//  4bis. Détecter le type d'identifiant : email ou téléphone 
 // Si ça contient un @, on cherche par email. Sinon, on applique les mêmes
 // règles de normalisation de numéro qu'à l'inscription (Comores + Sénégal).
 $est_email = str_contains($identifiant, '@');
@@ -88,7 +86,7 @@ if ($est_email) {
     }
 
     if (preg_match('/^[34]\d{6}$/', $phone_local)) {
-        // Comores : (3 ou 4) + 6 chiffres — 3 = Huri, 4 = Yas
+        // Comores : (3 ou 4) + 6 chiffres, 3 = Huri, 4 = Yas
         $cle_recherche = '269' . $phone_local;
     } elseif (preg_match('/^7\d{8}$/', $phone_local)) {
         // Sénégal : 7 + 8 chiffres (Orange, Free, Expresso)
@@ -101,7 +99,7 @@ if ($est_email) {
 $ip = $_SERVER['REMOTE_ADDR'];
 
 try {
-    // ── 5. Blocage par IP ─────────────────────────────────────────────────
+    //  5. Blocage par IP 
     $stmt = $pdo->prepare("SELECT attempts, last_attempt FROM login_attempts WHERE ip = ?");
     $stmt->execute([$ip]);
     $rowIp = $stmt->fetch();
@@ -118,7 +116,7 @@ try {
         }
     }
 
-    // ── 5bis. Blocage par compte (numéro visé), indépendant de l'IP ─────────
+    //  5bis. Blocage par compte (numéro visé), indépendant de l'IP 
     $stmtCompte = $pdo->prepare("SELECT attempts, last_attempt FROM login_attempts_compte WHERE phone = ?");
     $stmtCompte->execute([$cle_recherche]);
     $rowCompte = $stmtCompte->fetch();
@@ -135,7 +133,7 @@ try {
         }
     }
 
-    // ── 6. Rechercher l'utilisateur par téléphone ────────────────────────────
+    //  6. Rechercher l'utilisateur par téléphone 
     $stmt = $pdo->prepare("
         SELECT id, fullname, email, password, role, is_active, phone_verified
         FROM users_monrevenu
@@ -145,7 +143,7 @@ try {
     $stmt->execute([$cle_recherche, $cle_recherche]);
     $user = $stmt->fetch();
 
-    // ── 7. Vérifier le code secret ───────────────────────────────────────────
+    //  7. Vérifier le code secret 
     $hash_reference = $user['password'] ?? '$2y$12$D9m5x1sJZ3yKf6q1r0aFZO7hV1Q6qk4pQnR2eYkD5vXbG8tJmW3Ke';
     $code_valide = password_verify($code, $hash_reference);
 
@@ -183,20 +181,20 @@ try {
         exit();
     }
 
-    // ── 8. Compte actif ──────────────────────────────────────────────────────
+    //  8. Compte actif 
     if (!$user['is_active']) {
         header('Location: /index.php?error=compte_inactif');
         exit();
     }
 
-    // ── 8bis. Numéro de téléphone vérifié ────────────────────────────────────
+    //  8bis. Numéro de téléphone vérifié 
     if ((int) $user['phone_verified'] !== 1) {
         $_SESSION['unverified_login_user_id'] = $user['id'];
         header('Location: /verification.php');
         exit();
     }
 
-    // ── 9. Connexion réussie : on réinitialise les deux compteurs ───────────
+    //  9. Connexion réussie : on réinitialise les deux compteurs 
     $pdo->prepare("
         INSERT INTO login_attempts (ip, attempts, last_attempt)
         VALUES (?, 0, NOW())
@@ -211,7 +209,7 @@ try {
 
     try {
         $pdo->prepare("UPDATE users_monrevenu SET last_login=NOW() WHERE id=?")->execute([$user['id']]);
-    } catch (\PDOException $e) { /* colonne last_login absente — ignoré */
+    } catch (\PDOException $e) { /* colonne last_login absente, ignoré */
     }
 
     require_once __DIR__ . '/geoip.php';
@@ -219,7 +217,7 @@ try {
     try {
         $pdo->prepare("UPDATE users_monrevenu SET pays_code = ?, pays_nom = ? WHERE id = ?")
             ->execute([$pays['code'], $pays['nom'], $user['id']]);
-    } catch (\PDOException $e) { /* colonnes pays absentes — migration pas encore appliquée */
+    } catch (\PDOException $e) { /* colonnes pays absentes, migration pas encore appliquée */
     }
 
     session_regenerate_id(true);
@@ -233,7 +231,7 @@ try {
     $_SESSION['ip']            = $ip;
     $_SESSION['csrf_token']    = bin2hex(random_bytes(32));
 
-    // ── 10. Redirection selon le rôle (inchangée) ────────────────────────────
+    //  10. Redirection selon le rôle (inchangée) 
     switch ($user['role']) {
         case 'admin':
             header('Location:/admin/dashboard_admin.php');

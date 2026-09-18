@@ -1,12 +1,12 @@
 <?php
 /**
- * whatsapp_sender.php — Envoi de codes de vérification via WhatsApp
+ * whatsapp_sender.php, Envoi de codes de vérification via WhatsApp
  * ============================================================
  * Utilise l'API officielle WhatsApp Cloud (Meta). Aucun abonnement mensuel :
  * facturation à l'usage, avec un quota gratuit mensuel pour les messages
  * d'authentification dans la plupart des pays.
  *
- * ⚠️ CONFIGURATION REQUISE (à faire une seule fois, sur developers.facebook.com) :
+ * CONFIGURATION REQUISE (à faire une seule fois, sur developers.facebook.com) :
  *
  * 1. Créer un compte développeur Meta : https://developers.facebook.com
  * 2. Créer une "App" de type Business, puis ajouter le produit "WhatsApp"

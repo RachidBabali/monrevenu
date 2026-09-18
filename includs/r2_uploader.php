@@ -1,6 +1,6 @@
 <?php
 /**
- * r2_uploader.php — Upload de fichiers vers Cloudflare R2 (compatible S3)
+ * r2_uploader.php, Upload de fichiers vers Cloudflare R2 (compatible S3)
  * À placer dans : includs/r2_uploader.php
  *
  * Aucune dépendance Composer : implémente la signature AWS Signature V4
@@ -60,7 +60,7 @@ function uploaderVersR2(string $cheminLocal, string $cleDistante, string $conten
 
     $payloadHash = hash('sha256', $contenu);
 
-    // ── Requête canonique ────────────────────────────────────────────────
+    //  Requête canonique 
     $uriCanonique = '/' . rawurlencode($bucket) . '/' . implode('/', array_map('rawurlencode', explode('/', $cleDistante)));
 
     $headersCanoniques =
@@ -80,7 +80,7 @@ function uploaderVersR2(string $cheminLocal, string $cleDistante, string $conten
         $payloadHash,
     ]);
 
-    // ── Chaîne à signer ──────────────────────────────────────────────────
+    //  Chaîne à signer 
     $scope = "{$dateCourte}/{$region}/{$service}/aws4_request";
     $chaineASigner = implode("\n", [
         'AWS4-HMAC-SHA256',
@@ -89,7 +89,7 @@ function uploaderVersR2(string $cheminLocal, string $cleDistante, string $conten
         hash('sha256', $requeteCanonique),
     ]);
 
-    // ── Clé de signature dérivée ────────────────────────────────────────
+    //  Clé de signature dérivée 
     $kDate    = hash_hmac('sha256', $dateCourte, 'AWS4' . $secretKey, true);
     $kRegion  = hash_hmac('sha256', $region, $kDate, true);
     $kService = hash_hmac('sha256', $service, $kRegion, true);
@@ -99,7 +99,7 @@ function uploaderVersR2(string $cheminLocal, string $cleDistante, string $conten
 
     $autorisation = "AWS4-HMAC-SHA256 Credential={$accessKey}/{$scope}, SignedHeaders={$headersSignes}, Signature={$signature}";
 
-    // ── Requête PUT ──────────────────────────────────────────────────────
+    //  Requête PUT 
     $url = "https://{$endpointHost}{$uriCanonique}";
 
     $ch = curl_init($url);
