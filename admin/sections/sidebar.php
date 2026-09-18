@@ -84,21 +84,6 @@
         </button>
 
 
-        <!-- Formations -->
-        <button onclick="switchTab('tab-formations', this)"
-            class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-semibold transition-colors">
-
-            <span class="nav-icon w-8 h-8 rounded-lg flex items-center justify-center shrink-0">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="m22 10-10-5L2 10l10 5 10-5Z"/>
-                    <path d="M6 12v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5"/>
-                </svg>
-            </span>
-
-            <span class="truncate">Formations</span>
-        </button>
 
 
         <!-- FINANCE -->
@@ -166,21 +151,6 @@
         </p>
 
 
-        <!-- Publicités -->
-        <button onclick="switchTab('tab-publicites', this)"
-            class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-semibold transition-colors">
-
-            <span class="nav-icon w-8 h-8 rounded-lg flex items-center justify-center shrink-0">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="2" y="3" width="20" height="14" rx="2"/>
-                    <path d="M8 21h8M12 17v4"/>
-                </svg>
-            </span>
-
-            <span class="truncate">Publicités</span>
-        </button>
 
 
         <!-- Stock revendeurs -->

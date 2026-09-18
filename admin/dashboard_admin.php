@@ -330,213 +330,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // 4. Action : Publier une formation vidéo (lien YouTube)
-    if (isset($_POST['action_formation'])) {
-        $titre_formation = htmlspecialchars($_POST['titre_formation'] ?? '');
-        $description_formation = htmlspecialchars($_POST['description_formation'] ?? '');
-        $url_youtube = trim($_POST['url_youtube'] ?? '');
-
-        $uploadOkFormation = true;
-        $idYoutube = null;
-
-        if (empty($url_youtube)) {
-            $uploadOkFormation = false;
-            $error = "❌ Merci de coller un lien YouTube.";
-        } else {
-            if (preg_match('/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/', $url_youtube, $matches)) {
-                $idYoutube = $matches[1];
-            } else {
-                $uploadOkFormation = false;
-                $error = "❌ Lien YouTube invalide. Utilisez un lien du type https://www.youtube.com/watch?v=... ou https://youtu.be/...";
-            }
-        }
-
-        if ($uploadOkFormation && !empty($titre_formation)) {
-            $stmtFormation = $pdo->prepare(
-                "INSERT INTO formations (user_id, titre, description, video, miniature, date_publication)
-                 VALUES (?, ?, ?, ?, NULL, NOW())"
-            );
-            if ($stmtFormation->execute([$admin['id'], $titre_formation, $description_formation, $idYoutube])) {
-                $message = "✅ La formation a été publiée avec succès !";
-            } else {
-                $error = "❌ Une erreur est survenue lors de la création de la formation.";
-            }
-        } elseif ($uploadOkFormation && empty($titre_formation)) {
-            $error = "❌ Le titre de la formation est obligatoire.";
-        }
-    }
-
-    // 5. Action : Publier une publicité
-    if (isset($_POST['action_publicite'])) {
-        $titre_pub       = htmlspecialchars($_POST['titre_pub'] ?? '');
-        $description_pub = htmlspecialchars($_POST['description_pub'] ?? '');
-        $lien_annonceur  = htmlspecialchars($_POST['lien_annonceur'] ?? '');
-        $montant_gain    = (float) ($_POST['montant_gain'] ?? 0);
-        $duree_secondes  = (int) ($_POST['duree_secondes'] ?? 0);
-        $actif_pub       = isset($_POST['actif_pub']) ? 1 : 0;
-
-        $uploadOkPub = true;
-        $imagePub = 'uploads/publicites/default.jpg';
-        $videoPub = null;
-
-        if (isset($_FILES['image_pub']) && $_FILES['image_pub']['error'] !== UPLOAD_ERR_NO_FILE) {
-            $fichierPub = $_FILES['image_pub'];
-
-            if ($fichierPub['error'] !== UPLOAD_ERR_OK) {
-                $uploadOkPub = false;
-                $error = "❌ Erreur lors de l'envoi de l'image (code " . $fichierPub['error'] . ").";
-            }
-
-            if ($uploadOkPub && $fichierPub['size'] > 2 * 1024 * 1024) {
-                $uploadOkPub = false;
-                $error = "❌ L'image dépasse la taille maximale autorisée (2 Mo).";
-            }
-
-            $typesAutorisesPub = [
-                'image/jpeg' => 'jpg',
-                'image/png'  => 'png',
-                'image/webp' => 'webp',
-            ];
-
-            if ($uploadOkPub) {
-                $finfo = finfo_open(FILEINFO_MIME_TYPE);
-                $mimePub = finfo_file($finfo, $fichierPub['tmp_name']);
-                finfo_close($finfo);
-
-                if (!array_key_exists($mimePub, $typesAutorisesPub)) {
-                    $uploadOkPub = false;
-                    $error = "❌ Format de fichier non autorisé. Utilisez JPG, PNG ou WEBP.";
-                }
-            }
-
-            if ($uploadOkPub) {
-                $extensionPub = $typesAutorisesPub[$mimePub];
-                $nomFichierPub = 'pub_' . uniqid() . '_' . time() . '.' . $extensionPub;
-                $dossierPub = __DIR__ . '/uploads/publicites/';
-
-                if (!is_dir($dossierPub)) {
-                    mkdir($dossierPub, 0755, true);
-                }
-
-                if (move_uploaded_file($fichierPub['tmp_name'], $dossierPub . $nomFichierPub)) {
-                    $imagePub = 'uploads/publicites/' . $nomFichierPub;
-                } else {
-                    $uploadOkPub = false;
-                    $error = "❌ Impossible d'enregistrer l'image sur le serveur.";
-                }
-            }
-        }
-
-        if ($uploadOkPub) {
-            if (!isset($_FILES['video_pub']) || $_FILES['video_pub']['error'] === UPLOAD_ERR_NO_FILE) {
-                $uploadOkPub = false;
-                $error = "❌ Merci de sélectionner un fichier vidéo pour la publicité.";
-            } else {
-                $fichierVideoPub = $_FILES['video_pub'];
-
-                if ($fichierVideoPub['error'] !== UPLOAD_ERR_OK) {
-                    $uploadOkPub = false;
-                    $error = "❌ Erreur lors de l'envoi de la vidéo (code " . $fichierVideoPub['error'] . "). Vérifiez la taille maximale autorisée par le serveur (php.ini).";
-                }
-
-                if ($uploadOkPub && $fichierVideoPub['size'] > 100 * 1024 * 1024) {
-                    $uploadOkPub = false;
-                    $error = "❌ La vidéo dépasse la taille maximale autorisée (100 Mo).";
-                }
-
-                $typesVideoAutorisesPub = [
-                    'video/mp4'       => 'mp4',
-                    'video/webm'      => 'webm',
-                    'video/quicktime' => 'mov',
-                ];
-
-                if ($uploadOkPub) {
-                    $finfo = finfo_open(FILEINFO_MIME_TYPE);
-                    $mimeVideoPub = finfo_file($finfo, $fichierVideoPub['tmp_name']);
-                    finfo_close($finfo);
-
-                    if (!array_key_exists($mimeVideoPub, $typesVideoAutorisesPub)) {
-                        $uploadOkPub = false;
-                        $error = "❌ Format vidéo non autorisé. Utilisez MP4, WEBM ou MOV.";
-                    }
-                }
-
-                if ($uploadOkPub) {
-                    $extensionVideoPub = $typesVideoAutorisesPub[$mimeVideoPub];
-                    $nomFichierVideoPub = 'pubvideo_' . uniqid() . '_' . time() . '.' . $extensionVideoPub;
-                    $dossierVideoPub = __DIR__ . '/uploads/publicites/';
-
-                    if (!is_dir($dossierVideoPub)) {
-                        mkdir($dossierVideoPub, 0755, true);
-                    }
-
-                    if (move_uploaded_file($fichierVideoPub['tmp_name'], $dossierVideoPub . $nomFichierVideoPub)) {
-                        $videoPub = 'uploads/publicites/' . $nomFichierVideoPub;
-                    } else {
-                        $uploadOkPub = false;
-                        $error = "❌ Impossible d'enregistrer la vidéo sur le serveur.";
-                    }
-                }
-            }
-        }
-
-        if ($uploadOkPub && !empty($titre_pub) && $montant_gain > 0 && $duree_secondes > 0) {
-            $stmtPub = $pdo->prepare(
-                "INSERT INTO publicites (titre, description, image, video, lien_annonceur, montant_gain, duree_secondes, actif)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-            );
-            if ($stmtPub->execute([$titre_pub, $description_pub, $imagePub, $videoPub, $lien_annonceur, $montant_gain, $duree_secondes, $actif_pub])) {
-                $message = "✅ La publicité a été créée avec succès !";
-            } else {
-                $error = "❌ Une erreur est survenue lors de la création de la publicité.";
-            }
-        } elseif ($uploadOkPub) {
-            $error = "❌ Titre, montant du gain et durée sont obligatoires (montant et durée doivent être > 0).";
-        }
-    }
-
-    // 6. Action : Activer / désactiver une publicité
-    if (isset($_POST['action_toggle_publicite'])) {
-        $pub_id = (int) ($_POST['pub_id'] ?? 0);
-        if ($pub_id > 0) {
-            $stmtToggle = $pdo->prepare("UPDATE publicites SET actif = 1 - actif WHERE id = ?");
-            if ($stmtToggle->execute([$pub_id])) {
-                $message = "✅ Statut de la publicité mis à jour.";
-            } else {
-                $error = "❌ Impossible de mettre à jour le statut.";
-            }
-        }
-    }
-
-    // 7. Action : Modifier le montant du gain d'une publicité
-    if (isset($_POST['action_update_montant_pub'])) {
-        $pub_id = (int) ($_POST['pub_id'] ?? 0);
-        $nouveau_montant = (float) ($_POST['nouveau_montant'] ?? 0);
-        if ($pub_id > 0 && $nouveau_montant > 0) {
-            $stmtMontant = $pdo->prepare("UPDATE publicites SET montant_gain = ? WHERE id = ?");
-            if ($stmtMontant->execute([$nouveau_montant, $pub_id])) {
-                $message = "✅ Montant du gain mis à jour.";
-            } else {
-                $error = "❌ Impossible de mettre à jour le montant.";
-            }
-        } else {
-            $error = "❌ Montant invalide.";
-        }
-    }
-
-    // 8. Action : Supprimer une publicité
-    if (isset($_POST['action_delete_publicite'])) {
-        $pub_id = (int) ($_POST['pub_id'] ?? 0);
-        if ($pub_id > 0) {
-            $stmtDelPub = $pdo->prepare("DELETE FROM publicites WHERE id = ?");
-            if ($stmtDelPub->execute([$pub_id])) {
-                $message = "✅ Publicité supprimée.";
-            } else {
-                $error = "❌ Impossible de supprimer cette publicité.";
-            }
-        }
-    }
-
     // 9. Action : Modifier un produit existant
     if (isset($_POST['action_edit_produit'])) {
         $produit_id = (int) ($_POST['produit_id'] ?? 0);
@@ -574,45 +367,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     $error = "❌ Impossible de supprimer ce produit.";
                 }
-            }
-        }
-    }
-
-    // 11. Action : Modifier une formation existante
-    if (isset($_POST['action_edit_formation'])) {
-        $formation_id = (int) ($_POST['formation_id'] ?? 0);
-        $titre = htmlspecialchars($_POST['titre_formation_edit'] ?? '');
-        $description = htmlspecialchars($_POST['description_formation_edit'] ?? '');
-        $url_youtube = trim($_POST['url_youtube_edit'] ?? '');
-
-        $idYoutubeEdit = null;
-        if (preg_match('/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/', $url_youtube, $matchesEdit)) {
-            $idYoutubeEdit = $matchesEdit[1];
-        }
-
-        if ($formation_id > 0 && !empty($titre) && $idYoutubeEdit) {
-            $stmtEditFormation = $pdo->prepare(
-                "UPDATE formations SET titre = ?, description = ?, video = ? WHERE id = ?"
-            );
-            if ($stmtEditFormation->execute([$titre, $description, $idYoutubeEdit, $formation_id])) {
-                $message = "✅ Formation mise à jour.";
-            } else {
-                $error = "❌ Impossible de mettre à jour cette formation.";
-            }
-        } else {
-            $error = "❌ Titre et lien YouTube valides sont obligatoires.";
-        }
-    }
-
-    // 12. Action : Supprimer une formation
-    if (isset($_POST['action_delete_formation'])) {
-        $formation_id = (int) ($_POST['formation_id'] ?? 0);
-        if ($formation_id > 0) {
-            $stmtDelFormation = $pdo->prepare("DELETE FROM formations WHERE id = ?");
-            if ($stmtDelFormation->execute([$formation_id])) {
-                $message = "✅ Formation supprimée.";
-            } else {
-                $error = "❌ Impossible de supprimer cette formation.";
             }
         }
     }
@@ -868,53 +622,6 @@ $ventes = $pdo->query(
      LIMIT 30"
 )->fetchAll(PDO::FETCH_ASSOC);
 
-$formations = $pdo->query(
-    "SELECT f.id, f.titre, f.description, f.video, f.miniature, f.date_publication
-     FROM formations f
-     ORDER BY f.date_publication DESC
-     LIMIT 10"
-)->fetchAll(PDO::FETCH_ASSOC);
-
-$publicites = $pdo->query(
-    "SELECT id, titre, description, image, video, lien_annonceur, montant_gain, duree_secondes, actif
-     FROM publicites
-     ORDER BY id DESC"
-)->fetchAll(PDO::FETCH_ASSOC);
-
-$vues_par_pub = [];
-$stmtVuesParPub = $pdo->query(
-    "SELECT publicite_id,
-            SUM(statut = 'termine') AS total_termine,
-            SUM(statut = 'termine' AND jour = CURDATE()) AS termine_aujourdhui
-     FROM vues_publicites
-     GROUP BY publicite_id"
-);
-foreach ($stmtVuesParPub->fetchAll(PDO::FETCH_ASSOC) as $ligne) {
-    $vues_par_pub[$ligne['publicite_id']] = [
-        'total'       => (int) $ligne['total_termine'],
-        'aujourdhui'  => (int) $ligne['termine_aujourdhui'],
-    ];
-}
-
-$stmtVuesAuj = $pdo->prepare("SELECT COUNT(*) FROM vues_publicites WHERE jour = CURDATE()");
-$stmtVuesAuj->execute();
-$vues_aujourdhui = (int) $stmtVuesAuj->fetchColumn();
-
-$stmtTotalVerse = $pdo->query(
-    "SELECT COALESCE(SUM(p.montant_gain), 0)
-     FROM vues_publicites v
-     JOIN publicites p ON p.id = v.publicite_id"
-);
-$total_verse_pubs = (float) $stmtTotalVerse->fetchColumn();
-
-$total_verse_cpa = 0.0;
-try {
-    $stmtTotalCpa = $pdo->query("SELECT COALESCE(SUM(montant_reverse), 0) FROM postbacks_cpa");
-    $total_verse_cpa = (float) $stmtTotalCpa->fetchColumn();
-} catch (PDOException $e) {
-    // Table postbacks_cpa pas encore créée — on ignore silencieusement
-}
-
 $retraits = $pdo->query(
     "SELECT w.id, w.amount, w.status, w.method, w.note, w.created_at,
             u.fullname AS utilisateur_nom
@@ -1096,15 +803,11 @@ $admin_initiales = strtoupper(substr($admin['fullname'] ?? 'A', 0, 1) . substr(s
                 <!-- ============================ SECTION VENTES ============================ -->
                 <?php include 'sections/ventes.php'; ?>
                 <!-- ============================ SECTION FORMATIONS ============================ -->
-                <?php include 'sections/formations.php'; ?>
-                <!-- Modale d'édition formation -->
-                <?php include 'sections/edition-formation.php'; ?>
                 <!-- ============================ SECTION COMMISSIONS ============================ -->
                 <?php include 'sections/commissions.php'; ?>
                 <!-- ============================ SECTION STOCK REVENDEURS ============================ -->
                 <?php include 'sections/stock_revendeurs.php'; ?>
                 <!-- ============================ SECTION PUBLICITÉS ============================ -->
-                <?php include 'sections/publicites.php'; ?>
                 <!-- ============================ SECTION RETRAITS ============================ -->
                 <?php include 'sections/retraits.php'; ?>
                 <!-- ============================ SECTION HISTORIQUE ============================ -->

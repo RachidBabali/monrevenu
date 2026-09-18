@@ -40,15 +40,6 @@
         document.getElementById('modal-edition-produit').showModal();
     }
 
-    // --- Modale d'édition formation ---
-    function ouvrirEditionFormation(id, titre, description, urlYoutube) {
-        document.getElementById('edit-formation-id').value = id;
-        document.getElementById('edit-formation-titre').value = titre;
-        document.getElementById('edit-formation-description').value = description;
-        document.getElementById('edit-formation-url').value = urlYoutube;
-        document.getElementById('modal-edition-formation').showModal();
-    }
-
     // --- Recherche en direct dans le tableau des utilisateurs (filtrage côté client) ---
     const champRechercheUtilisateurs = document.getElementById('recherche-utilisateurs');
     if (champRechercheUtilisateurs) {

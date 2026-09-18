@@ -8,10 +8,8 @@
  * Fonctionnement :
  * 1. Vérifie le code à 6 chiffres.
  * 2. Active le compte après vérification.
- * 3. Crédite 50 KMF au parrain UNE SEULE FOIS (si le parrainage est actif).
- * 4. Enregistre la commission dans transactions_monrevenu.
- * 5. Envoie une notification au parrain.
- * 6. Connecte automatiquement le nouvel utilisateur.
+ * 3. Connecte automatiquement le nouvel utilisateur.
+ * Le parrainage a été retiré (décision du 18/09/2026).
  */
 
 session_start();
@@ -19,8 +17,6 @@ session_start();
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/email_sender.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/whatsapp_sender.php';
-
-define('COMMISSION_PARRAINAGE', 50);
 
 /* ============================================================
    DÉTERMINER L'UTILISATEUR À VÉRIFIER
@@ -426,181 +422,6 @@ if (
                 $stmtActivate->execute([
                     $user_id
                 ]);
-
-                /* =================================================
-                   COMMISSION DE PARRAINAGE : 50 KMF
-                   (uniquement si le parrainage est actif — réglage
-                   modifiable depuis le panneau admin)
-                   ================================================= */
-
-                $parrain_id = (int) ($userVerif['parrain_id'] ?? 0);
-
-                // Réglage global : le système de parrainage est-il actif ?
-                $parrainage_actif = true;
-                try {
-                    $stmtSettingParrainage = $pdo->prepare("SELECT setting_value FROM app_settings WHERE setting_key = 'parrainage_actif' LIMIT 1");
-                    $stmtSettingParrainage->execute();
-                    $valeurSettingParrainage = $stmtSettingParrainage->fetchColumn();
-                    if ($valeurSettingParrainage !== false) {
-                        $parrainage_actif = ($valeurSettingParrainage === '1');
-                    }
-                } catch (PDOException $e) {
-                    // Table app_settings pas encore créée — le parrainage reste actif par défaut
-                }
-
-                if ($parrain_id > 0 && $parrainage_actif) {
-
-                    /*
-                     * Référence unique liée à CET utilisateur.
-                     *
-                     * Exemple :
-                     * PARRAINAGE-125
-                     */
-
-                    $referenceParrainage =
-                        'PARRAINAGE-' . $user_id;
-
-                    /*
-                     * Vérifier si la commission existe déjà.
-                     *
-                     * Cette vérification empêche le double crédit
-                     * si le traitement est exécuté plusieurs fois.
-                     */
-
-                    $stmtCommission = $pdo->prepare("
-                        SELECT id
-                        FROM transactions_monrevenu
-                        WHERE reference = ?
-                        LIMIT 1
-                        FOR UPDATE
-                    ");
-
-                    $stmtCommission->execute([
-                        $referenceParrainage
-                    ]);
-
-                    $commissionExiste =
-                        $stmtCommission->fetch(PDO::FETCH_ASSOC);
-
-                    if (!$commissionExiste) {
-
-                        /*
-                         * Vérifier que le parrain existe.
-                         */
-
-                        $stmtParrain = $pdo->prepare("
-                            SELECT
-                                id,
-                                fullname
-                            FROM users_monrevenu
-                            WHERE id = ?
-                            LIMIT 1
-                            FOR UPDATE
-                        ");
-
-                        $stmtParrain->execute([
-                            $parrain_id
-                        ]);
-
-                        $parrain = $stmtParrain->fetch(
-                            PDO::FETCH_ASSOC
-                        );
-
-                        if ($parrain) {
-
-                            /*
-                             * Créditer 50 KMF au parrain.
-                             */
-
-                            $stmtCredit = $pdo->prepare("
-                                UPDATE users_monrevenu
-                                SET balance = balance + ?
-                                WHERE id = ?
-                            ");
-
-                            $stmtCredit->execute([
-                                COMMISSION_PARRAINAGE,
-                                $parrain_id
-                            ]);
-
-                            /*
-                             * Enregistrer la transaction.
-                             */
-
-                            $stmtTransaction = $pdo->prepare("
-                                INSERT INTO transactions_monrevenu
-                                (
-                                    user_id,
-                                    type,
-                                    amount,
-                                    reference,
-                                    status,
-                                    description
-                                )
-                                VALUES
-                                (
-                                    ?,
-                                    'commission',
-                                    ?,
-                                    ?,
-                                    'complete',
-                                    ?
-                                )
-                            ");
-
-                            $stmtTransaction->execute([
-                                $parrain_id,
-                                COMMISSION_PARRAINAGE,
-                                $referenceParrainage,
-                                'Commission de parrainage : inscription vérifiée de '
-                                . $userVerif['fullname']
-                            ]);
-
-                            /*
-                             * Notification du parrain.
-                             */
-
-                            $texteNotif =
-                                "🎉 "
-                                . $userVerif['fullname']
-                                . " a vérifié son compte après votre invitation ! "
-                                . number_format(
-                                    COMMISSION_PARRAINAGE,
-                                    0,
-                                    ',',
-                                    ' '
-                                )
-                                . " KMF ont été crédités sur votre solde.";
-
-                            /*
-                             * Vérifier que la table messages existe
-                             * et créer la notification.
-                             */
-
-                            $stmtNotification = $pdo->prepare("
-                                INSERT INTO messages
-                                (
-                                    user_id,
-                                    expediteur,
-                                    message,
-                                    statut
-                                )
-                                VALUES
-                                (
-                                    ?,
-                                    'MonRevenu',
-                                    ?,
-                                    'non_lu'
-                                )
-                            ");
-
-                            $stmtNotification->execute([
-                                $parrain_id,
-                                $texteNotif
-                            ]);
-                        }
-                    }
-                }
 
                 /*
                  * Tout s'est bien passé.
