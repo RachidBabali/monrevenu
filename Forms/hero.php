@@ -5,7 +5,7 @@
       <p class="text-lg text-text-2">Choisissez un produit du catalogue MonRevenu et partagez votre lien sur WhatsApp. Quand la commande de votre client est validée, la commission est créditée sur votre portefeuille.</p>
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
         <button type="button" class="btn btn-primaire" data-ouvrir="modal-register">Créer un compte</button>
-        <a class="lien px-1 text-base" href="#fonctionnement">Voir comment ça marche</a>
+        <a class="lien cible px-1 text-base" href="#fonctionnement">Voir comment ça marche</a>
       </div>
       <p class="text-sm text-text-3">Inscription gratuite. Aucun stock à gérer, aucun paiement à encaisser.</p>
     </div>

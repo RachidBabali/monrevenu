@@ -1,20 +1,20 @@
 <footer class="bg-surface">
   <div class="conteneur flex flex-col gap-6 py-10 md:flex-row md:items-start md:justify-between">
     <div class="flex max-w-sm flex-col gap-3">
-      <a href="/" class="flex items-center gap-2" aria-label="MonRevenu, accueil">
+      <a href="/" class="flex min-h-[44px] items-center gap-2" aria-label="MonRevenu, accueil">
         <img src="/assets/img/logo-64.png" alt="" width="28" height="28" class="h-7 w-7" loading="lazy">
         <span class="font-semibold text-primary-ink">MonRevenu</span>
       </a>
       <p class="text-sm text-text-2">Plateforme d'affiliation : partagez les produits de commerçants partenaires et touchez une commission fixe sur chaque vente validée.</p>
     </div>
     <nav class="grid grid-cols-2 gap-x-10 gap-y-2 text-sm" aria-label="Liens du pied de page">
-      <a class="text-text-2 hover:text-primary-ink" href="#fonctionnement">Fonctionnement</a>
-      <a class="text-text-2 hover:text-primary-ink" href="/conditions.php">Conditions générales</a>
-      <a class="text-text-2 hover:text-primary-ink" href="#remuneration">Rémunération</a>
-      <a class="text-text-2 hover:text-primary-ink" href="/confidentialite.php">Confidentialité</a>
-      <a class="text-text-2 hover:text-primary-ink" href="#questions">Questions</a>
-      <a class="text-text-2 hover:text-primary-ink" href="/suppression-donnees.php">Suppression des données</a>
-      <a class="text-text-2 hover:text-primary-ink" href="mailto:contact@monrevenu.xyz">Contact</a>
+      <a class="cible text-text-2 hover:text-primary-ink" href="#fonctionnement">Fonctionnement</a>
+      <a class="cible text-text-2 hover:text-primary-ink" href="/conditions.php">Conditions générales</a>
+      <a class="cible text-text-2 hover:text-primary-ink" href="#remuneration">Rémunération</a>
+      <a class="cible text-text-2 hover:text-primary-ink" href="/confidentialite.php">Confidentialité</a>
+      <a class="cible text-text-2 hover:text-primary-ink" href="#questions">Questions</a>
+      <a class="cible text-text-2 hover:text-primary-ink" href="/suppression-donnees.php">Suppression des données</a>
+      <a class="cible text-text-2 hover:text-primary-ink" href="mailto:contact@monrevenu.xyz">Contact</a>
     </nav>
   </div>
   <div class="border-t border-line">

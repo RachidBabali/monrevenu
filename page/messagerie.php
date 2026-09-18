@@ -77,7 +77,7 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
                 </p>
                 <p class="mt-1 text-sm text-text"><?= nl2br(e($texte)) ?></p>
                 <?php if ($isUnread): ?>
-                  <button type="button" class="lien mt-2 text-sm" data-marquer-lu="<?= $msgId ?>">Marquer comme lu</button>
+                  <button type="button" class="lien cible text-sm" data-marquer-lu="<?= $msgId ?>">Marquer comme lu</button>
                 <?php endif; ?>
               </div>
             </article>

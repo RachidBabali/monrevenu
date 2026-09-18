@@ -14,11 +14,11 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/head.php';
 <a class="lien-evitement" href="#contenu">Aller au contenu</a>
 <header class="border-b border-line">
   <div class="conteneur flex h-14 items-center justify-between gap-3">
-    <a href="/" class="flex items-center gap-2" aria-label="MonRevenu, accueil">
+    <a href="/" class="flex min-h-[44px] items-center gap-2" aria-label="MonRevenu, accueil">
       <img src="/assets/img/logo-64.png" alt="" width="28" height="28" class="h-7 w-7">
       <span class="font-semibold text-primary-ink">MonRevenu</span>
     </a>
-    <a class="lien text-sm" href="/">Retour à l'accueil</a>
+    <a class="lien cible text-sm" href="/">Retour à l'accueil</a>
   </div>
 </header>
 <main id="contenu" class="conteneur grid gap-8 py-8 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-x-16 lg:py-14">
@@ -29,15 +29,15 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/head.php';
   <nav class="lg:sticky lg:top-8 lg:row-start-2 lg:self-start" aria-labelledby="titre-sommaire">
     <p id="titre-sommaire" class="text-sm font-semibold text-text">Sommaire</p>
     <ol class="mt-3 flex flex-col gap-2 border-l border-line pl-4 text-sm text-text-2">
-          <li><a class="hover:text-primary-ink" href="#donnees-collectees">1. Données collectées</a></li>
-          <li><a class="hover:text-primary-ink" href="#securite-des-donnees">2. Sécurité des données</a></li>
-          <li><a class="hover:text-primary-ink" href="#utilisation-des-donnees">3. Utilisation des données</a></li>
-          <li><a class="hover:text-primary-ink" href="#partage-des-donnees">4. Partage des données</a></li>
-          <li><a class="hover:text-primary-ink" href="#conservation-des-donnees">5. Conservation des données</a></li>
-          <li><a class="hover:text-primary-ink" href="#vos-droits">6. Vos droits</a></li>
-          <li><a class="hover:text-primary-ink" href="#cookies">7. Cookies</a></li>
-          <li><a class="hover:text-primary-ink" href="#modification-de-la-politique">8. Modification de la politique</a></li>
-          <li><a class="hover:text-primary-ink" href="#contact">9. Contact</a></li>
+          <li><a class="cible hover:text-primary-ink" href="#donnees-collectees">1. Données collectées</a></li>
+          <li><a class="cible hover:text-primary-ink" href="#securite-des-donnees">2. Sécurité des données</a></li>
+          <li><a class="cible hover:text-primary-ink" href="#utilisation-des-donnees">3. Utilisation des données</a></li>
+          <li><a class="cible hover:text-primary-ink" href="#partage-des-donnees">4. Partage des données</a></li>
+          <li><a class="cible hover:text-primary-ink" href="#conservation-des-donnees">5. Conservation des données</a></li>
+          <li><a class="cible hover:text-primary-ink" href="#vos-droits">6. Vos droits</a></li>
+          <li><a class="cible hover:text-primary-ink" href="#cookies">7. Cookies</a></li>
+          <li><a class="cible hover:text-primary-ink" href="#modification-de-la-politique">8. Modification de la politique</a></li>
+          <li><a class="cible hover:text-primary-ink" href="#contact">9. Contact</a></li>
     </ol>
   </nav>
   <article class="lg:row-start-2">
@@ -81,10 +81,10 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/head.php';
 </main>
 <footer class="border-t border-line">
   <div class="conteneur flex flex-wrap gap-x-6 gap-y-2 py-6 text-sm text-text-3">
-    <a class="hover:text-primary-ink" href="/conditions.php">Conditions générales</a>
-    <a class="hover:text-primary-ink" href="/confidentialite.php">Confidentialité</a>
-    <a class="hover:text-primary-ink" href="/suppression-donnees.php">Suppression des données</a>
-    <a class="hover:text-primary-ink" href="mailto:contact@monrevenu.xyz">contact@monrevenu.xyz</a>
+    <a class="cible hover:text-primary-ink" href="/conditions.php">Conditions générales</a>
+    <a class="cible hover:text-primary-ink" href="/confidentialite.php">Confidentialité</a>
+    <a class="cible hover:text-primary-ink" href="/suppression-donnees.php">Suppression des données</a>
+    <a class="cible hover:text-primary-ink" href="mailto:contact@monrevenu.xyz">contact@monrevenu.xyz</a>
   </div>
 </footer>
 </body>

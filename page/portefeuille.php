@@ -48,7 +48,7 @@ echo $bloc_portefeuille;
     <section class="flex flex-col gap-3" aria-labelledby="t-retraits">
       <div class="flex items-end justify-between gap-3">
         <h2 id="t-retraits" class="section-titre">Mes retraits</h2>
-        <a class="lien text-sm" href="/page/historique.php">Tout l'historique</a>
+        <a class="lien cible text-sm" href="/page/historique.php">Tout l'historique</a>
       </div>
       <div class="carte overflow-hidden">
         <?php if (!$retraits): ?>

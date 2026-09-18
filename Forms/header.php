@@ -1,6 +1,6 @@
 <header class="sticky top-0 z-30 border-b border-line bg-surface">
   <div class="conteneur flex h-16 items-center justify-between gap-3">
-    <a href="/" class="flex shrink-0 items-center gap-2" aria-label="MonRevenu, accueil">
+    <a href="/" class="flex min-h-[44px] min-w-[44px] shrink-0 items-center gap-2" aria-label="MonRevenu, accueil">
       <img src="/assets/img/logo-64.png" alt="" width="32" height="32" class="h-8 w-8">
       <span class="hidden text-lg font-semibold text-primary-ink min-[400px]:inline">MonRevenu</span>
     </a>

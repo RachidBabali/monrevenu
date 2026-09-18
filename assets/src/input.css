@@ -158,6 +158,10 @@
   .lien {
     @apply font-medium text-primary-ink underline-offset-2 hover:underline;
   }
+  /* Lien isole : zone tactile de 44 px sans changer son apparence */
+  .cible {
+    @apply inline-flex min-h-[44px] items-center;
+  }
 
   .montant {
     @apply whitespace-nowrap font-semibold;
@@ -528,7 +532,7 @@
     @apply inline-flex rounded border border-line-strong bg-surface p-0.5;
   }
   .segment {
-    @apply inline-flex h-8 min-w-[44px] items-center justify-center rounded-sm px-3 text-sm font-medium text-text-2 transition-colors hover:text-text;
+    @apply inline-flex h-10 min-w-[44px] items-center justify-center rounded-sm px-3 text-sm font-medium text-text-2 transition-colors hover:text-text lg:h-9;
   }
   .segment[aria-pressed='true'], .segment[aria-current='true'] {
     @apply bg-primary-soft text-primary-ink;

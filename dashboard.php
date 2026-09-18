@@ -148,7 +148,7 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
       <section class="flex min-w-0 flex-col gap-3" aria-labelledby="t-commissions">
         <div class="flex items-end justify-between gap-3">
           <h2 id="t-commissions" class="section-titre">Dernières commissions</h2>
-          <a class="lien text-sm" href="/page/historique.php?type=commission">Tout voir</a>
+          <a class="lien cible text-sm" href="/page/historique.php?type=commission">Tout voir</a>
         </div>
         <div class="carte overflow-hidden">
           <?php if (!$dernieres_commissions): ?>
@@ -180,7 +180,7 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
         <section class="flex flex-col gap-3" aria-labelledby="t-promouvoir">
           <div class="flex items-end justify-between gap-3">
             <h2 id="t-promouvoir" class="section-titre">Produits à promouvoir</h2>
-            <a class="lien text-sm" href="/services/boutique.php?tri=commission">Catalogue</a>
+            <a class="lien cible text-sm" href="/services/boutique.php?tri=commission">Catalogue</a>
           </div>
           <div class="carte">
             <?php if (!$produits_a_promouvoir): ?>

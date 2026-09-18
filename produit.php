@@ -261,7 +261,7 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/head.php';
 <a class="lien-evitement" href="#contenu">Aller au contenu</a>
 <header class="border-b border-line bg-surface">
   <div class="conteneur flex h-14 items-center">
-    <a href="/" class="flex items-center gap-2" aria-label="MonRevenu, accueil">
+    <a href="/" class="flex min-h-[44px] items-center gap-2" aria-label="MonRevenu, accueil">
       <img src="/assets/img/logo-64.png" alt="" width="28" height="28" class="h-7 w-7">
       <span class="font-semibold text-primary-ink">MonRevenu</span>
     </a>
@@ -368,9 +368,9 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/head.php';
 </main>
 
 <footer class="conteneur flex flex-wrap gap-x-6 gap-y-2 py-8 text-sm text-text-3">
-  <a class="hover:text-primary-ink" href="/conditions.php">Conditions générales</a>
-  <a class="hover:text-primary-ink" href="/confidentialite.php">Confidentialité</a>
-  <a class="hover:text-primary-ink" href="mailto:contact@monrevenu.xyz">contact@monrevenu.xyz</a>
+  <a class="cible hover:text-primary-ink" href="/conditions.php">Conditions générales</a>
+  <a class="cible hover:text-primary-ink" href="/confidentialite.php">Confidentialité</a>
+  <a class="cible hover:text-primary-ink" href="mailto:contact@monrevenu.xyz">contact@monrevenu.xyz</a>
 </footer>
 
 <div id="toasts" class="toasts" role="status" aria-live="polite"></div>
