@@ -140,6 +140,15 @@
   // identifiant vide, script bloque ou echec de chargement le laissent donc cache.
   // Sur un reseau lent, le bloc apparait des que le bouton est rendu, sans delai maximal.
   var googlePret = false;
+  // Le bouton Google a une largeur fixe (200 a 400 px) et son cadre deborde d'environ 10 px :
+  // on la calcule d'apres l'emplacement pour ne jamais depasser la feuille sur les petits ecrans.
+  function largeurGoogle(el) {
+    // Feuille fermee ou bloc masque : largeur 0, on la deduit de la fenetre (pleine largeur sous 640 px, 448 px au-dela)
+    var bloc = el.closest('[data-bloc-google]');
+    var vw = document.documentElement.clientWidth;
+    var dispo = bloc && bloc.clientWidth ? bloc.clientWidth : (vw < 640 ? vw : 448) - 32;
+    return Math.max(200, Math.min(300, Math.floor(dispo) - 12));
+  }
   function initGoogle() {
     if (googlePret) return;
     var meta = document.querySelector('meta[name="google-signin-client_id"]');
@@ -159,7 +168,7 @@
           obs.observe(el, { childList: true });
         }
       }
-      google.accounts.id.renderButton(el, { theme: 'outline', size: 'large', shape: 'rectangular', text: b[1], width: 300, locale: 'fr' });
+      google.accounts.id.renderButton(el, { theme: 'outline', size: 'large', shape: 'rectangular', text: b[1], width: largeurGoogle(el), locale: 'fr' });
     });
   }
   // La bibliotheque Google appelle window.onGoogleLibraryLoad une fois chargee, meme longtemps apres la page

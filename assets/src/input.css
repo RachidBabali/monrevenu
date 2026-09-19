@@ -239,7 +239,16 @@
     @apply text-sm font-medium text-text;
   }
   .champ-saisie {
-    @apply h-12 w-full rounded border border-line-strong bg-surface px-3 text-base text-text transition-colors lg:h-11;
+    @apply h-12 w-full min-w-0 rounded border border-line-strong bg-surface px-3 text-base text-text transition-colors lg:h-11;
+  }
+  /* Safari iOS donne au champ date une largeur propre qui ignore width: 100% */
+  input[type='date'].champ-saisie {
+    @apply block;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  input[type='date'].champ-saisie::-webkit-date-and-time-value {
+    text-align: left;
   }
   .champ-saisie::placeholder {
     color: rgb(var(--text-3));
@@ -420,6 +429,9 @@
   .feuille {
     @apply m-0 mt-auto w-full max-w-none rounded-t-lg border-0 bg-surface p-0 text-text shadow-pop;
     max-height: 92dvh;
+    /* Filet de securite : rien ne doit faire glisser la feuille de gauche a droite */
+    overflow-x: clip;
+    overscroll-behavior-x: none;
   }
   .feuille::backdrop {
     background: var(--voile);
@@ -442,7 +454,8 @@
     @apply text-lg font-semibold;
   }
   .feuille-corps {
-    @apply overflow-y-auto p-4;
+    @apply overflow-y-auto overflow-x-hidden p-4;
+    overscroll-behavior-x: none;
   }
   .feuille-pied {
     @apply flex flex-col-reverse gap-2 border-t border-line p-4 sm:flex-row sm:justify-end;
