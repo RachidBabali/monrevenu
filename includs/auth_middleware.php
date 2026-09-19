@@ -12,6 +12,14 @@ if (!function_exists('exigerConnexion')) {
             header('Location: /index.php');
             exit();
         }
+        // Un commercant n'utilise pas les pages d'affiliation : seules son espace, son compte et ses messages lui sont ouverts
+        if (($_SESSION['user_role'] ?? '') === 'commercant') {
+            $page = parse_url($_SERVER['SCRIPT_NAME'] ?? '', PHP_URL_PATH) ?: '';
+            if (!in_array($page, ['/page/profil.php', '/page/messagerie.php', '/completer-telephone.php'], true)) {
+                header('Location: /commercant/index.php');
+                exit();
+            }
+        }
     }
 }
 

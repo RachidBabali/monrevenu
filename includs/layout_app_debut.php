@@ -22,9 +22,25 @@ $nav_principale = [
     ['/services/mon-stock.php', 'Mon stock', 'package'],
 ];
 $nav_plus = ['/page/historique.php', '/page/messagerie.php', '/services/mon-stock.php'];
+$nav_bas = [['/dashboard.php', 'Accueil', 'house'], ['/services/boutique.php', 'Catalogue', 'store'], ['/page/portefeuille.php', 'Portefeuille', 'wallet'], ['/page/profil.php', 'Compte', 'user']];
+$nav_accueil = '/dashboard.php';
+
+// Espace commercant : navigation propre, aucune page d'affiliation
+if (($_SESSION['user_role'] ?? '') === 'commercant') {
+    $nav_principale = [
+        ['/commercant/index.php', 'Tableau de bord', 'house'],
+        ['/commercant/produits.php', 'Mes produits', 'package'],
+        ['/commercant/commandes.php', 'Commandes', 'shopping-cart'],
+        ['/commercant/boutique.php', 'Ma boutique', 'store'],
+        ['/page/messagerie.php', 'Messages', 'message-square'],
+    ];
+    $nav_plus = ['/commercant/boutique.php', '/page/messagerie.php'];
+    $nav_bas = [['/commercant/index.php', 'Accueil', 'house'], ['/commercant/produits.php', 'Produits', 'package'], ['/commercant/commandes.php', 'Commandes', 'shopping-cart'], ['/page/profil.php', 'Compte', 'user']];
+    $nav_accueil = '/commercant/index.php';
+}
 
 $shell_nom   = $_SESSION['user_fullname'] ?? 'Utilisateur';
-$shell_roles = ['affilie' => 'Affilié', 'agent' => 'Agent revendeur', 'admin' => 'Administrateur', 'client' => 'Membre'];
+$shell_roles = ['affilie' => 'Affilié', 'agent' => 'Agent revendeur', 'admin' => 'Administrateur', 'client' => 'Membre', 'commercant' => 'Commerçant'];
 $shell_role  = $shell_roles[$_SESSION['user_role'] ?? ''] ?? 'Membre';
 
 $shell_non_lus = 0;
@@ -48,7 +64,7 @@ include __DIR__ . '/head.php';
 <a class="lien-evitement" href="#contenu">Aller au contenu</a>
 
 <aside class="barre-laterale" aria-label="Navigation principale">
-  <a href="/dashboard.php" class="flex h-14 shrink-0 items-center gap-2 border-b border-line px-4">
+  <a href="<?= e($nav_accueil) ?>" class="flex h-14 shrink-0 items-center gap-2 border-b border-line px-4">
     <img src="/assets/img/logo-64.png" alt="" width="28" height="28" class="h-7 w-7 rounded">
     <span class="text-base font-semibold text-primary-ink">MonRevenu</span>
   </a>

@@ -68,6 +68,18 @@
     var confirmation = document.getElementById('confirmCode');
     var naissance = document.getElementById('birthdate');
 
+    // Choix du type de compte : les champs de la boutique n'apparaissent que pour un commercant,
+    // et l'inscription Google (qui cree un compte affilie) est masquee dans ce cas.
+    var estCommercant = function () { var r = document.getElementById('typeCommercant'); return !!(r && r.checked); };
+    var basculerType = function () {
+      var c = estCommercant();
+      var champs = inscription.querySelector('[data-champs-commercant]');
+      if (champs) champs.hidden = !c;
+      document.querySelectorAll('[data-masquer-commercant]').forEach(function (b) { b.classList.toggle('hidden', c); });
+    };
+    inscription.querySelectorAll('input[name="type_compte"]').forEach(function (r) { r.addEventListener('change', basculerType); });
+    basculerType();
+
     var placeholderTel = function () {
       if (pays.value === 'SN') { tel.placeholder = '77 123 45 67'; tel.maxLength = 12; }
       else { tel.placeholder = '321 23 45'; tel.maxLength = 9; }
@@ -93,7 +105,12 @@
         return /^[34]\d{6}$/.test(local) ? '' : 'Numéro comorien : 7 chiffres commençant par 3 ou 4.';
       },
       code: function (v) { return v.length < 8 ? 'Choisissez un mot de passe d\'au moins 8 caractères.' : ''; },
-      confirmCode: function (v) { return v !== code.value ? 'Les deux mots de passe sont différents.' : ''; }
+      confirmCode: function (v) { return v !== code.value ? 'Les deux mots de passe sont différents.' : ''; },
+      nomBoutique: function (v) {
+        if (!estCommercant()) return '';
+        v = v.trim();
+        return v.length < 2 || v.length > 120 ? 'Indiquez le nom de votre boutique (2 à 120 caractères).' : '';
+      }
     };
 
     Object.keys(regles).forEach(function (id) {
@@ -117,6 +134,20 @@
   });
   if (location.hash === '#connexion') window.addEventListener('DOMContentLoaded', function () { MR.ouvrir('modal-login'); });
   if (location.hash === '#inscription') window.addEventListener('DOMContentLoaded', function () { MR.ouvrir('modal-register'); });
+  if (location.hash === '#inscription-commercant') window.addEventListener('DOMContentLoaded', function () {
+    var r = document.getElementById('typeCommercant');
+    if (r) { r.checked = true; r.dispatchEvent(new Event('change')); }
+    MR.ouvrir('modal-register');
+  });
+  // Liens internes vers l'inscription commercant (page d'accueil deja chargee)
+  document.addEventListener('click', function (e) {
+    var lien = e.target.closest('a[href="#inscription-commercant"], a[href="/#inscription-commercant"]');
+    if (!lien) return;
+    e.preventDefault();
+    var r = document.getElementById('typeCommercant');
+    if (r) { r.checked = true; r.dispatchEvent(new Event('change')); }
+    MR.ouvrir('modal-register');
+  });
 
   // Google Sign-In : une seule initialisation pour toute la page (deux initialize() cassent la bibliotheque)
   function handleGoogleCredential(response) {

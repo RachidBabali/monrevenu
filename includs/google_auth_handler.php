@@ -179,6 +179,7 @@ try {
     $redirect = match ($user_role) {
         'admin' => '/admin/dashboard_admin.php',
         'agent' => '/admin/dashboard_agent.php',
+        'commercant' => '/commercant/index.php',
         default => '/dashboard.php',
     };
 

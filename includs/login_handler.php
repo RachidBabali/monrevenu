@@ -239,6 +239,9 @@ try {
         case 'agent':
             header('Location: /admin/dashboard_agent.php');
             break;
+        case 'commercant':
+            header('Location: /commercant/index.php');
+            break;
         default: // affilie
             header('Location:/dashboard.php');
             break;

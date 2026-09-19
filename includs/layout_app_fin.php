@@ -10,7 +10,7 @@ $plusActif = in_array($current_page, $nav_plus, true);
 </div>
 
 <nav class="onglets-bas" aria-label="Navigation principale">
-  <?php foreach ([['/dashboard.php', 'Accueil', 'house'], ['/services/boutique.php', 'Catalogue', 'store'], ['/page/portefeuille.php', 'Portefeuille', 'wallet'], ['/page/profil.php', 'Compte', 'user']] as [$url, $libelle, $icone]): ?>
+  <?php foreach ($nav_bas as [$url, $libelle, $icone]): ?>
     <a class="onglet-bas" href="<?= e($url) ?>"<?= $estActif($url) ? ' aria-current="page"' : '' ?>><?= ico($icone, 'ico-24') ?><?= e($libelle) ?></a>
   <?php endforeach; ?>
   <button class="onglet-bas relative" type="button" data-ouvrir="feuille-plus"<?= $plusActif ? ' aria-current="page"' : '' ?> aria-haspopup="dialog">
@@ -26,7 +26,7 @@ $plusActif = in_array($current_page, $nav_plus, true);
     <button class="btn btn-icone btn-discret" type="button" data-fermer aria-label="Fermer"><?= ico('x') ?></button>
   </div>
   <nav class="liste-nav" aria-label="Autres pages">
-    <?php foreach (array_slice($nav_principale, 3) as [$url, $libelle, $icone]): ?>
+    <?php foreach (array_filter($nav_principale, fn($n) => in_array($n[0], $nav_plus, true)) as [$url, $libelle, $icone]): ?>
       <a class="liste-nav-lien" href="<?= e($url) ?>"<?= $estActif($url) ? ' aria-current="page"' : '' ?>>
         <?= ico($icone) ?><?= e($libelle) ?>
         <?php if ($url === '/page/messagerie.php' && $shell_non_lus > 0): ?><span class="pastille pastille-info ml-auto chiffres"><?= $shell_non_lus ?> non lu<?= $shell_non_lus > 1 ? 's' : '' ?></span><?php endif; ?>

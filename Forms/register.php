@@ -20,6 +20,7 @@ $errors = [
     'conditions'         => 'Cochez la case pour accepter les conditions générales.',
     'existe_deja'        => 'Cet email ou ce numéro est déjà utilisé. Connectez-vous ou utilisez-en un autre.',
     'birthdate_invalide' => 'Vous devez avoir au moins 18 ans pour vous inscrire.',
+    'boutique_invalide'  => 'Indiquez le nom de votre boutique (2 à 120 caractères).',
     'age_insuffisant'    => 'Vous devez avoir au moins 18 ans pour vous inscrire.',
     'methode_invalide'   => 'Choisissez comment recevoir votre code de vérification.',
     'csrf'               => 'Votre session a expiré. Rechargez la page puis recommencez.',
@@ -38,6 +39,7 @@ $champ_en_erreur = [
     'birthdate_invalide' => 'birthdate',
     'age_insuffisant'    => 'birthdate',
     'methode_invalide'   => 'verificationMethod',
+    'boutique_invalide'  => 'nomBoutique',
 ];
 
 $error   = $_GET['error'] ?? '';
@@ -48,6 +50,8 @@ $old_fullname  = htmlspecialchars($_GET['fullname'] ?? '', ENT_QUOTES, 'UTF-8');
 $old_email     = htmlspecialchars($_GET['email'] ?? '', ENT_QUOTES, 'UTF-8');
 $old_phone     = htmlspecialchars($_GET['phone'] ?? '', ENT_QUOTES, 'UTF-8');
 $old_birthdate = htmlspecialchars($_GET['birthdate'] ?? '', ENT_QUOTES, 'UTF-8');
+$saisie_inscription = $error !== '' ? ($_SESSION['inscription_saisie'] ?? []) : [];
+$type_compte_choisi = ($saisie_inscription['type'] ?? '') === 'commercant' ? 'commercant' : 'affilie';
 
 function afficherErreurChamp(string $nomChamp, string $champErrone, array $errors, string $error): void {
     if ($nomChamp === $champErrone && $error) {
@@ -78,6 +82,36 @@ $pays_tel = $_GET['phone_country'] ?? 'SN';
 
     <form method="POST" action="/includs/register_handler.php" id="registerForm" novalidate class="flex flex-col gap-4">
       <input type="hidden" name="csrf_token" value="<?= e($_SESSION['csrf_token']) ?>">
+
+      <fieldset class="flex flex-col gap-2">
+        <legend class="champ-label mb-2">Vous voulez</legend>
+        <div class="grid gap-2 sm:grid-cols-2">
+          <label class="choix-carte" for="typeAffilie">
+            <input class="case" type="radio" id="typeAffilie" name="type_compte" value="affilie"<?= $type_compte_choisi === 'affilie' ? ' checked' : '' ?>>
+            <span><span class="block font-medium text-text">Promouvoir des produits</span><span class="block text-sm text-text-2">Vous partagez des liens et touchez une commission.</span></span>
+          </label>
+          <label class="choix-carte" for="typeCommercant">
+            <input class="case" type="radio" id="typeCommercant" name="type_compte" value="commercant"<?= $type_compte_choisi === 'commercant' ? ' checked' : '' ?>>
+            <span><span class="block font-medium text-text">Vendre mes produits</span><span class="block text-sm text-text-2">Vous publiez vos produits, les affiliés les font connaître.</span></span>
+          </label>
+        </div>
+      </fieldset>
+
+      <div class="flex flex-col gap-4" data-champs-commercant<?= $type_compte_choisi === 'commercant' ? '' : ' hidden' ?>>
+        <div class="champ">
+          <label class="champ-label" for="nomBoutique">Nom de la boutique</label>
+          <input class="champ-saisie" type="text" id="nomBoutique" name="nom_boutique" maxlength="120" autocomplete="organization"
+                 value="<?= e($saisie_inscription['nom_boutique'] ?? '') ?>" aria-describedby="aide-boutique err-nomBoutique"<?= attributErreur('nomBoutique', $champ_errone) ?>>
+          <p class="champ-aide" id="aide-boutique">Visible par les affiliés et vos clients. Vos produits seront publiés après validation de votre compte.</p>
+          <p class="champ-erreur field-error" id="err-nomBoutique" hidden></p>
+          <?php afficherErreurChamp('nomBoutique', $champ_errone, $errors, $error); ?>
+        </div>
+        <div class="champ">
+          <label class="champ-label" for="villeBoutique">Ville <span class="font-normal text-text-3">(facultatif)</span></label>
+          <input class="champ-saisie" type="text" id="villeBoutique" name="ville" maxlength="100" autocomplete="address-level2"
+                 value="<?= e($saisie_inscription['ville'] ?? '') ?>">
+        </div>
+      </div>
 
       <div class="champ">
         <label class="champ-label" for="fullName">Nom complet</label>
@@ -157,7 +191,7 @@ $pays_tel = $_GET['phone_country'] ?? 'SN';
       <button type="submit" class="btn btn-primaire btn-bloc"><?= ico('loader-circle', 'ico-charge') ?><span data-libelle>Créer mon compte</span></button>
     </form>
 
-    <div class="flex flex-col gap-4" data-bloc-google hidden>
+    <div class="flex flex-col gap-4" data-bloc-google data-masquer-commercant hidden>
       <div class="flex items-center gap-3 text-xs text-text-3"><span class="h-px flex-1 bg-line"></span>ou<span class="h-px flex-1 bg-line"></span></div>
       <div id="googleBtnRegister" class="flex min-h-[44px] justify-center"></div>
     </div>

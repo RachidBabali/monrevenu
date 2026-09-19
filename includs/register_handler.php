@@ -82,6 +82,13 @@ $terms = isset(
     $_POST['acceptTerms']
 );
 
+// Type de compte : affilie (promouvoir des produits) ou commercant (vendre ses produits)
+$type_compte  = ($_POST['type_compte'] ?? 'affilie') === 'commercant' ? 'commercant' : 'affilie';
+$nom_boutique = trim(preg_replace('/\s+/u', ' ', (string) ($_POST['nom_boutique'] ?? '')));
+$ville        = trim(preg_replace('/\s+/u', ' ', (string) ($_POST['ville'] ?? '')));
+// Garde le choix et la boutique en session pour reafficher le formulaire en cas d'erreur (jamais dans l'URL)
+$_SESSION['inscription_saisie'] = ['type' => $type_compte, 'nom_boutique' => mb_substr($nom_boutique, 0, 120), 'ville' => mb_substr($ville, 0, 100)];
+
 
 /* ============================================================
    VALIDATION DES CHAMPS OBLIGATOIRES
@@ -97,6 +104,16 @@ if (
     header(
         'Location: /index.php?error=champs_manquants'
     );
+    exit();
+}
+
+
+/* ============================================================
+   BOUTIQUE (commercant seulement)
+   ============================================================ */
+
+if ($type_compte === 'commercant' && (mb_strlen($nom_boutique) < 2 || mb_strlen($nom_boutique) > 120 || mb_strlen($ville) > 100)) {
+    header('Location: /index.php?error=boutique_invalide');
     exit();
 }
 
@@ -352,6 +369,14 @@ try {
             $nouvel_utilisateur_id
         ]);
 
+        if ($type_compte === 'commercant') {
+            $pdo->prepare("UPDATE users_monrevenu SET role = 'commercant' WHERE id = ? AND role = 'affilie'")->execute([$nouvel_utilisateur_id]);
+            $pdo->prepare(
+                "INSERT INTO commercants_profils (user_id, nom_boutique, ville) VALUES (?, ?, ?)
+                 ON DUPLICATE KEY UPDATE nom_boutique = VALUES(nom_boutique), ville = VALUES(ville)"
+            )->execute([$nouvel_utilisateur_id, $nom_boutique, $ville !== '' ? $ville : null]);
+        }
+
         require_once __DIR__ . '/audit.php';
         auditInfo($pdo, ['category' => 'auth', 'action' => 'inscription_reprise_compte_non_verifie', 'entity_type' => 'utilisateur',
             'entity_id' => $nouvel_utilisateur_id, 'actor_id' => $nouvel_utilisateur_id, 'actor_role' => null, 'meta' => ['email' => $email]]);
@@ -471,7 +496,7 @@ try {
             :code_expires_at,
             NOW(),
             :password,
-            'affilie',
+            :role,
             0.00,
             0,
             NOW()
@@ -488,16 +513,24 @@ try {
         ':pays_nom' => $pays['nom'],
         ':verification_code' => $code_verification_hash,
         ':code_expires_at' => $code_expiration,
-        ':password' => $password_hash
+        ':password' => $password_hash,
+        ':role' => $type_compte,
     ]);
 
 
     $nouvel_utilisateur_id = (int) $pdo->lastInsertId();
 
+    if ($type_compte === 'commercant') {
+        $pdo->prepare("INSERT INTO commercants_profils (user_id, nom_boutique, ville) VALUES (?, ?, ?)")
+            ->execute([$nouvel_utilisateur_id, $nom_boutique, $ville !== '' ? $ville : null]);
+    }
+
     require_once __DIR__ . '/audit.php';
     auditInfo($pdo, ['category' => 'auth', 'action' => 'inscription', 'entity_type' => 'utilisateur', 'entity_id' => $nouvel_utilisateur_id,
-        'actor_id' => $nouvel_utilisateur_id, 'actor_role' => 'affilie',
-        'after' => ['email' => $email, 'phone' => $phone_normalise, 'role' => 'affilie', 'pays' => $pays['code']], 'meta' => ['methode' => 'formulaire']]);
+        'actor_id' => $nouvel_utilisateur_id, 'actor_role' => $type_compte,
+        'after' => ['email' => $email, 'phone' => $phone_normalise, 'role' => $type_compte, 'pays' => $pays['code']]
+            + ($type_compte === 'commercant' ? ['nom_boutique' => $nom_boutique, 'ville' => $ville] : []),
+        'meta' => ['methode' => 'formulaire']]);
 
     $pdo->commit();
 

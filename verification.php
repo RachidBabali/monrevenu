@@ -494,6 +494,14 @@ if (
 
                         break;
 
+                    case 'commercant':
+
+                        header(
+                            'Location: /commercant/index.php'
+                        );
+
+                        break;
+
                     default:
 
                         header(
