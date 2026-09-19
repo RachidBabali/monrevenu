@@ -148,9 +148,16 @@
     google.accounts.id.initialize({ client_id: clientId, callback: handleGoogleCredential });
     [['googleBtnLogin', 'continue_with'], ['googleBtnRegister', 'signup_with']].forEach(function (b) {
       var el = document.getElementById(b[0]);
-      if (el) google.accounts.id.renderButton(el, { theme: 'outline', size: 'large', shape: 'rectangular', text: b[1], width: 300, locale: 'fr' });
+      if (!el) return;
+      var bloc = el.closest('[data-bloc-google]');
+      if (bloc) bloc.hidden = false;
+      google.accounts.id.renderButton(el, { theme: 'outline', size: 'large', shape: 'rectangular', text: b[1], width: 300, locale: 'fr' });
+      // Si le bouton n'a rien rendu (identifiant refuse, iframe bloquee), le separateur et l'emplacement disparaissent
+      setTimeout(function () { if (bloc && !el.firstElementChild) bloc.hidden = true; }, 3000);
     });
   }
+  // Le bloc (separateur "ou" + emplacement) reste masque tant que le bouton Google n'est pas rendu :
+  // identifiant vide, script bloque ou echec de chargement le laissent donc cache.
   document.addEventListener('DOMContentLoaded', initGoogle);
 
   // Le SDK Google peut laisser overflow:hidden sur <html> ou <body> : on le retire si aucune feuille n'est ouverte

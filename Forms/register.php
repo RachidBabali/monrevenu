@@ -157,8 +157,10 @@ $pays_tel = $_GET['phone_country'] ?? 'SN';
       <button type="submit" class="btn btn-primaire btn-bloc"><?= ico('loader-circle', 'ico-charge') ?><span data-libelle>Créer mon compte</span></button>
     </form>
 
-    <div class="flex items-center gap-3 text-xs text-text-3"><span class="h-px flex-1 bg-line"></span>ou<span class="h-px flex-1 bg-line"></span></div>
-    <div id="googleBtnRegister" class="flex min-h-[44px] justify-center"></div>
+    <div class="flex flex-col gap-4" data-bloc-google hidden>
+      <div class="flex items-center gap-3 text-xs text-text-3"><span class="h-px flex-1 bg-line"></span>ou<span class="h-px flex-1 bg-line"></span></div>
+      <div id="googleBtnRegister" class="flex min-h-[44px] justify-center"></div>
+    </div>
 
     <p class="text-center text-sm text-text-2">
       Déjà un compte ?
