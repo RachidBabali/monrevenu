@@ -24,4 +24,4 @@ RewriteRule ^produit/([a-z0-9\-]+)/([A-Za-z0-9_\-]+)/?$ produit.php?slug=$1&toke
 <FilesMatch "(\.(sql|md|lock)|^composer\.json|^\.env.*)$">
     Require all denied
 </FilesMatch>
-RedirectMatch 404 ^/(dev|\.kilo|migrations)(/|$)
+RedirectMatch 404 ^/(dev|\.kilo|migrations|storage)(/|$)
