@@ -137,7 +137,7 @@ if (!function_exists('nettoyerPictogrammes')) {
         $t = preg_replace('/[\x{1F000}-\x{1FAFF}\x{2600}-\x{27BF}\x{2B00}-\x{2BFF}\x{2300}-\x{23FF}\x{FE0F}\x{20E3}\x{200D}]/u', '', $t);
         $t = preg_replace('/[\x{2190}-\x{21FF}\x{2794}\x{27A1}\x{2022}\x{25B2}-\x{25C6}]/u', '', $t);
         $t = preg_replace('/\s*[\x{2013}\x{2014}]\s*/u', ', ', $t);
-        $t = str_replace(["\u{00A0}", "\u{202F}", "\u{2019}", "\u{2026}"], [' ', ' ', "'", '...'], $t);
+        $t = str_replace([mb_chr(0x00A0), mb_chr(0x202F), mb_chr(0x2019), mb_chr(0x2026)], [' ', ' ', "'", '...'], $t);
         return trim(preg_replace('/\s{2,}/u', ' ', $t), " \t\n\r,");
     }
 }

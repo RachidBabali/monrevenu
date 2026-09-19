@@ -230,7 +230,7 @@ if (
                     );
 
                     $error =
-                        'Impossible d\u2019envoyer le code par '
+                        'Impossible d\'envoyer le code par '
                         . $libelleCanal
                         . '. Veuillez réessayer dans quelques instants.';
 

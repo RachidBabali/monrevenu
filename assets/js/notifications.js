@@ -22,13 +22,22 @@
     "bell": "<path d=\"M10.268 21a2 2 0 0 0 3.464 0\"/> <path d=\"M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326\"/>"
   };
 
-  // Nettoyage a l'affichage des anciennes notifications (emojis, fleches, tirets longs)
+  // Nettoyage a l'affichage des anciennes notifications (emojis, fleches, tirets longs).
+  // Les classes de caracteres sont construites a partir des points de code, sans sequence d'echappement.
+  var c = String.fromCodePoint;
+  var classe = function (plages) {
+    return '[' + plages.map(function (p) { return Array.isArray(p) ? c(p[0]) + '-' + c(p[1]) : c(p); }).join('') + ']';
+  };
+  var RE_EMOJI = new RegExp(classe([[0x1F000, 0x1FAFF], [0x2600, 0x27BF], [0x2B00, 0x2BFF], [0x2300, 0x23FF], 0xFE0F, 0x20E3, 0x200D]), 'gu');
+  var RE_FLECHES = new RegExp(classe([[0x2190, 0x21FF], 0x2794, 0x27A1, 0x2022, [0x25B2, 0x25C6]]), 'gu');
+  var RE_TIRETS = new RegExp('\\s*' + classe([0x2013, 0x2014]) + '\\s*', 'g');
+  var RE_ESPACES = new RegExp(classe([0x00A0, 0x202F]), 'g');
   function nettoyer(texte) {
     return String(texte || '')
-      .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{2300}-\u{23FF}\u{FE0F}\u{20E3}\u{200D}]/gu, '')
-      .replace(/[\u{2190}-\u{21FF}\u{2794}\u{27A1}\u{2022}\u{25B2}-\u{25C6}]/gu, '')
-      .replace(/\s*[\u2013\u2014]\s*/g, ', ')
-      .replace(/[\u00A0\u202F]/g, ' ')
+      .replace(RE_EMOJI, '')
+      .replace(RE_FLECHES, '')
+      .replace(RE_TIRETS, ', ')
+      .replace(RE_ESPACES, ' ')
       .replace(/\s{2,}/g, ' ')
       .replace(/^[\s,]+|[\s,]+$/g, '');
   }
