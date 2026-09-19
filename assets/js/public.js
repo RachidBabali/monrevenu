@@ -136,29 +136,44 @@
   }
   window.handleGoogleCredential = handleGoogleCredential;
 
-  var essais = 0;
+  // Le bloc (separateur "ou" + emplacement) reste masque tant que le bouton Google n'a rien rendu :
+  // identifiant vide, script bloque ou echec de chargement le laissent donc cache.
+  // Sur un reseau lent, le bloc apparait des que le bouton est rendu, sans delai maximal.
+  var googlePret = false;
   function initGoogle() {
+    if (googlePret) return;
     var meta = document.querySelector('meta[name="google-signin-client_id"]');
     var clientId = meta ? meta.content : '';
     if (!clientId || clientId.indexOf('YOUR_GOOGLE_CLIENT_ID') > -1) return;
-    if (!window.google || !google.accounts || !google.accounts.id) {
-      if (++essais < 40) setTimeout(initGoogle, 300);
-      return;
-    }
+    if (!window.google || !google.accounts || !google.accounts.id) return;
+    googlePret = true;
     google.accounts.id.initialize({ client_id: clientId, callback: handleGoogleCredential });
     [['googleBtnLogin', 'continue_with'], ['googleBtnRegister', 'signup_with']].forEach(function (b) {
       var el = document.getElementById(b[0]);
       if (!el) return;
       var bloc = el.closest('[data-bloc-google]');
-      if (bloc) bloc.hidden = false;
+      if (bloc) {
+        var afficher = function () { if (el.firstElementChild) { bloc.hidden = false; return true; } return false; };
+        if (!afficher()) {
+          var obs = new MutationObserver(function () { if (afficher()) obs.disconnect(); });
+          obs.observe(el, { childList: true });
+        }
+      }
       google.accounts.id.renderButton(el, { theme: 'outline', size: 'large', shape: 'rectangular', text: b[1], width: 300, locale: 'fr' });
-      // Si le bouton n'a rien rendu (identifiant refuse, iframe bloquee), le separateur et l'emplacement disparaissent
-      setTimeout(function () { if (bloc && !el.firstElementChild) bloc.hidden = true; }, 3000);
     });
   }
-  // Le bloc (separateur "ou" + emplacement) reste masque tant que le bouton Google n'est pas rendu :
-  // identifiant vide, script bloque ou echec de chargement le laissent donc cache.
-  document.addEventListener('DOMContentLoaded', initGoogle);
+  // La bibliotheque Google appelle window.onGoogleLibraryLoad une fois chargee, meme longtemps apres la page
+  var rappelGoogle = window.onGoogleLibraryLoad;
+  window.onGoogleLibraryLoad = function () {
+    if (typeof rappelGoogle === 'function') rappelGoogle();
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initGoogle);
+    else initGoogle();
+  };
+  document.addEventListener('DOMContentLoaded', function () {
+    initGoogle();
+    var script = document.querySelector('script[src^="https://accounts.google.com/gsi/client"]');
+    if (script) script.addEventListener('load', initGoogle);
+  });
 
   // Le SDK Google peut laisser overflow:hidden sur <html> ou <body> : on le retire si aucune feuille n'est ouverte
   function restaurerScroll() {
