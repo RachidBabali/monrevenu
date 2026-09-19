@@ -10,10 +10,23 @@
       <p class="text-sm text-text-3">Inscription gratuite. Aucun stock à gérer, aucun paiement à encaisser.</p>
     </div>
 
-    <figure class="flex flex-col gap-3" aria-label="Exemple d'affichage de l'espace affilié">
-      <figcaption class="text-xs font-medium text-text-3">Exemple d'affichage</figcaption>
-      <div class="grid items-start gap-3 sm:grid-cols-[minmax(0,180px)_minmax(0,1fr)]" aria-hidden="true">
+    <div class="grid items-start gap-3 sm:grid-cols-[minmax(0,180px)_minmax(0,1fr)]">
+      <?php if (!empty($vitrine)): ?>
+      <figure class="flex flex-col gap-2">
+        <figcaption class="text-xs font-medium text-text-3">Dernier produit du catalogue</figcaption>
         <div class="produit">
+          <div class="produit-image max-sm:aspect-[3/2]"><img src="<?= e($vitrine['image']) ?>" alt="<?= e($vitrine['nom']) ?>" width="<?= (int) $vitrine['largeur'] ?>" height="<?= (int) $vitrine['hauteur'] ?>" fetchpriority="high" decoding="async"></div>
+          <div class="produit-corps">
+            <p class="produit-nom"><?= e($vitrine['nom']) ?></p>
+            <p class="produit-prix"><?= montant($vitrine['prix']) ?></p>
+            <p class="produit-commission"><span>Commission</span><?= montant($vitrine['commission']) ?></p>
+          </div>
+        </div>
+      </figure>
+      <?php else: ?>
+      <figure class="flex flex-col gap-2" aria-label="Exemple d'affichage d'un produit">
+        <figcaption class="text-xs font-medium text-text-3">Exemple d'affichage</figcaption>
+        <div class="produit" aria-hidden="true">
           <div class="produit-image max-sm:aspect-[3/1]"><div class="flex items-center justify-center text-text-3"><?= ico('package', 'ico-40') ?></div></div>
           <div class="produit-corps">
             <p class="produit-nom">Produit du catalogue</p>
@@ -24,13 +37,17 @@
             <span class="btn btn-sm btn-primaire"><?= ico('copy', 'ico-16') ?>Copier le lien</span>
           </div>
         </div>
-        <div class="carte flex flex-col">
+      </figure>
+      <?php endif; ?>
+      <figure class="flex flex-col gap-2" aria-label="Exemple d'affichage de l'espace affilié">
+        <figcaption class="text-xs font-medium text-text-3">Exemple d'affichage</figcaption>
+        <div class="carte flex flex-col" aria-hidden="true">
           <p class="border-b border-line px-3 py-2 text-xs font-medium text-text-3">Dernières commissions</p>
           <div class="ligne-tx px-3"><div class="ligne-tx-corps"><p class="ligne-tx-titre">Commande de 1 article</p><div class="mt-1"><?= badgeStatut('en_attente', 'commission') ?></div></div><div class="ligne-tx-montant"><?= montant($commission_haute) ?></div></div>
           <div class="ligne-tx px-3"><div class="ligne-tx-corps"><p class="ligne-tx-titre">Commande de 1 article</p><div class="mt-1"><?= badgeStatut('validee', 'commission') ?></div></div><div class="ligne-tx-montant"><?= montant($commission_basse, true, 'montant-entrant') ?></div></div>
           <div class="ligne-tx px-3"><div class="ligne-tx-corps"><p class="ligne-tx-titre">Retrait</p><div class="mt-1"><?= badgeStatut('valide', 'retrait') ?></div></div><div class="ligne-tx-montant"><?= montant(-$minimum_retrait) ?></div></div>
         </div>
-      </div>
-    </figure>
+      </figure>
+    </div>
   </div>
 </section>

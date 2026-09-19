@@ -6,12 +6,14 @@ enregistrerVisitePays($pdo, $_SESSION['user_id'] ?? null);
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/ui.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/affiliation_helpers.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/vitrine_accueil.php';
 
 // Chiffres repris du code : includs/affiliation_helpers.php (commission) et sections/wallet.php (retrait)
 $seuil_commission = SEUIL_PRIX_COMMISSION;
 $commission_basse = COMMISSION_BASSE;
 $commission_haute = COMMISSION_HAUTE;
 $minimum_retrait  = 1000;
+$vitrine          = produitVitrineAccueil($pdo);
 $numero_whatsapp  = env('WHATSAPP_BUSINESS_DISPLAY_NUMBER', '+221 77 876 48 19');
 $numero_wa_me     = preg_replace('/\D/', '', $numero_whatsapp);
 
