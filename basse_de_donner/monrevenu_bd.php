@@ -24,6 +24,9 @@ $dsn = "mysql:host=$host;dbname=$dbname;charset=$charset";
 try {
     $pdo = new PDO($dsn, $username, $password, $options);
 } catch (\PDOException $e) {
-    die("Désolé, une erreur est survenue lors de la connexion à la base de données : " . $e->getMessage());
+    // Detail technique dans le journal d'erreurs seulement : jamais d'hote, d'utilisateur ni de message SQL a l'ecran
+    error_log('[monrevenu_bd] connexion impossible : ' . $e->getCode());
+    http_response_code(503);
+    die("Le service est momentanément indisponible. Réessayez dans quelques minutes.");
 }
 ?>

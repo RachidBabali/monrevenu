@@ -86,6 +86,7 @@ foreach ($mappings as $m) {
 
         // Met à jour toutes les lignes qui référencent encore l'ancien chemin local
         $ancienChemin = $m['chemin_relatif'] . $nomFichier;
+        // audit:exclu outil ponctuel en ligne de commande, a supprimer du serveur
         $stmt = $pdo->prepare("UPDATE {$m['table']} SET {$m['colonne']} = ? WHERE {$m['colonne']} = ?");
         $stmt->execute([$resultat['url'], $ancienChemin]);
 

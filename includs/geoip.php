@@ -79,6 +79,7 @@ if (!function_exists('enregistrerVisitePays')) {
 
         try {
             $pdo->prepare(
+                // audit:exclu telemetrie de visite (volume), hors journal par decision du lot 2
                 "INSERT INTO visites_pays (ip, pays_code, pays_nom, user_id, page) VALUES (?, ?, ?, ?, ?)"
             )->execute([
                 adresseIpVisiteur(),

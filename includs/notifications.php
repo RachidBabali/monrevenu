@@ -23,6 +23,7 @@ if (!function_exists('envoyerNotification')) {
     ): void {
         try {
             $stmt = $pdo->prepare(
+                // audit:exclu journalise par l action appelante
                 "INSERT INTO messages (user_id, expediteur, message, statut) VALUES (?, ?, ?, 'non_lu')"
             );
             $stmt->execute([$userId, $expediteur, $message]);
