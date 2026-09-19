@@ -108,6 +108,10 @@ if (!function_exists('badgeStatut')) {
             'vue'         => ['en_cours' => ['En cours', 'info'], 'termine' => ['Terminée', 'succes']],
             'message'     => ['non_lu' => ['Non lu', 'info'], 'lu' => ['Lu', 'neutre']],
             'stock'       => ['0' => ['Commission à envoyer', 'attente'], '1' => ['Commission envoyée', 'succes']],
+            'moderation'  => ['brouillon' => ['Brouillon', 'neutre'], 'en_attente' => ['En attente de validation', 'attente'], 'approuve' => ['Publié', 'succes'], 'refuse' => ['Refusé', 'danger']],
+            'boutique'    => ['en_attente' => ['En attente de validation', 'attente'], 'valide' => ['Validée', 'succes'], 'suspendu' => ['Suspendue', 'danger'], 'refuse' => ['Refusée', 'danger']],
+            'commande'    => ['en_attente' => ['Nouvelle', 'attente'], 'contacte' => ['Client contacté', 'info'], 'colis_recu' => ['Colis reçu', 'info'], 'validee' => ['Validée', 'succes'], 'annulee' => ['Annulée', 'danger']],
+            'produit'     => ['actif' => ['En vente', 'succes'], 'suspendu' => ['Suspendu', 'neutre'], 'termine' => ['Terminé', 'neutre']],
         ];
         [$libelle, $variante] = $table[$contexte][$code] ?? [ucfirst(str_replace('_', ' ', $code)) ?: 'Inconnu', 'neutre'];
         return '<span class="pastille pastille-' . $variante . '">' . e($libelle) . '</span>';

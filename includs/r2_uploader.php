@@ -132,3 +132,70 @@ function uploaderVersR2(string $cheminLocal, string $cleDistante, string $conten
 
     return ['ok' => true, 'url' => "{$urlPublique}/{$cleDistante}"];
 }
+
+/**
+ * Requete signee (SigV4) vers R2 pour les operations autres que l'envoi : suppression d'un objet,
+ * liste paginee d'un prefixe. Meme configuration que uploaderVersR2().
+ *
+ * @param array<string,string> $query parametres de la requete (tries et encodes pour la signature)
+ * @return array{ok: bool, code: int, corps: string, error?: string, duree_ms: int}
+ */
+function r2Requete(string $methode, string $cleDistante = '', array $query = []): array
+{
+    $accountId = env('R2_ACCOUNT_ID');
+    $accessKey = env('R2_ACCESS_KEY_ID');
+    $secretKey = env('R2_SECRET_ACCESS_KEY');
+    $bucket    = env('R2_BUCKET_NAME');
+    if (!$accountId || !$accessKey || !$secretKey || !$bucket) {
+        return ['ok' => false, 'code' => 0, 'corps' => '', 'error' => 'Configuration R2 incomplète.', 'duree_ms' => 0];
+    }
+
+    $hote   = "{$accountId}.r2.cloudflarestorage.com";
+    $cle    = ltrim($cleDistante, '/');
+    $uri    = '/' . rawurlencode($bucket) . ($cle !== '' ? '/' . implode('/', array_map('rawurlencode', explode('/', $cle))) : '');
+    ksort($query);
+    $qs     = implode('&', array_map(fn($k, $v) => rawurlencode($k) . '=' . rawurlencode((string) $v), array_keys($query), $query));
+    $maint  = new DateTime('now', new DateTimeZone('UTC'));
+    $dateAmz = $maint->format('Ymd\THis\Z');
+    $jour    = $maint->format('Ymd');
+    $hashVide = hash('sha256', '');
+
+    $canonique = implode("\n", [$methode, $uri, $qs, "host:{$hote}\nx-amz-content-sha256:{$hashVide}\nx-amz-date:{$dateAmz}\n",
+        'host;x-amz-content-sha256;x-amz-date', $hashVide]);
+    $scope = "{$jour}/auto/s3/aws4_request";
+    $aSigner = implode("\n", ['AWS4-HMAC-SHA256', $dateAmz, $scope, hash('sha256', $canonique)]);
+    $k = hash_hmac('sha256', $jour, 'AWS4' . $secretKey, true);
+    $k = hash_hmac('sha256', 'auto', $k, true);
+    $k = hash_hmac('sha256', 's3', $k, true);
+    $k = hash_hmac('sha256', 'aws4_request', $k, true);
+    $signature = hash_hmac('sha256', $aSigner, $k);
+
+    $debut = microtime(true);
+    $ch = curl_init("https://{$hote}{$uri}" . ($qs !== '' ? '?' . $qs : ''));
+    curl_setopt_array($ch, [
+        CURLOPT_CUSTOMREQUEST  => $methode,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER     => [
+            "x-amz-content-sha256: {$hashVide}",
+            "x-amz-date: {$dateAmz}",
+            "Authorization: AWS4-HMAC-SHA256 Credential={$accessKey}/{$scope}, SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature={$signature}",
+        ],
+        CURLOPT_TIMEOUT => 15,
+    ]);
+    $corps = (string) curl_exec($ch);
+    $code  = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $err   = curl_error($ch);
+    $duree = (int) round((microtime(true) - $debut) * 1000);
+    if ($err) return ['ok' => false, 'code' => 0, 'corps' => '', 'error' => 'Erreur réseau vers R2.', 'duree_ms' => $duree];
+    return ['ok' => $code >= 200 && $code < 300, 'code' => $code, 'corps' => $corps, 'duree_ms' => $duree];
+}
+
+/** Supprime un objet a partir de sa cle ou de son URL publique. Un objet deja absent compte comme supprime. */
+function supprimerDeR2(string $cleOuUrl): array
+{
+    $public = rtrim((string) env('R2_PUBLIC_URL'), '/');
+    $cle = ($public !== '' && str_starts_with($cleOuUrl, $public . '/')) ? substr($cleOuUrl, strlen($public) + 1) : $cleOuUrl;
+    if ($cle === '' || preg_match('#^(https?:|data:)#', $cle)) return ['ok' => false, 'error' => 'Clé R2 invalide.'];
+    $r = r2Requete('DELETE', $cle);
+    return ['ok' => $r['ok'] || $r['code'] === 404, 'cle' => $cle, 'error' => $r['error'] ?? null];
+}
