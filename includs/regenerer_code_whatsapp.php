@@ -24,6 +24,8 @@ if (empty($_SESSION['user_id'])) {
 // Vérification CSRF, adapter au token déjà généré ailleurs dans le projet.
 $csrfRecu = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
 if (empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $csrfRecu)) {
+    require_once __DIR__ . '/audit.php';
+    auditCsrf($pdo, 'regenerer_code_whatsapp');
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Requête invalide.']);
     exit;

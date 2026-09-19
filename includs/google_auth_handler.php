@@ -35,6 +35,8 @@ if (
     empty($_POST['csrf_token']) ||
     !hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'])
 ) {
+    require_once __DIR__ . '/audit.php';
+    auditCsrf($pdo ?? null, 'google');
     repondre(false, ['error' => 'Session expirée, veuillez recharger la page.']);
 }
 
@@ -61,7 +63,10 @@ if ($code_http !== 200 || !$reponse_brute) {
 $payload = json_decode($reponse_brute, true);
 
 // Vérifie que le jeton a bien été émis pour NOTRE application
+require_once __DIR__ . '/audit.php';
 if (!$payload || ($payload['aud'] ?? '') !== GOOGLE_CLIENT_ID) {
+    auditInfo($pdo, ['category' => 'auth', 'action' => 'google_jeton_refuse', 'result' => 'refus', 'actor_id' => null, 'actor_role' => null,
+        'meta' => ['raison' => 'audience']]);
     repondre(false, ['error' => 'Jeton Google non reconnu.']);
 }
 
@@ -100,6 +105,8 @@ try {
             ->execute([$google_id, $user['id']]);
 
         if (!$user['is_active']) {
+            auditInfo($pdo, ['category' => 'auth', 'action' => 'connexion_refusee_inactif', 'result' => 'refus', 'actor_id' => null,
+                'actor_role' => null, 'entity_type' => 'utilisateur', 'entity_id' => $user['id'], 'meta' => ['methode' => 'google']]);
             repondre(false, ['error' => 'Votre compte est désactivé. Contactez le support.']);
         }
 
@@ -134,6 +141,8 @@ try {
         $user_id        = (int) $pdo->lastInsertId();
         $user_role      = 'affilie';
         $phone_verified = 0;
+        auditInfo($pdo, ['category' => 'auth', 'action' => 'inscription', 'entity_type' => 'utilisateur', 'entity_id' => $user_id,
+            'actor_id' => $user_id, 'actor_role' => 'affilie', 'after' => ['email' => $email, 'role' => 'affilie'], 'meta' => ['methode' => 'google']]);
     }
 
     // Rafraîchit le pays détecté à chaque connexion (utile si le compte a
@@ -156,6 +165,9 @@ try {
     try {
         $pdo->prepare("UPDATE users_monrevenu SET last_login = NOW() WHERE id = ?")->execute([$user_id]);
     } catch (\PDOException $e) { /* colonne last_login absente, ignoré */ }
+
+    auditInfo($pdo, ['category' => 'auth', 'action' => 'connexion', 'entity_type' => 'utilisateur', 'entity_id' => $user_id,
+        'meta' => ['methode' => 'google', 'compte_lie' => isset($user) && $user ? true : false, 'pays' => $pays['code'] ?? null]]);
 
     // Téléphone non vérifié : direction le dashboard quand même (la bannière
     // de vérification WhatsApp y prend le relais), plus de redirection vers

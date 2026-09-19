@@ -47,6 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 require_once __DIR__ . '/basse_de_donner/monrevenu_bd.php'; // fournit $pdo
 require_once __DIR__ . '/includs/whatsapp_verif_helpers.php';
 require_once __DIR__ . '/includs/notifications.php'; // pour envoyerNotification()
+require_once __DIR__ . '/includs/audit.php';
 
 header('Content-Type: application/json');
 
@@ -60,6 +61,8 @@ $signatureAttendue = 'sha256=' . hash_hmac('sha256', $raw, $appSecret);
 
 if ($appSecret === '' || !hash_equals($signatureAttendue, $signatureRecue)) {
     error_log('[webhook_whatsapp] Signature invalide, requête rejetée.');
+    auditInfo($pdo, ['category' => 'systeme', 'action' => $appSecret === '' ? 'webhook_whatsapp_secret_absent' : 'webhook_whatsapp_signature_invalide',
+        'result' => 'refus', 'actor_id' => null, 'actor_role' => null, 'meta' => ['taille' => strlen($raw)]]);
     http_response_code(403);
     exit;
 }
@@ -69,6 +72,8 @@ if ($appSecret === '' || !hash_equals($signatureAttendue, $signatureRecue)) {
 http_response_code(200);
 
 $payload = json_decode($raw, true);
+auditInfo($pdo, ['category' => 'systeme', 'action' => 'webhook_whatsapp_recu', 'actor_id' => null, 'actor_role' => null,
+    'meta' => ['json_valide' => (bool) $payload, 'taille' => strlen($raw)]]);
 if (!$payload) {
     exit;
 }

@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/audit.php';
 /**
  * whatsapp_sender.php, Envoi de codes de vérification via WhatsApp
  * ============================================================
@@ -41,7 +42,8 @@ function envoyerCodeWhatsApp(string $telephone, string $code): array
 {
     // Garde-fou : configuration non renseignée (variables d'environnement absentes)
     if (WHATSAPP_PHONE_NUMBER_ID === '' || WHATSAPP_ACCESS_TOKEN === '') {
-        error_log("[whatsapp_sender] Configuration manquante : code non envoyé (mode test). Code pour {$telephone} : {$code}");
+        error_log('[whatsapp_sender] Configuration manquante : code non envoyé.');
+        auditEnvoi('whatsapp', 'envoyerCodeWhatsApp', false, $telephone, 'configuration manquante');
         return ['ok' => false, 'erreur' => 'Service WhatsApp non configuré.'];
     }
 
@@ -93,13 +95,16 @@ function envoyerCodeWhatsApp(string $telephone, string $code): array
 
     if ($erreur_curl) {
         error_log("[whatsapp_sender] Erreur cURL : {$erreur_curl}");
+        auditEnvoi('whatsapp', 'envoyerCodeWhatsApp', false, $telephone, 'reseau : ' . $erreur_curl);
         return ['ok' => false, 'erreur' => 'Impossible de joindre WhatsApp pour le moment.'];
     }
 
     if ($code_http !== 200) {
-        error_log("[whatsapp_sender] Réponse API WhatsApp (HTTP {$code_http}) : {$reponse}");
+        error_log("[whatsapp_sender] Réponse API WhatsApp (HTTP {$code_http})");
+        auditEnvoi('whatsapp', 'envoyerCodeWhatsApp', false, $telephone, 'HTTP ' . $code_http);
         return ['ok' => false, 'erreur' => 'Échec de l\'envoi du code via WhatsApp.'];
     }
 
+    auditEnvoi('whatsapp', 'envoyerCodeWhatsApp', true, $telephone);
     return ['ok' => true, 'erreur' => null];
 }

@@ -31,9 +31,12 @@ if (!function_exists('envoyerNotificationPush')) {
         $privateKey = env('VAPID_PRIVATE_KEY');
         $subject    = env('VAPID_SUBJECT', 'mailto:contact@monrevenu.xyz');
 
+        require_once __DIR__ . '/audit.php';
         if (!$publicKey || !$privateKey) {
-            // Clés VAPID pas encore configurées : on ignore silencieusement le push,
-            // la notification "in-app" (table messages) a déjà été enregistrée.
+            // Clés VAPID absentes : la notification in-app (table messages) est enregistrée, le push est ignoré.
+            // Une ligne de journal par heure au plus, pour que l'absence de push reste visible.
+            auditInfoLimite($pdo, 'push_sans_cles', 3600, ['category' => 'systeme', 'action' => 'push_ignore_sans_cles', 'result' => 'echec',
+                'meta' => ['user_id' => $userId]]);
             return;
         }
 
@@ -47,6 +50,7 @@ if (!function_exists('envoyerNotificationPush')) {
         }
 
         if (!$abonnements) {
+            auditInfo($pdo, ['category' => 'systeme', 'action' => 'push_ignore_sans_abonnement', 'result' => 'echec', 'meta' => ['user_id' => $userId]]);
             return;
         }
 
@@ -80,7 +84,9 @@ if (!function_exists('envoyerNotificationPush')) {
             $webPush->queueNotification($subscription, $payload);
         }
 
+        $envoyes = 0; $echecs = 0; $expires = 0;
         foreach ($webPush->flush() as $rapport) {
+            if ($rapport->isSuccess()) $envoyes++; elseif ($rapport->isSubscriptionExpired()) $expires++; else $echecs++;
             if (!$rapport->isSuccess() && $rapport->isSubscriptionExpired()) {
                 // L'abonnement n'est plus valide (désinstallé, permission retirée...) : on le supprime.
                 try {
@@ -93,5 +99,7 @@ if (!function_exists('envoyerNotificationPush')) {
                 error_log('envoyerNotificationPush (échec) : ' . $rapport->getReason());
             }
         }
+        auditInfo($pdo, ['category' => 'systeme', 'action' => $envoyes > 0 ? 'push_envoye' : 'push_echec', 'result' => $envoyes > 0 ? 'ok' : 'echec',
+            'meta' => ['user_id' => $userId, 'envoyes' => $envoyes, 'echecs' => $echecs, 'abonnements_expires_supprimes' => $expires]]);
     }
 }

@@ -15,6 +15,7 @@
 session_start();
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
+require_once __DIR__ . '/includs/audit.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/email_sender.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/whatsapp_sender.php';
 
@@ -133,6 +134,7 @@ if (
     ) {
 
         $error = 'Session expirée, merci de recharger la page.';
+        auditCsrf($pdo, 'verification_renvoi');
 
     } else {
 
@@ -256,6 +258,8 @@ if (
                         $nouvelle_expiration,
                         $user_id
                     ]);
+                    auditInfo($pdo, ['category' => 'auth', 'action' => 'verification_code_renvoye', 'entity_type' => 'utilisateur',
+                        'entity_id' => $user_id, 'actor_id' => $user_id, 'actor_role' => null, 'meta' => ['canal' => $libelleCanal]]);
 
                     $success =
                         'Nouveau code envoyé par ' . $libelleCanal . '.';
@@ -303,6 +307,7 @@ if (
 
         $error =
             'Session expirée, merci de recharger la page.';
+        auditCsrf($pdo, 'verification');
 
     } else {
 
@@ -340,6 +345,8 @@ if (
         ) {
 
             $error = 'Code incorrect.';
+            auditInfo($pdo, ['category' => 'auth', 'action' => 'verification_echec', 'result' => 'echec', 'entity_type' => 'utilisateur',
+                'entity_id' => $user_id, 'actor_id' => $user_id, 'actor_role' => null]);
 
         } else {
 
@@ -422,6 +429,9 @@ if (
                 $stmtActivate->execute([
                     $user_id
                 ]);
+                auditInfo($pdo, ['category' => 'auth', 'action' => 'verification_email', 'entity_type' => 'utilisateur',
+                    'entity_id' => $user_id, 'actor_id' => $user_id, 'actor_role' => $userVerif['role'],
+                    'before' => ['phone_verified' => 0, 'is_active' => $userVerif['is_active'] ?? null], 'after' => ['phone_verified' => 1, 'is_active' => 1, 'status' => 'active']]);
 
                 /*
                  * Tout s'est bien passé.

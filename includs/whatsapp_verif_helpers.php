@@ -61,6 +61,10 @@ function genererOuRecupererCodeVerificationWhatsapp(PDO $pdo, int $userId, bool 
     );
     $upd->execute([$code, $expireAt, $userId]);
 
+    require_once __DIR__ . '/audit.php';
+    auditInfo($pdo, ['category' => 'auth', 'action' => 'whatsapp_code_genere', 'entity_type' => 'utilisateur', 'entity_id' => $userId,
+        'meta' => ['renouvele' => $forcer]]);
+
     return ['code' => $code, 'expire_at' => $expireAt, 'regenere' => $forcer];
 }
 
@@ -142,7 +146,13 @@ function validerCodeWhatsapp(PDO $pdo, string $texteMessage, string $numeroExped
         "INSERT INTO whatsapp_webhook_log (wa_from, message_body, code_extrait, matched_user_id, statut)
          VALUES (?, ?, ?, ?, ?)"
     );
-    $log->execute([$numero, $texteMessage, $code, $matchedUserId, $statut]);
+    // Le texte du message n'est pas conserve : seul le code extrait sert au controle
+    $log->execute([$numero, null, $code, $matchedUserId, $statut]);
+
+    require_once __DIR__ . '/audit.php';
+    auditInfo($pdo, ['category' => 'auth', 'action' => $statut === 'valide' ? 'verification_whatsapp' : 'whatsapp_code_' . $statut,
+        'result' => $statut === 'valide' ? 'ok' : 'refus', 'actor_id' => $matchedUserId, 'actor_role' => null,
+        'entity_type' => $matchedUserId ? 'utilisateur' : null, 'entity_id' => $matchedUserId, 'meta' => ['wa_from' => $numero, 'statut' => $statut]]);
 
     return [
         'success' => $statut === 'valide',

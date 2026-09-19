@@ -3,6 +3,7 @@ session_start();
 
 // 1. Connexion à la base de données (fichier centralisé du projet)
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
+require_once __DIR__ . '/../includs/audit.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/ui.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/geoip.php';
 
@@ -52,6 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $token_recu = $_POST['csrf_token'] ?? '';
     if (!hash_equals($_SESSION['csrf_token'], $token_recu)) {
         $_SESSION['flash_error'] = "Votre session a expiré. Rechargez la page puis recommencez.";
+        auditCsrf($pdo, 'profil');
         header('Location: profil.php'); exit();
     }
 
@@ -68,8 +70,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['flash_error'] = "L'adresse email n'est pas valide.";
         } else {
             try {
+                $stAvant = $pdo->prepare("SELECT fullname, email FROM users_monrevenu WHERE id = ?");
+                $stAvant->execute([$user_id]);
+                $avant = $stAvant->fetch(PDO::FETCH_ASSOC) ?: [];
                 $update = $pdo->prepare("UPDATE users_monrevenu SET fullname = ?, email = ? WHERE id = ?");
                 $update->execute([$nouveau_nom, $nouvel_email, $user_id]);
+                [$b, $a] = auditDiff($avant, ['fullname' => $nouveau_nom, 'email' => $nouvel_email]);
+                if ($a) {
+                    auditInfo($pdo, ['category' => 'compte', 'action' => 'profil_modification', 'entity_type' => 'utilisateur', 'entity_id' => $user_id,
+                        'before' => $b, 'after' => $a]);
+                }
 
                 // Met à jour la session pour que navbar.php affiche le nouveau nom sans reconnexion
                 $_SESSION['user_fullname'] = $nouveau_nom;
@@ -109,10 +119,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 if (!$row || !password_verify($code_actuel, $row['password'])) {
                     $_SESSION['flash_error'] = "Le code secret actuel est incorrect.";
+                    auditInfo($pdo, ['category' => 'auth', 'action' => 'mot_de_passe_changement_echec', 'result' => 'echec',
+                        'entity_type' => 'utilisateur', 'entity_id' => $user_id]);
                 } else {
                     $hash = password_hash($code_nouveau, PASSWORD_BCRYPT, ['cost' => 12]);
                     $upd  = $pdo->prepare("UPDATE users_monrevenu SET password = ? WHERE id = ?");
                     $upd->execute([$hash, $user_id]);
+                    auditInfo($pdo, ['category' => 'auth', 'action' => 'mot_de_passe_changement', 'entity_type' => 'utilisateur', 'entity_id' => $user_id]);
                     $_SESSION['flash_success'] = "Votre code secret est modifié.";
                 }
             } catch (PDOException $e) {
@@ -225,6 +238,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } catch (PDOException $e) {
                 error_log('journal_suppressions_compte (table absente ?) : ' . $e->getMessage());
             }
+
+            auditCritique($pdo, ['category' => 'compte', 'action' => 'compte_suppression', 'entity_type' => 'utilisateur', 'entity_id' => $user_id,
+                'after' => ['status' => 'deleted', 'is_active' => 0, 'anonymise' => true], 'meta' => ['type' => $type_suppression]]);
 
             $pdo->commit();
 

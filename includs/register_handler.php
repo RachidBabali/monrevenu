@@ -33,6 +33,8 @@ if (
         $_POST['csrf_token']
     )
 ) {
+    require_once __DIR__ . '/audit.php';
+    auditCsrf($pdo ?? null, 'inscription');
     header('Location: /index.php?error=csrf');
     exit();
 }
@@ -350,6 +352,10 @@ try {
             $nouvel_utilisateur_id
         ]);
 
+        require_once __DIR__ . '/audit.php';
+        auditInfo($pdo, ['category' => 'auth', 'action' => 'inscription_reprise_compte_non_verifie', 'entity_type' => 'utilisateur',
+            'entity_id' => $nouvel_utilisateur_id, 'actor_id' => $nouvel_utilisateur_id, 'actor_role' => null, 'meta' => ['email' => $email]]);
+
         // Après création, l'utilisateur doit recevoir un code par
         // email pour vérifier son compte : redirection vers
         // verification.php (inchangée).
@@ -488,6 +494,10 @@ try {
 
     $nouvel_utilisateur_id = (int) $pdo->lastInsertId();
 
+    require_once __DIR__ . '/audit.php';
+    auditInfo($pdo, ['category' => 'auth', 'action' => 'inscription', 'entity_type' => 'utilisateur', 'entity_id' => $nouvel_utilisateur_id,
+        'actor_id' => $nouvel_utilisateur_id, 'actor_role' => 'affilie',
+        'after' => ['email' => $email, 'phone' => $phone_normalise, 'role' => 'affilie', 'pays' => $pays['code']], 'meta' => ['methode' => 'formulaire']]);
 
     $pdo->commit();
 

@@ -9,6 +9,7 @@
 
 session_start();
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
+require_once __DIR__ . '/includs/audit.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/auth_middleware.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/whatsapp_sender.php';
 
@@ -38,6 +39,7 @@ $erreur = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
         $erreur = 'Votre session a expiré. Rechargez la page puis recommencez.';
+        auditCsrf($pdo, 'completer_telephone');
     } else {
         $phone_brut    = trim($_POST['phone'] ?? '');
         $phone_country = trim($_POST['phone_country'] ?? 'KM');
@@ -91,6 +93,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                          verification_code = ?, code_expires_at = ?, code_sent_at = NOW()
                      WHERE id = ?"
                 )->execute([$phone_normalise, $code_verification_hash, $code_expiration, $user_id]);
+                auditInfo($pdo, ['category' => 'compte', 'action' => 'telephone_ajout', 'entity_type' => 'utilisateur', 'entity_id' => $user_id,
+                    'after' => ['phone' => $phone_normalise, 'verification_method' => 'whatsapp']]);
 
                 $resultatEnvoi = envoyerCodeWhatsApp($phone_normalise, $code_verification);
 

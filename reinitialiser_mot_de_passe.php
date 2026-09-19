@@ -2,6 +2,7 @@
 session_start();
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
+require_once __DIR__ . '/includs/audit.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/email_sender.php';
 
 $user_id = $_SESSION['reset_password_user_id'] ?? null;
@@ -32,6 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_renvoyer'])) {
 
     if (empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
         $error = 'Votre session a expiré. Rechargez la page puis recommencez.';
+        auditCsrf($pdo, 'reinitialisation_renvoi');
     } else {
         $nouveau_code_email = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         $nouveau_hash = password_hash($nouveau_code_email, PASSWORD_BCRYPT);
@@ -42,13 +44,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_renvoyer'])) {
         if ($resultat['ok']) {
             $pdo->prepare("UPDATE users_monrevenu SET reset_password_code = ?, reset_password_expires_at = ? WHERE id = ?")
                 ->execute([$nouveau_hash, $nouvelle_expiration, $user_id]);
+            auditInfo($pdo, ['category' => 'auth', 'action' => 'reinitialisation_code_renvoye', 'entity_type' => 'utilisateur',
+                'entity_id' => $user_id, 'actor_id' => null, 'actor_role' => null]);
 
             $success = 'Nouveau code envoyé par email.';
 
             $stmtUser->execute([$user_id]);
             $user = $stmtUser->fetch();
         } else {
-            error_log('Erreur renvoi code reset pour ' . $user['email'] . ' : ' . ($resultat['error'] ?? 'Erreur inconnue'));
+            error_log('Erreur renvoi code reset pour ' . journalMasquerEmail($user['email']) . ' : ' . ($resultat['error'] ?? 'Erreur inconnue'));
             $error = "Impossible d'envoyer le code par email. Veuillez réessayer.";
         }
     }
@@ -61,6 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_reinitialiser'
 
     if (empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
         $error = 'Votre session a expiré. Rechargez la page puis recommencez.';
+        auditCsrf($pdo, 'reinitialisation');
     } else {
         $code_email_saisi = trim($_POST['code'] ?? '');
         $nouveau_code      = strtoupper(trim($_POST['nouveau_code'] ?? ''));
@@ -72,6 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_reinitialiser'
             $error = "Ce code a expiré. Merci de redemander un code.";
         } elseif (!password_verify($code_email_saisi, $user['reset_password_code'])) {
             $error = "Code incorrect.";
+            auditInfo($pdo, ['category' => 'auth', 'action' => 'reinitialisation_echec', 'result' => 'echec', 'entity_type' => 'utilisateur',
+                'entity_id' => $user_id, 'actor_id' => null, 'actor_role' => null]);
         } elseif (strlen($nouveau_code) !== 4) {
             $error = "Le code secret doit contenir exactement 4 caractères.";
         } else {
@@ -89,6 +96,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_reinitialiser'
                     $pdo->prepare(
                         "UPDATE users_monrevenu SET password = ?, reset_password_code = NULL, reset_password_expires_at = NULL WHERE id = ?"
                     )->execute([$hash, $user_id]);
+                    auditInfo($pdo, ['category' => 'auth', 'action' => 'reinitialisation_validee', 'entity_type' => 'utilisateur',
+                        'entity_id' => $user_id, 'actor_id' => $user_id, 'actor_role' => null]);
 
                     unset($_SESSION['reset_password_user_id'], $_SESSION['reset_password_email']);
                     $_SESSION['flash_success'] = "Votre code secret a été réinitialisé avec succès. Vous pouvez vous connecter.";

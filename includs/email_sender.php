@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/audit.php';
 /**
  * email_sender.php, Envoi du code de vérification par email
  * À placer dans : includs/email_sender.php
@@ -55,10 +56,12 @@ function envoyerCodeEmail(string $destinataire, string $code, string $nomDestina
         $mail->AltBody = "Votre code de vérification MonRevenu est : $code\nCe code expire dans 10 minutes.";
 
         $mail->send();
+        auditEnvoi('email', 'envoyerCodeEmail', true, $destinataire);
         return ['ok' => true];
 
     } catch (Exception $e) {
         error_log('Erreur envoi email de vérification : ' . $mail->ErrorInfo);
+        auditEnvoi('email', 'envoyerCodeEmail', false, $destinataire, $mail->ErrorInfo);
         return ['ok' => false, 'error' => $mail->ErrorInfo];
     }
 }
@@ -133,10 +136,12 @@ function envoyerCodeResetMotDePasse(string $destinataire, string $code, string $
         $mail->AltBody = "Votre code de réinitialisation MonRevenu est : $code\nCe code expire dans 10 minutes. Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.";
 
         $mail->send();
+        auditEnvoi('email', 'envoyerCodeResetMotDePasse', true, $destinataire);
         return ['ok' => true];
 
     } catch (Exception $e) {
         error_log('Erreur envoi email de réinitialisation : ' . $mail->ErrorInfo);
+        auditEnvoi('email', 'envoyerCodeResetMotDePasse', false, $destinataire, $mail->ErrorInfo);
         return ['ok' => false, 'error' => $mail->ErrorInfo];
     }
 }
@@ -183,10 +188,12 @@ function envoyerAlerteTentativesConnexion(string $destinataire, string $nom, str
             . "Si ce n'était pas vous, changez votre code secret dès que possible.";
 
         $mail->send();
+        auditEnvoi('email', 'envoyerAlerteTentativesConnexion', true, $destinataire);
         return ['ok' => true];
 
     } catch (Exception $e) {
         error_log('Erreur envoi alerte connexion suspecte : ' . $mail->ErrorInfo);
+        auditEnvoi('email', 'envoyerAlerteTentativesConnexion', false, $destinataire, $mail->ErrorInfo);
         return ['ok' => false, 'error' => $mail->ErrorInfo];
     }
 }

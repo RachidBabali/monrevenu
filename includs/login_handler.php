@@ -33,26 +33,14 @@ if (
     empty($_POST['csrf_token']) ||
     !hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'])
 ) {
+    require_once __DIR__ . '/audit.php';
+    auditCsrf($pdo ?? null, 'connexion');
     header('Location: /index.php?error=csrf');
     exit();
 }
 
-//  3. Créer les tables de protection si elles n'existent pas 
-try {
-    $pdo->exec("CREATE TABLE IF NOT EXISTS login_attempts (
-        ip           VARCHAR(45) NOT NULL PRIMARY KEY,
-        attempts     INT NOT NULL DEFAULT 0,
-        last_attempt DATETIME NOT NULL DEFAULT NOW()
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
-    $pdo->exec("CREATE TABLE IF NOT EXISTS login_attempts_compte (
-        phone        VARCHAR(20) NOT NULL PRIMARY KEY,
-        attempts     INT NOT NULL DEFAULT 0,
-        last_attempt DATETIME NOT NULL DEFAULT NOW()
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-} catch (\PDOException $e) {
-    // Tables existent déjà ou autre erreur non bloquante
-}
+//  3. Les tables login_attempts et login_attempts_compte existent en base (structure de production, migration 001).
+require_once __DIR__ . '/audit.php';
 
 //  4. Récupération des champs 
 $identifiant = trim($_POST['identifiant'] ?? '');
@@ -108,6 +96,8 @@ try {
         $diffIp = time() - strtotime($rowIp['last_attempt']);
         if ($rowIp['attempts'] >= MAX_TENTATIVES && $diffIp < DUREE_BLOCAGE_SECONDES) {
             $reste = ceil((DUREE_BLOCAGE_SECONDES - $diffIp) / 60);
+            auditInfo($pdo, ['category' => 'auth', 'action' => 'connexion_refusee_verrou_ip', 'result' => 'refus', 'actor_id' => null, 'actor_role' => null,
+                'meta' => ['identifiant' => $cle_recherche, 'tentatives' => (int) $rowIp['attempts']]]);
             header("Location: /index.php?error=trop_tentatives&reste={$reste}");
             exit();
         }
@@ -125,6 +115,8 @@ try {
         $diffCompte = time() - strtotime($rowCompte['last_attempt']);
         if ($rowCompte['attempts'] >= MAX_TENTATIVES && $diffCompte < DUREE_BLOCAGE_SECONDES) {
             $reste = ceil((DUREE_BLOCAGE_SECONDES - $diffCompte) / 60);
+            auditInfo($pdo, ['category' => 'auth', 'action' => 'connexion_refusee_verrou_compte', 'result' => 'refus', 'actor_id' => null, 'actor_role' => null,
+                'meta' => ['identifiant' => $cle_recherche, 'tentatives' => (int) $rowCompte['attempts']]]);
             header("Location: /index.php?error=compte_bloque&reste={$reste}");
             exit();
         }
@@ -175,6 +167,9 @@ try {
         }
 
         $tentatives_ip = $rowIp ? ((int) $rowIp['attempts'] + 1) : 1;
+        auditInfo($pdo, ['category' => 'auth', 'action' => $nouvelles_tentatives_compte >= MAX_TENTATIVES ? 'verrouillage_compte' : 'connexion_echec',
+            'result' => 'echec', 'actor_id' => null, 'actor_role' => null, 'entity_type' => $user ? 'utilisateur' : null, 'entity_id' => $user['id'] ?? null,
+            'meta' => ['identifiant' => $cle_recherche, 'tentatives_compte' => $nouvelles_tentatives_compte, 'tentatives_ip' => $tentatives_ip, 'compte_connu' => (bool) $user]]);
         $reste_tentatives = max(0, MAX_TENTATIVES - $tentatives_ip);
 
         header("Location: /index.php?error=identifiants&reste_tentatives={$reste_tentatives}");
@@ -183,6 +178,8 @@ try {
 
     //  8. Compte actif 
     if (!$user['is_active']) {
+        auditInfo($pdo, ['category' => 'auth', 'action' => 'connexion_refusee_inactif', 'result' => 'refus', 'actor_id' => null, 'actor_role' => null,
+            'entity_type' => 'utilisateur', 'entity_id' => $user['id']]);
         header('Location: /index.php?error=compte_inactif');
         exit();
     }
@@ -230,6 +227,9 @@ try {
     $_SESSION['login_time']    = time();
     $_SESSION['ip']            = $ip;
     $_SESSION['csrf_token']    = bin2hex(random_bytes(32));
+
+    auditInfo($pdo, ['category' => 'auth', 'action' => 'connexion', 'entity_type' => 'utilisateur', 'entity_id' => $user['id'],
+        'meta' => ['methode' => 'mot_de_passe', 'pays' => $pays['code'] ?? null]]);
 
     //  10. Redirection selon le rôle (inchangée) 
     switch ($user['role']) {

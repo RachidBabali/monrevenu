@@ -2,6 +2,7 @@
 session_start();
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
+require_once __DIR__ . '/includs/audit.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/email_sender.php';
 
 if (empty($_SESSION['csrf_token'])) {
@@ -15,6 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_demander_reset
 
     if (empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
         $error = 'Votre session a expiré. Rechargez la page puis recommencez.';
+        auditCsrf($pdo, 'mot_de_passe_oublie');
     } else {
         $email = trim(strtolower($_POST['email'] ?? ''));
 
@@ -35,6 +37,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_demander_reset
 
                     $pdo->prepare("UPDATE users_monrevenu SET reset_password_code = ?, reset_password_expires_at = ? WHERE id = ?")
                         ->execute([$code_hash, $expiration, $user['id']]);
+                    auditInfo($pdo, ['category' => 'auth', 'action' => 'reinitialisation_demande', 'entity_type' => 'utilisateur',
+                        'entity_id' => $user['id'], 'actor_id' => null, 'actor_role' => null]);
 
                     $resultat = envoyerCodeResetMotDePasse($user['email'], $code, $user['fullname']);
 
@@ -45,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_demander_reset
                         header('Location: reinitialiser_mot_de_passe.php');
                         exit();
                     } else {
-                        error_log('Erreur envoi email reset pour ' . $email . ' : ' . ($resultat['error'] ?? 'Erreur inconnue'));
+                        error_log('Erreur envoi email reset pour ' . journalMasquerEmail($email) . ' : ' . ($resultat['error'] ?? 'Erreur inconnue'));
                         $error = "L'email n'a pas pu être envoyé. Réessayez dans un instant.";
                     }
                 } else {
