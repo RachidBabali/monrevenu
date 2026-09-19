@@ -16,8 +16,10 @@ if (!defined('MONTANT_MIN_RETRAIT')) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'retrait') {
     if (empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'])) {
         $retrait_error = 'Votre session a expiré. Rechargez la page puis recommencez.';
+        require_once __DIR__ . '/../includs/audit.php';
+        auditInfo($pdo, ['category' => 'systeme', 'action' => 'csrf_echec', 'result' => 'refus', 'meta' => ['page' => 'portefeuille']]);
     } else {
-        $montant_r = floatval($_POST['montant_retrait'] ?? 0);
+        $montant_r = round(floatval($_POST['montant_retrait'] ?? 0), 2);
         $methode_r = trim($_POST['methode_retrait'] ?? '');
         $numero_r  = trim($_POST['numero_reception'] ?? '');
 
@@ -28,46 +30,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         } elseif ($montant_r > $balance) {
             $retrait_error = 'Solde insuffisant : vous disposez de ' . formaterMontant($balance) . '.';
         } else {
+            require_once __DIR__ . '/../includs/argent.php';
             $pdo->beginTransaction();
             try {
-                $stmtLock = $pdo->prepare("SELECT balance FROM users_monrevenu WHERE id = ? FOR UPDATE");
-                $stmtLock->execute([$user_id]);
-                $solde_verifie = (float) $stmtLock->fetchColumn();
+                // Le retrait est cree d'abord pour connaitre son numero, puis le solde est debite sous verrou
+                // par mouvementSolde (refus si le solde deviendrait negatif, journal dans la meme transaction).
+                $note = $methode_r . ' : ' . $numero_r;
+                $stmtRetrait = $pdo->prepare(
+                    "INSERT INTO withdrawals (user_id, amount, status, method, note, created_at)
+                     VALUES (?, ?, 'en_attente', ?, ?, NOW())"
+                );
+                $stmtRetrait->execute([$user_id, $montant_r, $methode_r, $note]);
+                $withdrawal_id = (int) $pdo->lastInsertId();
 
-                if ($montant_r > $solde_verifie) {
-                    $pdo->rollBack();
-                    $retrait_error = 'Solde insuffisant : vous disposez de ' . formaterMontant($balance) . '.';
-                } else {
-                    $pdo->prepare("UPDATE users_monrevenu SET balance = balance - ? WHERE id = ?")->execute([$montant_r, $user_id]);
+                mouvementSolde($pdo, (int) $user_id, -$montant_r, 'retrait', 'RETRAIT-' . $withdrawal_id, 'en_attente',
+                    'Demande de retrait via ' . $methode_r, 'retrait_demande', ['retrait_id' => $withdrawal_id, 'methode' => $methode_r]);
 
-                    $note = $methode_r . ' : ' . $numero_r;
-                    $stmtRetrait = $pdo->prepare(
-                        "INSERT INTO withdrawals (user_id, amount, status, method, note, created_at)
-                         VALUES (?, ?, 'en_attente', ?, ?, NOW())"
-                    );
-                    $stmtRetrait->execute([$user_id, $montant_r, $methode_r, $note]);
-                    $withdrawal_id = (int) $pdo->lastInsertId();
+                $pdo->commit();
 
-                    $referenceTx = 'RETRAIT-' . $withdrawal_id;
-                    $pdo->prepare(
-                        "INSERT INTO transactions_monrevenu (user_id, type, amount, reference, status, description)
-                         VALUES (?, 'retrait', ?, ?, 'en_attente', ?)"
-                    )->execute([$user_id, $montant_r, $referenceTx, 'Demande de retrait via ' . $methode_r]);
-
+                // Notification apres le commit : aucun appel reseau pendant que la tete du journal est verrouillee
+                try {
                     require_once __DIR__ . '/../includs/notifications.php';
                     envoyerNotification(
                         $pdo, $user_id,
                         "Votre demande de retrait de " . formaterMontant($montant_r) . " est enregistrée. Elle est en attente de validation.",
                         'Demande de retrait', '/page/historique.php'
                     );
-
-                    $pdo->commit();
-                    $balance -= $montant_r;
-                    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-                    $retrait_success = 'Demande de retrait de ' . formaterMontant($montant_r) . ' enregistrée. Vous recevrez une notification quand le paiement sera effectué.';
+                } catch (Throwable $e) {
+                    error_log('[wallet] notification de retrait : ' . get_class($e));
                 }
-            } catch (Exception $e) {
+                $balance -= $montant_r;
+                $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+                $retrait_success = 'Demande de retrait de ' . formaterMontant($montant_r) . ' enregistrée. Vous recevrez une notification quand le paiement sera effectué.';
+            } catch (SoldeInsuffisant $e) {
                 $pdo->rollBack();
+                $retrait_error = 'Solde insuffisant : vous disposez de ' . formaterMontant($balance) . '.';
+            } catch (Throwable $e) {
+                if ($pdo->inTransaction()) $pdo->rollBack();
+                error_log('[wallet] retrait : ' . get_class($e) . ' ' . $e->getMessage());
                 $retrait_error = "La demande n'a pas pu être enregistrée. Réessayez dans un instant.";
             }
         }

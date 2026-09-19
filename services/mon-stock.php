@@ -88,6 +88,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_enregistrer_ve
              VALUES (?, ?, 'SALE', ?, ?, ?, ?, ?)"
         )->execute([$user_id, $produit_id, $quantite, $stock_avant, $stock_apres, $reference, $user_id]);
 
+        require_once __DIR__ . '/../includs/audit.php';
+        auditCritique($pdo, ['category' => 'commande', 'action' => 'vente_stock_declaration', 'entity_type' => 'vente_stock', 'entity_id' => $vente_id,
+            'before' => ['quantite' => $stock_avant], 'after' => ['quantite' => $stock_apres],
+            'meta' => ['produit_id' => $produit_id, 'vendu' => $quantite, 'commission' => $commission_montant, 'reference' => $reference]]);
+
         $pdo->commit();
 
         $_SESSION['flash_success'] = "Vente enregistrée : {$quantite} x " . $ligne['nom_produit'] . ". Commission de " . formaterMontant($commission_montant) . " en attente d'envoi par l'administration.";

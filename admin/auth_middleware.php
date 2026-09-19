@@ -36,6 +36,11 @@ function requireLogin(string $redirect = '/index.php'): void {
 
     // Verrouillage IP
     if (isset($_SESSION['ip']) && $_SESSION['ip'] !== $_SERVER['REMOTE_ADDR']) {
+        if (isset($GLOBALS['pdo']) && $GLOBALS['pdo'] instanceof PDO) {
+            require_once __DIR__ . '/../includs/audit.php';
+            auditInfo($GLOBALS['pdo'], ['category' => 'auth', 'action' => 'session_ip_changee', 'result' => 'refus',
+                'meta' => ['ip_precedente' => tronquerIp($_SESSION['ip'])]]);
+        }
         session_destroy();
         header("Location: {$redirect}?error=session"); exit();
     }
@@ -65,6 +70,10 @@ function requireRole(PDO $pdo, string $role, string $redirect = '/index.php'): a
     $user = $stmt->fetch();
 
     if (!$user || $user['role'] !== $role) {
+        require_once __DIR__ . '/../includs/audit.php';
+        auditInfo($pdo, ['category' => 'systeme', 'action' => 'acces_refuse', 'result' => 'refus', 'entity_type' => 'page',
+            'entity_id' => parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), 'actor_id' => $user ? (int) $user['id'] : null,
+            'actor_role' => $user['role'] ?? null, 'meta' => ['role_requis' => $role]]);
         session_destroy();
         header("Location: $redirect"); exit();
     }
