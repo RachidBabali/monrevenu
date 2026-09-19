@@ -18,6 +18,7 @@ define('BASE_URL', $protocole . $_SERVER['HTTP_HOST']);
 //    (includs/affiliation_helpers.php) pour éviter toute divergence.
 // ============================================================
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/affiliation_helpers.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/commercant.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/ui.php';
 
 // ============================================================
@@ -132,9 +133,10 @@ if ($ref_valide && $ref_id > 0) {
 $produit = null;
 if ($produit_id > 0) {
     $stmtProduit = $pdo->prepare(
-        "SELECT id, nom_produit AS nom, description, image, prix_vente AS prix, commission_pct AS commission_pourcentage
-         FROM vendeur_produits
-         WHERE id = ? AND statut = 'actif'
+        "SELECT vp.id, vp.nom_produit AS nom, vp.description, vp.image, vp.prix_vente AS prix,
+                vp.commission_pct AS commission_pourcentage, vp.vendeur_id AS proprietaire_id
+         FROM vendeur_produits vp " . CATALOGUE_JOINTURE . "
+         WHERE vp.id = ? AND " . CATALOGUE_CONDITION . "
          LIMIT 1"
     );
     $stmtProduit->execute([$produit_id]);
@@ -204,6 +206,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_commander'])) 
                     'Nouvelle vente en attente',
                     '/page/historique.php'
                 );
+
+                // Le commercant proprietaire du produit est prevenu de la commande (apres l'enregistrement)
+                $proprietaire = (int) ($produit['proprietaire_id'] ?? 0);
+                if ($proprietaire > 0 && $proprietaire !== (int) $vendeur['id']) {
+                    try {
+                        $stRole = $pdo->prepare("SELECT role FROM users_monrevenu WHERE id = ?");
+                        $stRole->execute([$proprietaire]);
+                        if ($stRole->fetchColumn() === 'commercant') {
+                            envoyerNotification(
+                                $pdo,
+                                $proprietaire,
+                                "Nouvelle commande n° " . $commande_id . " : " . $quantite . " x " . $produit['nom'] . ". Coordonnées du client dans votre espace.",
+                                'Nouvelle commande',
+                                '/commercant/commandes.php'
+                            );
+                        }
+                    } catch (Throwable $t) {
+                        error_log('[produit] notification commercant : ' . get_class($t));
+                    }
+                }
 
                 $_SESSION['flash_message_commande'] = "Merci {$nom_client}, votre commande est enregistrée. Vous serez contacté sur WhatsApp au {$telephone_client} pour confirmer la livraison. Le paiement se fait à la livraison.";
                 header('Location: ' . $_SERVER['REQUEST_URI']);

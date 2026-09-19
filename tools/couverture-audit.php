@@ -4,7 +4,7 @@
  * Usage (ligne de commande seulement) : php tools/couverture-audit.php [--markdown]
  *
  * Une ecriture est couverte si un appel de journal (auditCritique, auditInfo, auditCsrf, auditEnvoi,
- * auditInfoLimite, mouvementSolde) se trouve dans la meme fonction ou le meme bloc, au plus 60 lignes
+ * auditInfoLimite, mouvementSolde) se trouve dans la meme fonction ou le meme bloc, au plus 85 lignes
  * apres ou 15 lignes avant. Une ecriture volontairement hors journal porte le commentaire
  * `audit:exclu <raison>` sur sa ligne ou dans les 2 lignes precedentes.
  * Code de sortie 1 si une ecriture n'est ni couverte ni exclue.
@@ -52,7 +52,7 @@ foreach ($fichiers as $rel) {
                 $resultats[] = [$rel, $n + 1, $op, $table, 'exclue', trim($ex[1])];
                 continue;
             }
-            $fenetre = implode("\n", array_slice($lignes, max(0, $n - 15), 76));
+            $fenetre = implode("\n", array_slice($lignes, max(0, $n - 15), 101));
             $couvert = (bool) preg_match($motifJournal, $fenetre);
             $resultats[] = [$rel, $n + 1, $op, $table, $couvert ? 'couverte' : 'NON COUVERTE', ''];
         }

@@ -1,5 +1,12 @@
 <section class="border-b border-line" aria-labelledby="titre-confiance">
   <div class="conteneur py-12 lg:py-16">
+    <div class="carte mb-8 flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h2 class="text-lg font-semibold">Vous vendez des produits ?</h2>
+        <p class="mt-1 text-text-2">Publiez vos fiches et laissez les affiliés les faire connaître. Chaque fiche est vérifiée avant sa mise en ligne.</p>
+      </div>
+      <a class="btn btn-secondaire shrink-0" href="/#inscription-commercant">Ouvrir une boutique</a>
+    </div>
     <h2 id="titre-confiance" class="text-2xl font-semibold lg:text-3xl">Vos données et vos contacts</h2>
     <div class="mt-6 grid gap-6 md:grid-cols-2">
       <div class="flex flex-col gap-3">

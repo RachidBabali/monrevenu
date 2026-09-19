@@ -8,6 +8,7 @@
  */
 
 require_once __DIR__ . '/affiliation_helpers.php';
+require_once __DIR__ . '/commercant.php';
 
 if (!defined('VITRINE_CACHE_SECONDES')) {
     define('VITRINE_CACHE_SECONDES', 600);
@@ -42,10 +43,10 @@ if (!function_exists('produitVitrineAccueil')) {
         $produit = null;
         try {
             $stmt = $pdo->prepare(
-                "SELECT id, nom_produit, image, prix_vente
-                 FROM vendeur_produits
-                 WHERE statut = 'actif' AND image <> '' AND image NOT LIKE 'data:%'
-                 ORDER BY created_at DESC, id DESC
+                "SELECT vp.id, vp.nom_produit, vp.image, vp.prix_vente
+                 FROM vendeur_produits vp " . CATALOGUE_JOINTURE . "
+                 WHERE " . CATALOGUE_CONDITION . " AND vp.image <> '' AND vp.image NOT LIKE 'data:%'
+                 ORDER BY vp.created_at DESC, vp.id DESC
                  LIMIT 1"
             );
             $stmt->execute();

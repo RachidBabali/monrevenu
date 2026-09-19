@@ -26,6 +26,10 @@
         <p class="pb-4 text-text-2">Cela dépend uniquement des ventes validées : <?= formaterMontant($commission_basse) ?> par article pour un produit jusqu'à <?= formaterMontant($seuil_commission) ?>, <?= formaterMontant($commission_haute) ?> au-delà. MonRevenu ne garantit aucun revenu.</p>
       </details>
       <details class="accordeon">
+        <summary>Je vends des produits : puis-je les proposer ici ?<?= ico('chevron-down') ?></summary>
+        <p class="pb-4 text-text-2">Oui. Créez un compte en choisissant « Vendre mes produits », puis publiez vos fiches depuis votre espace. Chaque fiche est vérifiée avant d'apparaître dans le catalogue. Les affiliés partagent ensuite vos produits ; vous traitez les commandes et vous devez à MonRevenu la commission de l'affilié sur chaque vente validée.</p>
+      </details>
+      <details class="accordeon">
         <summary>Comment retirer mon argent ?<?= ico('chevron-down') ?></summary>
         <p class="pb-4 text-text-2">Depuis votre portefeuille, à partir de <?= formaterMontant($minimum_retrait) ?>. Le montant est déduit de votre solde au moment de la demande, puis envoyé sur le numéro indiqué après validation. Une demande refusée est recréditée.</p>
       </details>

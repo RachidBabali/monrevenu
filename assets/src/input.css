@@ -294,6 +294,19 @@
     @apply h-5 w-5 shrink-0 rounded-sm border-line-strong;
     accent-color: rgb(var(--primary));
   }
+  /* Choix exclusif presente en carte (type de compte) : toute la carte est cliquable */
+  .choix-carte {
+    @apply flex min-h-[44px] cursor-pointer items-start gap-3 rounded border border-line-strong bg-surface p-3 transition-colors;
+  }
+  .choix-carte:hover {
+    @apply bg-surface-2;
+  }
+  .choix-carte:has(input:checked) {
+    @apply border-primary bg-primary-soft;
+  }
+  .choix-carte .case {
+    @apply mt-0.5;
+  }
 
   /* Surfaces */
   .carte {

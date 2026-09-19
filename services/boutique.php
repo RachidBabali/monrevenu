@@ -5,6 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/auth_middleware.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/commercant.php';
 exigerAffiliationDebloquee($pdo);
 
 $user_id = $_SESSION['user_id'] ?? null;
@@ -30,18 +31,18 @@ $produits = [];
 try {
     if ($recherche !== '') {
         $stmt = $pdo->prepare(
-            "SELECT id, nom_produit AS nom, description, image, prix_vente AS prix
-             FROM vendeur_produits
-             WHERE statut = 'actif' AND nom_produit LIKE ?
-             ORDER BY nom_produit ASC"
+            "SELECT vp.id, vp.nom_produit AS nom, vp.description, vp.image, vp.prix_vente AS prix
+             FROM vendeur_produits vp " . CATALOGUE_JOINTURE . "
+             WHERE " . CATALOGUE_CONDITION . " AND vp.nom_produit LIKE ?
+             ORDER BY vp.nom_produit ASC"
         );
         $stmt->execute(['%' . $recherche . '%']);
     } else {
         $stmt = $pdo->prepare(
-            "SELECT id, nom_produit AS nom, description, image, prix_vente AS prix
-             FROM vendeur_produits
-             WHERE statut = 'actif'
-             ORDER BY nom_produit ASC"
+            "SELECT vp.id, vp.nom_produit AS nom, vp.description, vp.image, vp.prix_vente AS prix
+             FROM vendeur_produits vp " . CATALOGUE_JOINTURE . "
+             WHERE " . CATALOGUE_CONDITION . "
+             ORDER BY vp.nom_produit ASC"
         );
         $stmt->execute();
     }

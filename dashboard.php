@@ -4,6 +4,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/auth_middleware.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/commercant.php';
 exigerConnexion();
 
 $user_id       = $_SESSION['user_id'];
@@ -71,8 +72,8 @@ try {
     $dernieres_commissions = $st->fetchAll();
 
     $st = $pdo->prepare(
-        "SELECT id, nom_produit, image, prix_vente FROM vendeur_produits
-         WHERE statut = 'actif' ORDER BY prix_vente DESC, id DESC LIMIT 4"
+        "SELECT vp.id, vp.nom_produit, vp.image, vp.prix_vente FROM vendeur_produits vp " . CATALOGUE_JOINTURE . "
+         WHERE " . CATALOGUE_CONDITION . " ORDER BY vp.prix_vente DESC, vp.id DESC LIMIT 4"
     );
     $st->execute();
     $produits_a_promouvoir = $st->fetchAll();
