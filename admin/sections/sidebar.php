@@ -32,6 +32,15 @@ $onglets_admin = [
         </button>
       <?php endforeach; ?>
     <?php endforeach; ?>
+    <p class="nav-groupe">Commerçants</p>
+    <a class="nav-lien" href="/admin/commercants.php">
+      <?= ico('store') ?><span class="flex-1 truncate">Comptes</span>
+      <?php if (!empty($nb_commercants_attente)): ?><span class="chiffres rounded-full bg-surface-2 px-1.5 text-xs text-text-2"><?= (int) $nb_commercants_attente ?></span><?php endif; ?>
+    </a>
+    <a class="nav-lien" href="/admin/moderation.php">
+      <?= ico('badge-check') ?><span class="flex-1 truncate">Produits à valider</span>
+      <?php if (!empty($nb_produits_attente)): ?><span class="chiffres rounded-full bg-surface-2 px-1.5 text-xs text-text-2"><?= (int) $nb_produits_attente ?></span><?php endif; ?>
+    </a>
   </nav>
   <div class="border-t border-line p-3">
     <div class="flex items-center gap-3 px-1 pb-2">

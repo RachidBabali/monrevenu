@@ -675,6 +675,16 @@ $libelles_roles = [
     'affilie' => 'affilié' . (($repartition_roles['affilie'] ?? 0) > 1 ? 's' : ''),
 ];
 
+// Compteurs des pages Commercants et Produits a valider (barre laterale)
+$nb_commercants_attente = 0;
+$nb_produits_attente = 0;
+try {
+    $nb_commercants_attente = (int) $pdo->query("SELECT COUNT(*) FROM commercants_profils WHERE statut = 'en_attente'")->fetchColumn();
+    $nb_produits_attente = (int) $pdo->query("SELECT COUNT(*) FROM vendeur_produits WHERE moderation = 'en_attente'")->fetchColumn();
+} catch (PDOException $e) {
+    // Tables du lot 2 pas encore migrees : les compteurs restent a zero
+}
+
 $admin_prenom = explode(' ', trim($admin['fullname'] ?? 'Admin'))[0] ?? 'Admin';
 $admin_initiales = strtoupper(substr($admin['fullname'] ?? 'A', 0, 1) . substr(strrchr(' ' . ($admin['fullname'] ?? ''), ' '), 1, 1));
 ?>
