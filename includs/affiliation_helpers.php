@@ -13,13 +13,21 @@
 require_once __DIR__ . '/env_loader.php';
 
 if (!defined('SECRET_AFFILIATION')) {
-    // À définir dans .env (clé AFFILIATION_SECRET) avec une valeur aléatoire
-    // longue et unique. La valeur ci-dessous n'est qu'un filet de sécurité
-    // pour ne pas casser les liens existants si .env n'est pas encore réglé.
-    define('SECRET_AFFILIATION', env('AFFILIATION_SECRET', 'change-moi-avec-une-longue-cle-aleatoire-unique'));
+    // A definir dans .env (cle AFFILIATION_SECRET) avec une valeur aleatoire longue et unique.
+    // Valeur absente ou vide : cle de repli (liens existants preserves), signalee en critique
+    // par la page Sante et journalisee une fois par jour.
+    $secretAffiliation = (string) env('AFFILIATION_SECRET', '');
+    define('SECRET_AFFILIATION_REPLI', $secretAffiliation === '');
+    define('SECRET_AFFILIATION', SECRET_AFFILIATION_REPLI ? 'change-moi-avec-une-longue-cle-aleatoire-unique' : $secretAffiliation);
+    unset($secretAffiliation);
 
-    if (env('AFFILIATION_SECRET') === null) {
-        error_log('[affiliation_helpers] AFFILIATION_SECRET absent du .env : clé de repli utilisée, à corriger avant mise en production.');
+    if (SECRET_AFFILIATION_REPLI) {
+        error_log('[affiliation_helpers] AFFILIATION_SECRET absent du .env : clé de repli utilisée.');
+        if (isset($GLOBALS['pdo']) && $GLOBALS['pdo'] instanceof PDO) {
+            require_once __DIR__ . '/audit.php';
+            auditInfoLimite($GLOBALS['pdo'], 'env_affiliation_secret', 86400, ['category' => 'systeme', 'action' => 'variable_env_manquante',
+                'result' => 'echec', 'actor_id' => null, 'actor_role' => null, 'meta' => ['variable' => 'AFFILIATION_SECRET', 'repli' => true]]);
+        }
     }
 }
 
@@ -37,5 +45,14 @@ if (!function_exists('calculerCommission')) {
     function calculerCommission(float $prix): int
     {
         return $prix <= SEUIL_PRIX_COMMISSION ? COMMISSION_BASSE : COMMISSION_HAUTE;
+    }
+}
+
+if (!function_exists('quantiteMaxCommande')) {
+    // Plafond de quantite par commande depuis un lien d'affiliation (QUANTITE_MAX_COMMANDE dans .env, 10 par defaut)
+    function quantiteMaxCommande(): int
+    {
+        $max = (int) env('QUANTITE_MAX_COMMANDE', 10);
+        return $max >= 1 ? $max : 10;
     }
 }

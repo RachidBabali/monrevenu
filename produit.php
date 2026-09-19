@@ -5,6 +5,7 @@ session_start();
 // 1. CONNEXION À LA BASE DE DONNÉES
 // ============================================================
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
+require_once __DIR__ . '/includs/audit.php';
 
 // ============================================================
 // 2. DÉTECTION AUTOMATIQUE HTTP / HTTPS
@@ -106,9 +107,8 @@ if (!empty($_GET['token'])) {
         if (hash_equals($sig_attendue, $sig_recue)) {
             $ref_id = $ref_id_brut;
         }
-    } elseif ($ref_id_brut > 0) {
-        $ref_id = $ref_id_brut;
     }
+    // Un ref sans signature valide est ignore : page produit normale, aucune commission attribuee
 }
 
 $ref_valide = $ref_id > 0;
@@ -148,6 +148,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_commander'])) 
 
     if (!hash_equals($csrf_token, $_POST['csrf_token'] ?? '')) {
         $error = "Votre session a expiré. Rechargez la page puis validez à nouveau la commande.";
+        auditCsrf($pdo, 'commande');
     } elseif (!$produit) {
         $error = "Ce produit n'est plus disponible.";
     } elseif (!$vendeur) {
@@ -157,8 +158,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_commander'])) 
         $telephone_client = trim($_POST['telephone_client'] ?? '');
         $adresse_client   = trim($_POST['adresse_client'] ?? '');
         $quantite         = max(1, (int) ($_POST['quantite'] ?? 1));
+        $quantite_max     = quantiteMaxCommande();
 
-        if ($nom_client === '' || $telephone_client === '') {
+        if ($quantite > $quantite_max) {
+            $error = "La quantité est limitée à " . $quantite_max . " par commande.";
+        } elseif ($nom_client === '' || $telephone_client === '') {
             $error = "Indiquez votre nom et votre numéro WhatsApp.";
         } elseif (mb_strlen($nom_client) > 120 || mb_strlen($telephone_client) > 30) {
             $error = "Le nom ou le numéro renseigné est trop long.";
@@ -186,6 +190,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_commander'])) 
                     $telephone_client,
                     $adresse_client !== '' ? $adresse_client : null,
                 ]);
+                $commande_id = (int) $pdo->lastInsertId();
+                auditInfo($pdo, ['category' => 'commande', 'action' => 'commande_creation', 'entity_type' => 'commande', 'entity_id' => $commande_id,
+                    'actor_id' => null, 'actor_role' => null,
+                    'after' => ['produit_id' => (int) $produit['id'], 'affilie_id' => (int) $vendeur['id'], 'quantite' => $quantite,
+                        'commission' => $commission_totale, 'telephone_client' => $telephone_client, 'statut' => 'en_attente']]);
 
                 require_once __DIR__ . '/includs/notifications.php';
                 envoyerNotification(
@@ -350,7 +359,7 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/head.php';
 
             <div class="champ">
               <label class="champ-label" for="quantite">Quantité</label>
-              <input class="champ-saisie chiffres w-28" type="number" id="quantite" name="quantite" min="1" max="99" step="1" inputmode="numeric" value="<?= $quantite_saisie ?>" data-prix="<?= $prix_produit ?>">
+              <input class="champ-saisie chiffres w-28" type="number" id="quantite" name="quantite" min="1" max="<?= (int) quantiteMaxCommande() ?>" step="1" inputmode="numeric" value="<?= $quantite_saisie ?>" data-prix="<?= $prix_produit ?>">
             </div>
 
             <div class="-mx-4 -mb-4 flex flex-col gap-3 border-t border-line bg-surface p-4 max-lg:sticky max-lg:bottom-0 max-lg:pb-[max(16px,env(safe-area-inset-bottom))]">
