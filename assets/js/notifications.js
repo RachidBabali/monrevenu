@@ -189,7 +189,11 @@
     cloche.querySelector('.notif-liste').addEventListener('click', function (e) {
       var item = e.target.closest('.notif-item');
       if (!item || item.dataset.lu === '1') return;
-      fetch('/page/marquer-lu.php?id=' + encodeURIComponent(item.dataset.id)).then(function () { rafraichir(cloche); });
+      fetch('/includs/notifications_api.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'marquer_lu', id: Number(item.dataset.id), csrf_token: csrfToken })
+      }).then(function () { rafraichir(cloche); });
     });
 
     cloche.querySelector('.notif-activer-push').addEventListener('click', function () { abonnerPush(cloche); });

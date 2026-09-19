@@ -17,7 +17,11 @@
     var bouton = e.target.closest('[data-marquer-lu]');
     if (!bouton) return;
     var id = bouton.getAttribute('data-marquer-lu');
-    fetch('/page/marquer-lu.php?id=' + encodeURIComponent(id))
+    fetch('/includs/notifications_api.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'marquer_lu', id: Number(id), csrf_token: csrf })
+    })
       .then(function (r) { if (r.ok) marquerVisuel(document.getElementById('carte-message-' + id)); })
       .catch(function () { MR.toast('Action impossible. Vérifiez votre connexion.'); });
   });
