@@ -6,4 +6,7 @@
 DELETE FROM login_attempts_compte WHERE CHAR_LENGTH(phone) > 20;
 
 ALTER TABLE login_attempts_compte
-  MODIFY COLUMN IF EXISTS phone VARCHAR(20) COLLATE utf8mb4_general_ci NOT NULL;
+  MODIFY phone VARCHAR(20) COLLATE utf8mb4_general_ci NOT NULL;
+
+-- Controle : la colonne Type doit afficher varchar(20)
+SHOW COLUMNS FROM login_attempts_compte LIKE 'phone';

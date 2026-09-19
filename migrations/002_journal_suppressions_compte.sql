@@ -12,6 +12,5 @@ CREATE TABLE IF NOT EXISTS journal_suppressions_compte (
     created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Controle : doit afficher 1
-SELECT COUNT(*) FROM information_schema.TABLES
-WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'journal_suppressions_compte';
+-- Controle : doit afficher une ligne journal_suppressions_compte
+SHOW TABLES LIKE 'journal_suppressions_compte';

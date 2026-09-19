@@ -7,8 +7,7 @@
 -- A executer a la main, apres sauvegarde de la base. Ne rien executer automatiquement.
 
 ALTER TABLE login_attempts_compte
-  MODIFY COLUMN IF EXISTS phone VARCHAR(150) COLLATE utf8mb4_general_ci NOT NULL;
+  MODIFY phone VARCHAR(150) COLLATE utf8mb4_general_ci NOT NULL;
 
--- Controle : doit afficher varchar(150)
-SELECT COLUMN_TYPE FROM information_schema.COLUMNS
-WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'login_attempts_compte' AND COLUMN_NAME = 'phone';
+-- Controle : la colonne Type doit afficher varchar(150)
+SHOW COLUMNS FROM login_attempts_compte LIKE 'phone';
