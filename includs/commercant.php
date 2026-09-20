@@ -13,16 +13,21 @@
 require_once __DIR__ . '/env_loader.php';
 
 /** Condition SQL du catalogue public ; l'alias du produit est vp, celui du profil cp (LEFT JOIN). */
-const CATALOGUE_JOINTURE = "LEFT JOIN commercants_profils cp ON cp.user_id = vp.vendeur_id";
-const CATALOGUE_CONDITION = "vp.statut = 'actif' AND vp.moderation = 'approuve' AND (cp.user_id IS NULL OR cp.statut = 'valide')";
+if (!defined('CATALOGUE_JOINTURE')) {
+    define('CATALOGUE_JOINTURE', "LEFT JOIN commercants_profils cp ON cp.user_id = vp.vendeur_id");
+    define('CATALOGUE_CONDITION', "vp.statut = 'actif' AND vp.moderation = 'approuve' AND (cp.user_id IS NULL OR cp.statut = 'valide')");
+}
 
 /** Etats de commande que le commercant peut donner lui-meme (jamais 'validee'). */
-const COMMERCANT_TRANSITIONS = [
-    'en_attente' => ['contacte', 'annulee'],
-    'contacte'   => ['colis_recu', 'annulee'],
-    'colis_recu' => ['annulee'],
-];
+if (!defined('COMMERCANT_TRANSITIONS')) {
+    define('COMMERCANT_TRANSITIONS', [
+        'en_attente' => ['contacte', 'annulee'],
+        'contacte'   => ['colis_recu', 'annulee'],
+        'colis_recu' => ['annulee'],
+    ]);
+}
 
+if (!function_exists('commercantMaxProduitsJour')) {
 function commercantMaxProduitsJour(): int { return max(1, (int) env('COMMERCANT_MAX_PRODUITS_JOUR', 20)); }
 function commercantMaxProduits(): int { return max(1, (int) env('COMMERCANT_MAX_PRODUITS', 200)); }
 
@@ -81,4 +86,5 @@ function detteCommercant(PDO $pdo, int $commercantId): array
     $centimes = static fn(string $v): int => (int) round(((float) $v) * 100);
     $solde = $centimes($du) - $centimes($regle);
     return ['commissions' => $du, 'reglements' => $regle, 'solde' => ($solde < 0 ? '-' : '') . intdiv(abs($solde), 100) . '.' . str_pad((string) (abs($solde) % 100), 2, '0', STR_PAD_LEFT)];
+}
 }
