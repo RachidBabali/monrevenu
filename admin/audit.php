@@ -99,8 +99,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $sortie = fopen('php://output', 'w');
         fwrite($sortie, "\xEF\xBB\xBF"); // BOM : Excel lit correctement les accents
         fputcsv($sortie, ['id', 'date', 'requete', 'acteur', 'role', 'categorie', 'action', 'entite', 'entite_id',
-            'resultat', 'page', 'ip_tronquee', 'avant', 'apres', 'details'], ';');
-        while ($ligne = $st->fetch(PDO::FETCH_NUM)) fputcsv($sortie, $ligne, ';');
+            'resultat', 'page', 'ip_tronquee', 'avant', 'apres', 'details'], ';', '"', '');
+        while ($ligne = $st->fetch(PDO::FETCH_NUM)) fputcsv($sortie, $ligne, ';', '"', '');
         fclose($sortie);
         exit();
     }
