@@ -364,6 +364,8 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
       </form>
     </div>
 
+    <?php include $_SERVER['DOCUMENT_ROOT'] . '/sections/activer_notifications.php'; ?>
+
     <section id="supprimer-compte" class="carte scroll-mt-20 border-danger/40" aria-labelledby="t-suppression">
       <h2 id="t-suppression" class="carte-entete carte-titre text-danger">Supprimer mon compte</h2>
       <div class="flex flex-col gap-3 p-4 text-sm text-text-2">

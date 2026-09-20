@@ -134,6 +134,8 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
       </div>
     </section>
 
+    <?php include $_SERVER['DOCUMENT_ROOT'] . '/sections/activer_notifications.php'; ?>
+
     <section class="carte flex flex-col gap-2 p-4" aria-labelledby="t-fonctionnement">
       <h2 id="t-fonctionnement" class="section-titre">Fonctionnement</h2>
       <ul class="flex list-disc flex-col gap-1 pl-5 text-sm text-text-2">

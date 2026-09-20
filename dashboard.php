@@ -145,6 +145,8 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
       </dl>
     </section>
 
+    <?php include $_SERVER['DOCUMENT_ROOT'] . '/sections/activer_notifications.php'; ?>
+
     <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
       <section class="flex min-w-0 flex-col gap-3" aria-labelledby="t-commissions">
         <div class="flex items-end justify-between gap-3">

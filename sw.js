@@ -29,19 +29,31 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// Réception d'une notification push (commissions, ventes, retraits)
+// Réception d'une notification push (commissions, ventes, retraits, commandes)
 self.addEventListener('push', (event) => {
   const data = event.data ? event.data.json() : {};
   const title = data.title || 'MonRevenu';
   const options = {
     body: data.body || '',
     icon: '/assets/img/icon-192.png',
-    badge: '/assets/img/icon-192.png',
+    badge: '/assets/img/badge-96.png',
+    tag: data.tag || 'monrevenu',
+    renotify: data.renotify !== false,
+    timestamp: data.timestamp || Date.now(),
+    lang: 'fr',
     data: { url: data.url || '/dashboard.php' }
   };
-  event.waitUntil(
-    self.registration.showNotification(title, options)
-  );
+  if (data.image) options.image = data.image;
+  const travaux = [self.registration.showNotification(title, options)];
+  // Compteur sur l'icone de l'application quand le navigateur le permet
+  if (typeof data.badge_compteur === 'number' && self.navigator && 'setAppBadge' in self.navigator) {
+    travaux.push(
+      data.badge_compteur > 0
+        ? self.navigator.setAppBadge(data.badge_compteur).catch(() => {})
+        : self.navigator.clearAppBadge().catch(() => {})
+    );
+  }
+  event.waitUntil(Promise.all(travaux));
 });
 
 // Clic sur la notification -> ouvrir/focus l'app sur la bonne page, ou

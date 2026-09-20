@@ -205,4 +205,118 @@
 
   document.addEventListener('click', fermerTout);
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') fermerTout(); });
+
+  // ---------------------------------------------------------------- Bloc d'activation des notifications
+  // Etats : non pris en charge, indisponible (pas de cle serveur), non demande, autorise, refuse.
+  var blocs = document.querySelectorAll('[data-bloc-push]');
+  if (blocs.length) {
+    var estIos = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var installee = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+
+    function afficher(bloc, etat, abonne) {
+      var texte = bloc.querySelector('[data-push-texte]');
+      var activer = bloc.querySelector('[data-push-activer]');
+      var essai = bloc.querySelector('[data-push-test]');
+      var desactiver = bloc.querySelector('[data-push-desactiver]');
+      [activer, essai, desactiver].forEach(function (b) { if (b) b.classList.add('hidden'); });
+      bloc.querySelector('[data-push-aide-ios]').classList.add('hidden');
+      bloc.querySelector('[data-push-aide-refus]').classList.add('hidden');
+
+      if (etat === 'non_pris_en_charge') {
+        texte.textContent = estIos && !installee
+          ? "Pour recevoir les notifications sur iPhone, installez MonRevenu sur votre écran d'accueil."
+          : "Ce navigateur ne gère pas les notifications. Vos messages restent disponibles dans la messagerie.";
+        if (estIos && !installee) bloc.querySelector('[data-push-aide-ios]').classList.remove('hidden');
+        return;
+      }
+      if (etat === 'indisponible') {
+        texte.textContent = "Les notifications ne sont pas disponibles pour le moment. Vos messages restent dans la messagerie.";
+        return;
+      }
+      if (etat === 'refuse') {
+        texte.textContent = "Les notifications sont refusées sur cet appareil.";
+        bloc.querySelector('[data-push-aide-refus]').classList.remove('hidden');
+        return;
+      }
+      if (abonne) {
+        texte.textContent = "Les notifications sont activées sur cet appareil.";
+        if (essai) essai.classList.remove('hidden');
+        if (desactiver) desactiver.classList.remove('hidden');
+        return;
+      }
+      texte.textContent = "Recevez une alerte quand une commande arrive, quand une commission est créditée ou quand un retrait est payé.";
+      if (activer) activer.classList.remove('hidden');
+    }
+
+    function etatPush(bloc) {
+      if (bloc.dataset.vapid !== '1' || !vapidPublicKey) { afficher(bloc, 'indisponible'); return; }
+      if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+        afficher(bloc, 'non_pris_en_charge'); return;
+      }
+      if (Notification.permission === 'denied') { afficher(bloc, 'refuse'); return; }
+      navigator.serviceWorker.ready.then(function (reg) {
+        return reg.pushManager.getSubscription();
+      }).then(function (abo) {
+        afficher(bloc, 'ok', !!abo);
+      }).catch(function () { afficher(bloc, 'non_pris_en_charge'); });
+    }
+
+    function abonner(bloc) {
+      Notification.requestPermission().then(function (permission) {
+        if (permission !== 'granted') { etatPush(bloc); return; }
+        return navigator.serviceWorker.ready.then(function (reg) {
+          return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) });
+        }).then(function (abo) {
+          var corps = abo.toJSON();
+          corps.action = 'subscribe';
+          corps.csrf_token = csrfToken;
+          return fetch('/includs/push_subscribe.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corps) });
+        }).then(function (r) {
+          if (!r.ok) throw new Error();
+          if (window.MR) window.MR.toast('Notifications activées sur cet appareil.');
+          etatPush(bloc);
+        });
+      }).catch(function () {
+        if (window.MR) window.MR.toast("Les notifications n'ont pas pu être activées. Vérifiez les autorisations du navigateur.");
+        etatPush(bloc);
+      });
+    }
+
+    function desabonner(bloc) {
+      navigator.serviceWorker.ready.then(function (reg) { return reg.pushManager.getSubscription(); })
+        .then(function (abo) {
+          if (!abo) return null;
+          var point = abo.endpoint;
+          return abo.unsubscribe().then(function () {
+            return fetch('/includs/push_subscribe.php', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'unsubscribe', endpoint: point, csrf_token: csrfToken }) });
+          });
+        })
+        .then(function () { if (window.MR) window.MR.toast('Notifications désactivées sur cet appareil.'); etatPush(bloc); })
+        .catch(function () { etatPush(bloc); });
+    }
+
+    function essayer(bloc) {
+      fetch('/includs/notifications_api.php', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'push_test', csrf_token: csrfToken }) })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (window.MR) window.MR.toast(d && d.ok ? "Notification d'essai envoyée. Elle arrive dans quelques secondes."
+            : ((d && d.error) || "L'essai n'a pas pu être envoyé."));
+        })
+        .catch(function () { if (window.MR) window.MR.toast("L'essai n'a pas pu être envoyé."); });
+    }
+
+    blocs.forEach(function (bloc) {
+      etatPush(bloc);
+      var activer = bloc.querySelector('[data-push-activer]');
+      var essai = bloc.querySelector('[data-push-test]');
+      var desactiver = bloc.querySelector('[data-push-desactiver]');
+      if (activer) activer.addEventListener('click', function () { abonner(bloc); });
+      if (essai) essai.addEventListener('click', function () { essayer(bloc); });
+      if (desactiver) desactiver.addEventListener('click', function () { desabonner(bloc); });
+    });
+  }
+
 })();

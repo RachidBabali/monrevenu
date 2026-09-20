@@ -25,7 +25,7 @@ if (!function_exists('envoyerNotificationPush')) {
      * Ne bloque jamais l'exécution en cas d'échec (log seulement), une
      * notification push est un bonus, pas une opération critique.
      */
-    function envoyerNotificationPush(PDO $pdo, int $userId, string $titre, string $corps, string $lien = '/dashboard.php'): void
+    function envoyerNotificationPush(PDO $pdo, int $userId, string $titre, string $corps, string $lien = '/dashboard.php', array $options = []): void
     {
         $publicKey  = env('VAPID_PUBLIC_KEY');
         $privateKey = env('VAPID_PRIVATE_KEY');
@@ -67,13 +67,16 @@ if (!function_exists('envoyerNotificationPush')) {
             return;
         }
 
-        $payload = json_encode([
-            'title' => $titre,
-            'body'  => $corps,
-            'url'   => $lien,
-        ], JSON_UNESCAPED_UNICODE);
+        $payload = construirePayloadPush($titre, $corps, $lien, $options, compterNonLusPush($pdo, $userId));
 
         foreach ($abonnements as $abo) {
+          try {
+            // Cles illisibles : WebPush echouerait sur tout l'envoi, on ecarte l'abonnement des maintenant
+            $cleBrute = base64_decode(strtr((string) $abo['p256dh'], '-_', '+/'), true);
+            $authBrut = base64_decode(strtr((string) $abo['auth'], '-_', '+/'), true);
+            if ($cleBrute === false || strlen($cleBrute) !== 65 || $authBrut === false || strlen($authBrut) < 12) {
+                throw new InvalidArgumentException('cles d\'abonnement invalides');
+            }
             $subscription = Subscription::create([
                 'endpoint' => $abo['endpoint'],
                 'keys' => [
@@ -82,9 +85,17 @@ if (!function_exists('envoyerNotificationPush')) {
                 ],
             ]);
             $webPush->queueNotification($subscription, $payload);
+          } catch (\Throwable $e) {
+            // Abonnement illisible (cles corrompues) : on le retire au lieu de faire echouer l'envoi
+            error_log('envoyerNotificationPush (abonnement invalide) : ' . get_class($e));
+            try { $pdo->prepare("DELETE FROM push_subscriptions WHERE id = ?")->execute([$abo['id']]); } catch (PDOException $ignore) {}
+            auditInfo($pdo, ['category' => 'systeme', 'action' => 'push_abonnement_invalide', 'result' => 'echec',
+                'meta' => ['user_id' => $userId]]);
+          }
         }
 
         $envoyes = 0; $echecs = 0; $expires = 0;
+        try {
         foreach ($webPush->flush() as $rapport) {
             if ($rapport->isSuccess()) $envoyes++; elseif ($rapport->isSubscriptionExpired()) $expires++; else $echecs++;
             if (!$rapport->isSuccess() && $rapport->isSubscriptionExpired()) {
@@ -99,7 +110,44 @@ if (!function_exists('envoyerNotificationPush')) {
                 error_log('envoyerNotificationPush (échec) : ' . $rapport->getReason());
             }
         }
+        } catch (\Throwable $e) {
+            error_log('envoyerNotificationPush (envoi) : ' . get_class($e) . ' ' . $e->getMessage());
+            $echecs++;
+        }
         auditInfo($pdo, ['category' => 'systeme', 'action' => $envoyes > 0 ? 'push_envoye' : 'push_echec', 'result' => $envoyes > 0 ? 'ok' : 'echec',
             'meta' => ['user_id' => $userId, 'envoyes' => $envoyes, 'echecs' => $echecs, 'abonnements_expires_supprimes' => $expires]]);
+    }
+}
+
+if (!function_exists('construirePayloadPush')) {
+    /**
+     * Charge utile d'une notification push : titre court, apercu en une ligne, lien profond,
+     * etiquette par type d'evenement (les notifications d'un meme type se remplacent au lieu de s'empiler),
+     * image quand elle est utile, compteur pour l'icone de l'application.
+     * Aucune donnee sensible : le texte s'affiche sur un ecran verrouille.
+     */
+    function construirePayloadPush(string $titre, string $corps, string $lien, array $options = [], int $nonLus = 0): string
+    {
+        return json_encode(array_filter([
+            'title'          => mb_substr(trim($titre), 0, 60),
+            'body'           => mb_substr(trim(preg_replace('/\s+/u', ' ', $corps)), 0, 160),
+            'url'            => $lien !== '' ? $lien : '/dashboard.php',
+            'tag'            => $options['tag'] ?? ($options['type'] ?? 'monrevenu'),
+            'renotify'       => $options['renotify'] ?? true,
+            'timestamp'      => (int) round(microtime(true) * 1000),
+            'image'          => $options['image'] ?? null,
+            'badge_compteur' => $nonLus,
+        ], static fn($v) => $v !== null), JSON_UNESCAPED_UNICODE);
+    }
+
+    function compterNonLusPush(PDO $pdo, int $userId): int
+    {
+        try {
+            $st = $pdo->prepare("SELECT COUNT(*) FROM messages WHERE user_id = ? AND statut = 'non_lu'");
+            $st->execute([$userId]);
+            return (int) $st->fetchColumn();
+        } catch (PDOException $e) {
+            return 0;
+        }
     }
 }

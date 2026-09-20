@@ -35,6 +35,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         exit();
     }
+    // Notification d'essai demandee par l'utilisateur lui-meme (bouton de la page)
+    if (($input['action'] ?? '') === 'push_test') {
+        require_once __DIR__ . '/webpush_sender.php';
+        $abonnements = 0;
+        try {
+            $st = $pdo->prepare("SELECT COUNT(*) FROM push_subscriptions WHERE user_id = ?");
+            $st->execute([$user_id]);
+            $abonnements = (int) $st->fetchColumn();
+        } catch (PDOException $e) {
+            $abonnements = 0;
+        }
+        if ($abonnements === 0) {
+            auditInfo($pdo, ['category' => 'systeme', 'action' => 'push_test', 'result' => 'echec',
+                'meta' => ['raison' => 'aucun abonnement']]);
+            echo json_encode(['ok' => false, 'error' => "Activez d'abord les notifications sur cet appareil."]);
+            exit();
+        }
+        envoyerNotificationPush($pdo, (int) $user_id, 'Essai de notification',
+            'Si vous voyez ce message, les notifications fonctionnent sur cet appareil.', '/page/messagerie.php', ['type' => 'essai']);
+        auditInfo($pdo, ['category' => 'systeme', 'action' => 'push_test', 'meta' => ['abonnements' => $abonnements]]);
+        echo json_encode(['ok' => true]);
+        exit();
+    }
+
     // Un seul message : le WHERE user_id = ? empeche de toucher au message d'un autre utilisateur
     if (($input['action'] ?? '') === 'marquer_lu') {
         $message_id = (int) ($input['id'] ?? 0);

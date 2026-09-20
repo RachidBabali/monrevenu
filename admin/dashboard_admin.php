@@ -132,11 +132,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $description = mb_substr(htmlspecialchars($description), 0, 255);
 
         if ($user_id > 0 && $montant > 0) {
-            $executer(function () use ($pdo, $admin, $user_id, $montant, $description, &$message) {
+            $executer(function () use ($pdo, $admin, $user_id, $montant, $description, &$message, &$apresCommit) {
                 mouvementSolde($pdo, $user_id, $montant, 'commission', 'COMM-' . bin2hex(random_bytes(8)), 'complete', $description,
                     'credit_manuel_admin', ['motif' => $description], (int) $admin['id']);
-                $pdo->prepare("INSERT INTO messages (user_id, expediteur, message, statut) VALUES (?, 'MonRevenu', ?, 'non_lu')")
-                    ->execute([$user_id, "Une commission de " . number_format($montant, 0, ',', ' ') . " FCFA vous a été créditée. Motif : " . $description]);
+                require_once __DIR__ . '/../includs/notifications.php';
+                $texte = "Une commission de " . number_format($montant, 0, ',', ' ') . " FCFA vous a été créditée. Motif : " . $description;
+                $apresCommit[] = fn() => envoyerNotification($pdo, $user_id, $texte, 'Commission créditée', '/page/portefeuille.php',
+                    'MonRevenu', ['type' => 'argent']);
                 $message = "La commission de " . $montant . " FCFA a bien été créditée à l'utilisateur.";
             }, "Échec du crédit de commission. Aucune somme n'a été créditée.");
         } else {
@@ -192,7 +194,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     (int) $vente['vendeur_id'],
                     $libelles_notif_statut[$nouveau_statut],
                     $titres_notif_statut[$nouveau_statut] ?? 'MonRevenu',
-                    '/page/historique.php'
+                    '/page/historique.php',
+                    'MonRevenu',
+                    ['type' => 'commande']
                 );
                 $message = "Statut de la vente mis à jour.";
             }, "Échec de la mise à jour de la vente. Rien n'a été modifié.");
@@ -225,7 +229,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     (int) $vente['vendeur_id'],
                     "Commission envoyée. " . number_format((float) $vente['commission_earn'], 0, ',', ' ') . " FCFA ont été crédités sur votre solde pour la vente #" . $vente_id . ".",
                     'Commission créditée',
-                    '/page/historique.php'
+                    '/page/historique.php',
+                    'MonRevenu',
+                    ['type' => 'argent']
                 );
                 $message = "Commission envoyée avec succès.";
             }, "Échec de l'envoi de la commission. Aucune somme n'a été créditée.");
@@ -237,7 +243,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $withdrawal_id = (int) ($_POST['withdrawal_id'] ?? 0);
 
         if ($withdrawal_id > 0) {
-            $executer(function () use ($pdo, $withdrawal_id, &$message, &$error) {
+            $executer(function () use ($pdo, $withdrawal_id, &$message, &$error, &$apresCommit) {
                 $stmtW = $pdo->prepare("SELECT * FROM withdrawals WHERE id = ? FOR UPDATE");
                 $stmtW->execute([$withdrawal_id]);
                 $w = $stmtW->fetch();
@@ -252,8 +258,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'before' => ['status' => $w['status']], 'after' => ['status' => 'valide'],
                     'meta' => ['user_id' => (int) $w['user_id'], 'montant' => $w['amount'], 'reference' => 'RETRAIT-' . $withdrawal_id]]);
 
-                $pdo->prepare("INSERT INTO messages (user_id, expediteur, message, statut) VALUES (?, 'MonRevenu', ?, 'non_lu')")
-                    ->execute([$w['user_id'], "Votre retrait de " . number_format((float) $w['amount'], 0, ',', ' ') . " FCFA a été envoyé avec succès."]);
+                require_once __DIR__ . '/../includs/notifications.php';
+                $texte = "Votre retrait de " . number_format((float) $w['amount'], 0, ',', ' ') . " FCFA a été envoyé.";
+                $destinataire = (int) $w['user_id'];
+                $apresCommit[] = fn() => envoyerNotification($pdo, $destinataire, $texte, 'Retrait payé', '/page/portefeuille.php',
+                    'MonRevenu', ['type' => 'retrait']);
                 $message = "Retrait validé et marqué comme envoyé.";
             }, "Échec de la validation du retrait. Rien n'a été modifié.");
         }
@@ -264,7 +273,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $withdrawal_id = (int) ($_POST['withdrawal_id'] ?? 0);
 
         if ($withdrawal_id > 0) {
-            $executer(function () use ($pdo, $admin, $withdrawal_id, &$message, &$error) {
+            $executer(function () use ($pdo, $admin, $withdrawal_id, &$message, &$error, &$apresCommit) {
                 $stmtW = $pdo->prepare("SELECT * FROM withdrawals WHERE id = ? FOR UPDATE");
                 $stmtW->execute([$withdrawal_id]);
                 $w = $stmtW->fetch();
@@ -281,8 +290,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'before' => ['status' => $w['status']], 'after' => ['status' => 'rejete'],
                     'meta' => ['user_id' => (int) $w['user_id'], 'montant' => $w['amount'], 'reference' => 'RETRAIT-' . $withdrawal_id]]);
 
-                $pdo->prepare("INSERT INTO messages (user_id, expediteur, message, statut) VALUES (?, 'MonRevenu', ?, 'non_lu')")
-                    ->execute([$w['user_id'], "Votre retrait de " . number_format((float) $w['amount'], 0, ',', ' ') . " FCFA a été refusé. Le montant a été recrédité sur votre solde."]);
+                require_once __DIR__ . '/../includs/notifications.php';
+                $texte = "Votre retrait de " . number_format((float) $w['amount'], 0, ',', ' ') . " FCFA a été refusé. Le montant est recrédité sur votre solde.";
+                $destinataire = (int) $w['user_id'];
+                $apresCommit[] = fn() => envoyerNotification($pdo, $destinataire, $texte, 'Retrait refusé', '/page/portefeuille.php',
+                    'MonRevenu', ['type' => 'retrait']);
                 $message = "Retrait refusé, montant recrédité à l'utilisateur.";
             }, "Échec du refus du retrait. Rien n'a été modifié.");
         }
@@ -461,7 +473,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stock_quantite   = (int) ($_POST['stock_quantite'] ?? 0);
 
         if ($stock_user_id > 0 && $stock_produit_id > 0 && $stock_quantite > 0) {
-            $executer(function () use ($pdo, $admin, $stock_user_id, $stock_produit_id, $stock_quantite, &$message) {
+            $executer(function () use ($pdo, $admin, $stock_user_id, $stock_produit_id, $stock_quantite, &$message, &$apresCommit) {
                 $stmtExiste = $pdo->prepare(
                     "SELECT quantite_disponible FROM stocks_revendeurs WHERE user_id = ? AND produit_id = ? FOR UPDATE"
                 );
@@ -492,12 +504,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmtProduitNom->execute([$stock_produit_id]);
                 $nomProduitAttribue = $stmtProduitNom->fetchColumn() ?: 'un produit';
 
-                $pdo->prepare(
-                    "INSERT INTO messages (user_id, expediteur, message, statut) VALUES (?, 'MonRevenu', ?, 'non_lu')"
-                )->execute([
-                    $stock_user_id,
-                    "" . $stock_quantite . " unité(s) de " . $nomProduitAttribue . " ont été ajoutées à votre stock."
-                ]);
+                require_once __DIR__ . '/../includs/notifications.php';
+                $texte = $stock_quantite . " unité(s) de " . $nomProduitAttribue . " ont été ajoutées à votre stock.";
+                $apresCommit[] = fn() => envoyerNotification($pdo, $stock_user_id, $texte, 'Stock reçu', '/services/mon-stock.php',
+                    'MonRevenu', ['type' => 'stock']);
                 $message = "Stock attribué avec succès.";
             }, "Impossible d'attribuer le stock. Rien n'a été modifié.");
         } else {
@@ -510,7 +520,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $vente_stock_id = (int) ($_POST['vente_stock_id'] ?? 0);
 
         if ($vente_stock_id > 0) {
-            $executer(function () use ($pdo, $admin, $vente_stock_id, &$message, &$error) {
+            $executer(function () use ($pdo, $admin, $vente_stock_id, &$message, &$error, &$apresCommit) {
                 $stmtVenteStock = $pdo->prepare("SELECT * FROM ventes_stock WHERE id = ? FOR UPDATE");
                 $stmtVenteStock->execute([$vente_stock_id]);
                 $venteStock = $stmtVenteStock->fetch();
@@ -523,12 +533,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mouvementSolde($pdo, (int) $venteStock['user_id'], $venteStock['commission_montant'], 'commission', $venteStock['reference'], 'complete',
                     'Commission sur vente de stock #' . $venteStock['id'], 'commission_stock_credit', ['vente_stock_id' => $vente_stock_id], (int) $admin['id']);
 
-                $pdo->prepare(
-                    "INSERT INTO messages (user_id, expediteur, message, statut) VALUES (?, 'MonRevenu', ?, 'non_lu')"
-                )->execute([
-                    $venteStock['user_id'],
-                    "Commission envoyée. " . number_format((float) $venteStock['commission_montant'], 0, ',', ' ') . " FCFA ont été crédités sur votre solde."
-                ]);
+                require_once __DIR__ . '/../includs/notifications.php';
+                $texte = number_format((float) $venteStock['commission_montant'], 0, ',', ' ') . " FCFA ont été crédités sur votre solde.";
+                $destinataire = (int) $venteStock['user_id'];
+                $apresCommit[] = fn() => envoyerNotification($pdo, $destinataire, $texte, 'Commission créditée', '/page/portefeuille.php',
+                    'MonRevenu', ['type' => 'argent']);
                 $message = "Commission envoyée avec succès.";
             }, "Échec de l'envoi de la commission. Aucune somme n'a été créditée.");
         }
