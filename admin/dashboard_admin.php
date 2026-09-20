@@ -57,8 +57,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // 1. Action : Publier un produit
     if (isset($_POST['action_produit'])) {
-        $nom = htmlspecialchars($_POST['nom']);
-        $description = htmlspecialchars($_POST['description']);
+        // Texte brut en base, echappe seulement a l'affichage (e()) : pas de double echappement.
+        $nom = mb_substr(trim(preg_replace('/\s+/u', ' ', (string) ($_POST['nom'] ?? ''))), 0, 255);
+        $description = mb_substr(trim((string) ($_POST['description'] ?? '')), 0, 2000);
         $prix = (float)$_POST['prix'];
         $commission = (int)$_POST['commission_pourcentage'];
 
@@ -129,7 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $montant = round((float)$_POST['montant'], 2);
         $description = trim((string) ($_POST['description'] ?? ''));
         if ($description === '') $description = "Ajustement de commission par l'admin";
-        $description = mb_substr(htmlspecialchars($description), 0, 255);
+        $description = mb_substr($description, 0, 255);
 
         if ($user_id > 0 && $montant > 0) {
             $executer(function () use ($pdo, $admin, $user_id, $montant, $description, &$message, &$apresCommit) {
@@ -303,8 +304,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // 9. Action : Modifier un produit existant
     if (isset($_POST['action_edit_produit'])) {
         $produit_id = (int) ($_POST['produit_id'] ?? 0);
-        $nom = htmlspecialchars($_POST['nom_edit'] ?? '');
-        $description = htmlspecialchars($_POST['description_edit'] ?? '');
+        $nom = mb_substr(trim(preg_replace('/\s+/u', ' ', (string) ($_POST['nom_edit'] ?? ''))), 0, 255);
+        $description = mb_substr(trim((string) ($_POST['description_edit'] ?? '')), 0, 2000);
         $prix = (float) ($_POST['prix_edit'] ?? 0);
         $commission = (int) ($_POST['commission_pourcentage_edit'] ?? 0);
 
@@ -397,7 +398,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // 15. Action : Créer un produit dans le catalogue de stock (indépendant de vendeur_produits)
     if (isset($_POST['action_creer_produit_stock'])) {
-        $nom_produit_stock = htmlspecialchars($_POST['nom_produit_stock'] ?? '');
+        $nom_produit_stock = mb_substr(trim(preg_replace('/\s+/u', ' ', (string) ($_POST['nom_produit_stock'] ?? ''))), 0, 150);
         $prix_produit_stock = (float) ($_POST['prix_produit_stock'] ?? 0);
         $commission_produit_stock = (float) ($_POST['commission_produit_stock'] ?? 0);
 
