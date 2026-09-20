@@ -142,12 +142,14 @@ function validerCodeWhatsapp(PDO $pdo, string $texteMessage, string $numeroExped
         }
     }
 
+    // Le texte du message n'est jamais conserve : seuls le code extrait et les metadonnees
+    // (numero, utilisateur reconnu, statut, horodatage) servent au controle et a l'anti-abus.
+    // La colonne message_body n'est plus ecrite du tout ; la migration 007 vide les anciennes valeurs.
     $log = $pdo->prepare(
-        "INSERT INTO whatsapp_webhook_log (wa_from, message_body, code_extrait, matched_user_id, statut)
-         VALUES (?, ?, ?, ?, ?)"
+        "INSERT INTO whatsapp_webhook_log (wa_from, code_extrait, matched_user_id, statut)
+         VALUES (?, ?, ?, ?)"
     );
-    // Le texte du message n'est pas conserve : seul le code extrait sert au controle
-    $log->execute([$numero, null, $code, $matchedUserId, $statut]);
+    $log->execute([$numero, $code, $matchedUserId, $statut]);
 
     require_once __DIR__ . '/audit.php';
     auditInfo($pdo, ['category' => 'auth', 'action' => $statut === 'valide' ? 'verification_whatsapp' : 'whatsapp_code_' . $statut,
