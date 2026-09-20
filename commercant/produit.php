@@ -7,6 +7,7 @@
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/audit.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/incident.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/commercant.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/image_produit.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/affiliation_helpers.php';
@@ -168,8 +169,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'suppr
                 header('Location: /commercant/produits.php'); exit();
             } catch (Throwable $t) {
                 if ($pdo->inTransaction()) $pdo->rollBack();
-                error_log('[commercant/produit] ' . get_class($t) . ' ' . $t->getMessage());
-                $erreur = "Le produit n'a pas pu être enregistré. Réessayez dans un instant.";
+                $erreur = messageIncident(incidentEnregistrer($pdo, $t, 'commercant/produit'),
+                    "Le produit n'a pas pu être enregistré. Réessayez dans un instant.");
             }
         }
     }

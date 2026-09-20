@@ -3,6 +3,7 @@ session_start();
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
 require_once __DIR__ . '/includs/audit.php';
+require_once __DIR__ . '/includs/incident.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/email_sender.php';
 
 if (empty($_SESSION['csrf_token'])) {
@@ -57,8 +58,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_demander_reset
                     $success = "Si un compte existe avec cette adresse, un code de réinitialisation vient d'y être envoyé. Pensez à regarder dans les courriers indésirables.";
                 }
             } catch (\Throwable $e) {
-                error_log('Erreur mot de passe oublié : ' . $e->getMessage());
-                $error = "La demande a échoué pour une raison technique. Réessayez dans un instant.";
+                $error = messageIncident(incidentEnregistrer($pdo, $e, 'mot_de_passe_oublie'),
+                    "La demande a échoué pour une raison technique. Réessayez dans un instant.");
             }
         }
     }

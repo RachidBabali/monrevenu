@@ -6,6 +6,7 @@
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/audit.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/incident.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/commercant.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/image_produit.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/affiliation_helpers.php';
@@ -99,11 +100,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['flash_error'] = match ($t->getMessage()) {
             'commandes_existantes' => "Ce produit a déjà des commandes : suspendez-le ou marquez-le terminé plutôt que de le supprimer.",
             'boutique_non_validee' => "Votre boutique doit être validée avant de publier un produit.",
-            default => "L'action n'a pas pu être enregistrée. Réessayez dans un instant.",
+            default => messageIncident(incidentEnregistrer($pdo, $t, 'commercant/produits'),
+                "L'action n'a pas pu être enregistrée. Réessayez dans un instant."),
         };
-        if (!in_array($t->getMessage(), ['commandes_existantes', 'boutique_non_validee'], true)) {
-            error_log('[commercant/produits] ' . get_class($t) . ' ' . $t->getMessage());
-        }
     }
     header('Location: /commercant/produits.php'); exit();
 }

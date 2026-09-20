@@ -17,6 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     if (empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'])) {
         $retrait_error = 'Votre session a expiré. Rechargez la page puis recommencez.';
         require_once __DIR__ . '/../includs/audit.php';
+        require_once __DIR__ . '/../includs/incident.php';
         auditInfo($pdo, ['category' => 'systeme', 'action' => 'csrf_echec', 'result' => 'refus', 'meta' => ['page' => 'portefeuille']]);
     } else {
         $montant_r = round(floatval($_POST['montant_retrait'] ?? 0), 2);
@@ -67,8 +68,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $retrait_error = 'Solde insuffisant : vous disposez de ' . formaterMontant($balance) . '.';
             } catch (Throwable $e) {
                 if ($pdo->inTransaction()) $pdo->rollBack();
-                error_log('[wallet] retrait : ' . get_class($e) . ' ' . $e->getMessage());
-                $retrait_error = "La demande n'a pas pu être enregistrée. Réessayez dans un instant.";
+                $retrait_error = messageIncident(incidentEnregistrer($pdo, $e, 'portefeuille/retrait'),
+                    "La demande n'a pas pu être enregistrée. Réessayez dans un instant.");
             }
         }
     }

@@ -6,6 +6,7 @@ session_start();
 // ============================================================
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
 require_once __DIR__ . '/includs/audit.php';
+require_once __DIR__ . '/includs/incident.php';
 
 // ============================================================
 // 2. DÉTECTION AUTOMATIQUE HTTP / HTTPS
@@ -231,7 +232,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_commander'])) 
                 header('Location: ' . $_SERVER['REQUEST_URI']);
                 exit();
             } catch (PDOException $e) {
-                $error = "La commande n'a pas pu être enregistrée. Réessayez dans un instant.";
+                $error = messageIncident(incidentEnregistrer($pdo, $e, 'commande'),
+                    "La commande n'a pas pu être enregistrée. Réessayez dans un instant.");
             }
         }
     }

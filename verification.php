@@ -16,6 +16,7 @@ session_start();
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
 require_once __DIR__ . '/includs/audit.php';
+require_once __DIR__ . '/includs/incident.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/email_sender.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/whatsapp_sender.php';
 
@@ -274,14 +275,10 @@ if (
 
             } catch (\Throwable $e) {
 
-                error_log(
-                    'Erreur renvoi code MonRevenu : '
-                    . $e->getMessage()
+                $error = messageIncident(
+                    incidentEnregistrer($pdo, $e, 'verification/renvoi_code'),
+                    'Une erreur est survenue. Veuillez réessayer.'
                 );
-
-                $error =
-                    'Une erreur est survenue. '
-                    . 'Veuillez réessayer.';
             }
         }
     }
@@ -519,15 +516,10 @@ if (
                     $pdo->rollBack();
                 }
 
-                error_log(
-                    'Erreur vérification MonRevenu : '
-                    . $e->getMessage()
+                $error = messageIncident(
+                    incidentEnregistrer($pdo, $e, 'verification/validation'),
+                    'Une erreur est survenue pendant la validation de votre compte. Veuillez réessayer.'
                 );
-
-                $error =
-                    'Une erreur est survenue pendant la '
-                    . 'validation de votre compte. '
-                    . 'Veuillez réessayer.';
             }
         }
     }

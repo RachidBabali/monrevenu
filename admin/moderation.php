@@ -6,6 +6,7 @@
 require_once __DIR__ . '/../basse_de_donner/monrevenu_bd.php';
 require_once __DIR__ . '/auth_middleware.php';
 require_once __DIR__ . '/../includs/audit.php';
+require_once __DIR__ . '/../includs/incident.php';
 require_once __DIR__ . '/../includs/commercant.php';
 require_once __DIR__ . '/../includs/affiliation_helpers.php';
 require_once __DIR__ . '/../includs/ui.php';
@@ -75,11 +76,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = match ($t->getMessage()) {
             'introuvable' => "Ce produit est introuvable.",
             'motif_manquant' => "Indiquez le motif : il est envoyé au commerçant.",
-            default => "L'action n'a pas pu être enregistrée. Réessayez dans un instant.",
+            default => messageIncident(
+                incidentEnregistrer($pdo, $t, 'admin/moderation'),
+                "L'action n'a pas pu être enregistrée. Réessayez dans un instant."
+            ),
         };
-        if (!in_array($t->getMessage(), ['introuvable', 'motif_manquant'], true)) {
-            error_log('[admin/moderation] ' . get_class($t) . ' ' . $t->getMessage());
-        }
         $message = '';
     }
     $_SESSION['flash_message'] = $message;
@@ -110,8 +111,7 @@ try {
     $st->execute();
     $produits = $st->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
-    error_log('[admin/moderation] ' . $e->getMessage());
-    $error = $error ?: "La liste n'a pas pu être chargée.";
+    $error = $error ?: messageIncident(incidentEnregistrer($pdo, $e, 'admin/moderation/liste'), "La liste n'a pas pu être chargée.");
 }
 
 $compteurs_admin = [

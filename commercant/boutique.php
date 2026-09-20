@@ -6,6 +6,7 @@
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/audit.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/incident.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/commercant.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/ui.php';
 
@@ -45,8 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: /commercant/boutique.php'); exit();
             } catch (Throwable $t) {
                 if ($pdo->inTransaction()) $pdo->rollBack();
-                error_log('[commercant/boutique] ' . get_class($t) . ' ' . $t->getMessage());
-                $erreur = "Les informations n'ont pas pu être enregistrées. Réessayez dans un instant.";
+                $erreur = messageIncident(incidentEnregistrer($pdo, $t, 'commercant/boutique'),
+                    "Les informations n'ont pas pu être enregistrées. Réessayez dans un instant.");
             }
         }
         $profil['nom_boutique'] = $nom;

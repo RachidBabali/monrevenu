@@ -4,6 +4,7 @@ session_start();
 // 1. Connexion à la base de données (fichier centralisé du projet)
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
 require_once __DIR__ . '/../includs/audit.php';
+require_once __DIR__ . '/../includs/incident.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/ui.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/geoip.php';
 
@@ -91,7 +92,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($e->getCode() === '23000') {
                     $_SESSION['flash_error'] = "Cet email est déjà utilisé par un autre compte.";
                 } else {
-                    $_SESSION['flash_error'] = "Vos informations n'ont pas pu être enregistrées. Réessayez dans un instant.";
+                    $_SESSION['flash_error'] = messageIncident(incidentEnregistrer($pdo, $e, 'profil/informations'),
+                        "Vos informations n'ont pas pu être enregistrées. Réessayez dans un instant.");
                 }
             }
         }
@@ -129,7 +131,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['flash_success'] = "Votre code secret est modifié.";
                 }
             } catch (PDOException $e) {
-                $_SESSION['flash_error'] = "Le code secret n'a pas pu être modifié. Réessayez dans un instant.";
+                $_SESSION['flash_error'] = messageIncident(incidentEnregistrer($pdo, $e, 'profil/code_secret'),
+                    "Le code secret n'a pas pu être modifié. Réessayez dans un instant.");
             }
         }
 
@@ -248,8 +251,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
-            error_log('Erreur suppression compte : ' . $e->getMessage());
-            $_SESSION['flash_error'] = "Une erreur est survenue, votre compte n'a pas été supprimé. Réessayez.";
+            $_SESSION['flash_error'] = messageIncident(incidentEnregistrer($pdo, $e, 'profil/suppression_compte'),
+                "Une erreur est survenue, votre compte n'a pas été supprimé. Réessayez.");
             header('Location: profil.php'); exit();
         }
 

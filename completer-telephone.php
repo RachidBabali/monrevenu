@@ -10,6 +10,7 @@
 session_start();
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
 require_once __DIR__ . '/includs/audit.php';
+require_once __DIR__ . '/includs/incident.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/auth_middleware.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/whatsapp_sender.php';
 
@@ -107,8 +108,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     exit();
                 }
             } catch (PDOException $e) {
-                error_log('completer-telephone.php : ' . $e->getMessage());
-                $erreur = "L'envoi a échoué pour une raison technique. Réessayez dans un instant.";
+                $erreur = messageIncident(incidentEnregistrer($pdo, $e, 'completer-telephone'),
+                    "L'envoi a échoué pour une raison technique. Réessayez dans un instant.");
             }
         }
     }

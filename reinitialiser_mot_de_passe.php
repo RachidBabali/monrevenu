@@ -3,6 +3,7 @@ session_start();
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
 require_once __DIR__ . '/includs/audit.php';
+require_once __DIR__ . '/includs/incident.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/email_sender.php';
 
 $user_id = $_SESSION['reset_password_user_id'] ?? null;
@@ -105,8 +106,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_reinitialiser'
                     header('Location: /index.php');
                     exit();
                 } catch (\Throwable $e) {
-                    error_log('Erreur réinitialisation code secret : ' . $e->getMessage());
-                    $error = "Une erreur est survenue. Veuillez réessayer.";
+                    $error = messageIncident(incidentEnregistrer($pdo, $e, 'reinitialiser_mot_de_passe'),
+                        "Une erreur est survenue. Veuillez réessayer.");
                 }
             }
         }

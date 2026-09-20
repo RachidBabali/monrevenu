@@ -11,6 +11,7 @@ require_once '../includs/image_helper.php';
 require_once 'auth_middleware.php';
 require_once '../includs/ui.php';
 require_once '../includs/audit.php';
+require_once '../includs/incident.php';
 require_once '../includs/argent.php';
 
 
@@ -49,8 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } catch (Throwable $t) {
             if ($pdo->inTransaction()) $pdo->rollBack();
-            error_log('[dashboard_admin] ' . $echec . ' : ' . get_class($t) . ' ' . $t->getMessage());
-            $error = $echec;
+            $error = messageIncident(incidentEnregistrer($pdo, $t, 'admin/dashboard', ['action' => $echec]), $echec);
             $message = '';
         }
     };

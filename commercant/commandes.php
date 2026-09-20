@@ -7,6 +7,7 @@
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/audit.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/incident.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/commercant.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/ui.php';
 
@@ -78,11 +79,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['flash_error'] = match ($t->getMessage()) {
             'transition_interdite' => "Cette commande ne peut pas passer à cet état. Seul MonRevenu valide une vente.",
             'motif_manquant' => "Indiquez le motif de l'annulation : il est envoyé à l'affilié.",
-            default => "La commande n'a pas pu être mise à jour. Réessayez dans un instant.",
+            default => messageIncident(incidentEnregistrer($pdo, $t, 'commercant/commandes'),
+                "La commande n'a pas pu être mise à jour. Réessayez dans un instant."),
         };
-        if (!in_array($t->getMessage(), ['transition_interdite', 'motif_manquant'], true)) {
-            error_log('[commercant/commandes] ' . get_class($t) . ' ' . $t->getMessage());
-        }
     }
     header('Location: /commercant/commandes.php'); exit();
 }
