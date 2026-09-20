@@ -8,9 +8,9 @@
  *   Numéros acceptés : Comores (+269) et Sénégal (+221)     
  * À placer dans : includs/login_handler.php
  *
- * Aucune modification manuelle de la base requise : les deux tables
- * de protection (login_attempts et login_attempts_compte) se créent
- * automatiquement toutes seules au premier appel.
+ * Les deux tables de protection (login_attempts et login_attempts_compte)
+ * viennent des migrations : aucune table n'est créée à la connexion.
+ * Si l'une manque, l'onglet Santé de l'audit le signale (tables attendues absentes).
  */
 session_start();
 require_once __DIR__ . '/../basse_de_donner/monrevenu_bd.php';

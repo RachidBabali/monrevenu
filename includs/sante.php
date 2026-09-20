@@ -156,7 +156,7 @@ if (!function_exists('santeControle')) {
             $part > 80 ? 'critique' : ($part > 50 ? 'attention' : 'ok'), count($tables) . ' tables');
         $c[] = santeControle('bd_lignes', 'Lignes (estimation)', number_format(array_sum(array_column($tables, 'lignes')), 0, ',', ' '), 'ok',
             'Estimation donnée par SHOW TABLE STATUS.');
-        return $c;
+        return array_merge($c, santeTablesManquantes($pdo));
     }
 
     /** Liste des tables avec leur taille (SHOW TABLE STATUS, jamais information_schema). */
@@ -180,6 +180,34 @@ if (!function_exists('santeControle')) {
             usort($tables, fn($a, $b) => $b['octets'] <=> $a['octets']);
             return $tables;
         });
+    }
+
+    /**
+     * Tables dont le code a besoin. Une table absente veut dire qu'une migration n'a pas ete
+     * appliquee : le code ne cree plus aucune table a la volee (login_attempts_compte comprise).
+     */
+    function santeTablesAttendues(): array
+    {
+        return [
+            'users_monrevenu', 'vendeur_produits', 'vendeur_ventes', 'transactions_monrevenu', 'withdrawals',
+            'agent_commissions', 'stocks_revendeurs', 'mouvements_stock', 'produits_stock', 'ventes_stock',
+            'messages', 'push_subscriptions', 'visites_pays', 'whatsapp_webhook_log',
+            'login_attempts', 'login_attempts_compte', 'journal_suppressions_compte',
+            'audit_log', 'audit_chain_head', 'health_snapshots',
+            'commercants_profils', 'commercant_reglements',
+        ];
+    }
+
+    /** Tables attendues mais absentes : migration oubliee. */
+    function santeTablesManquantes(PDO $pdo): array
+    {
+        $presentes = array_column(santeTables($pdo), 'nom');
+        $manquantes = array_values(array_diff(santeTablesAttendues(), $presentes));
+        $note = $manquantes
+            ? 'Migration non appliquée : ' . implode(', ', $manquantes) . '. Voir le dossier migrations.'
+            : 'Les ' . count(santeTablesAttendues()) . ' tables attendues sont présentes.';
+        return [santeControle('bd_tables_manquantes', 'Tables attendues absentes', count($manquantes),
+            $manquantes ? 'critique' : 'ok', $note)];
     }
 
     /** Controles d'integrite : orphelins, dates incoherentes, commandes bloquees. */
