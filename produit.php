@@ -23,29 +23,9 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/commercant.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/ui.php';
 
 // ============================================================
-// 3ter. VALIDATION DU NUMÉRO (Sénégal +221 ou Comores +269 uniquement)
+// 3ter. VALIDATION DU NUMÉRO : celui du marché du produit
+//       (longueur nationale, sans liste de préfixes, voir includs/config_marche.php)
 // ============================================================
-/**
- * Vérifie que le numéro correspond à un format sénégalais (+221) ou
- * comorien (+269). Accepte avec ou sans indicatif, espaces retirés.
- */
-function validerTelephoneSenegalOuComores(string $tel): bool
-{
-    // On retire tout sauf les chiffres et le signe +
-    $tel = preg_replace('/[^\d+]/', '', $tel);
-
-    // Sénégal : +221 suivi de 9 chiffres commençant par 7 (mobile)
-    if (preg_match('/^(\+221|00221)?7[0-8]\d{7}$/', $tel)) {
-        return true;
-    }
-
-    // Comores : +269 suivi de 7 chiffres commençant par 3 ou 4 (mobile)
-    if (preg_match('/^(\+269|00269)?[34]\d{6}$/', $tel)) {
-        return true;
-    }
-
-    return false;
-}
 
 // ============================================================
 // 4. JETON CSRF (protection du formulaire de commande)
@@ -135,14 +115,23 @@ $produit = null;
 if ($produit_id > 0) {
     $stmtProduit = $pdo->prepare(
         "SELECT vp.id, vp.nom_produit AS nom, vp.description, vp.image, vp.prix_vente AS prix,
-                vp.commission_pct AS commission_pourcentage, vp.vendeur_id AS proprietaire_id
+                vp.commission_pct AS commission_pourcentage, vp.vendeur_id AS proprietaire_id,
+                vp.devise, proprio.pays_code, proprio.phone
          FROM vendeur_produits vp " . CATALOGUE_JOINTURE . "
+         LEFT JOIN users_monrevenu proprio ON proprio.id = vp.vendeur_id
          WHERE vp.id = ? AND " . CATALOGUE_CONDITION . "
          LIMIT 1"
     );
     $stmtProduit->execute([$produit_id]);
     $produit = $stmtProduit->fetch();
 }
+
+// Marche du produit : sa devise enregistree, sinon le marche de son proprietaire. Toute la page
+// (prix, commission, numero accepte) suit ce marche, jamais celui du visiteur.
+$marche_produit = ($produit ? marcheDeDevise($produit['devise'] ?? null) : null)
+    ?? ($produit ? marcheDeCompte($produit) : marcheCourant());
+definirMarcheCourant($marche_produit);
+$config_marche_produit = marche($marche_produit);
 
 // ============================================================
 // 6bis. TRAITEMENT DE LA COMMANDE (POST)
@@ -169,19 +158,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_commander'])) 
             $error = "Indiquez votre nom et votre numéro WhatsApp.";
         } elseif (mb_strlen($nom_client) > 120 || mb_strlen($telephone_client) > 30) {
             $error = "Le nom ou le numéro renseigné est trop long.";
-        } elseif (!validerTelephoneSenegalOuComores($telephone_client)) {
-            $error = "Numéro WhatsApp invalide. Indiquez un numéro du Sénégal (+221) ou des Comores (+269).";
+        } elseif (normaliserNumero($telephone_client, $marche_produit) === null) {
+            $error = "Numéro WhatsApp invalide. Ce produit est vendu " . ($marche_produit === 'KM' ? 'aux Comores' : 'au Sénégal')
+                . " : indiquez un numéro +" . $config_marche_produit['indicatif'] . " de "
+                . $config_marche_produit['longueur_nationale'] . " chiffres (exemple : " . $config_marche_produit['exemple_numero'] . ").";
         } else {
             $prix_unitaire        = (float) $produit['prix'];
-            $commission_unitaire  = calculerCommission($prix_unitaire);
+            $commission_unitaire  = calculerCommission($prix_unitaire, $marche_produit);
             $commission_totale    = $commission_unitaire * $quantite;
 
             try {
                 $stmtVente = $pdo->prepare(
                     "INSERT INTO vendeur_ventes
                         (produit_id, vendeur_id, quantite, prix_unitaire, commission_pct, commission_earn,
-                         nom_client, telephone_client, adresse_client, statut, commission_creditee)
-                     VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, 'en_attente', 0)"
+                         nom_client, telephone_client, adresse_client, statut, commission_creditee, devise)
+                     VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, 'en_attente', 0, ?)"
                 );
                 $stmtVente->execute([
                     $produit['id'],
@@ -192,6 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_commander'])) 
                     $nom_client,
                     $telephone_client,
                     $adresse_client !== '' ? $adresse_client : null,
+                    deviseIso($marche_produit),
                 ]);
                 $commande_id = (int) $pdo->lastInsertId();
                 auditInfo($pdo, ['category' => 'commande', 'action' => 'commande_creation', 'entity_type' => 'commande', 'entity_id' => $commande_id,
@@ -283,7 +275,7 @@ $head_supp = '<meta property="og:type" content="product">'
     . '<meta property="og:image:width" content="800"><meta property="og:image:height" content="800">'
     . '<meta property="og:url" content="' . e($og_url) . '">'
     . '<meta property="og:site_name" content="MonRevenu">'
-    . ($produit ? '<meta property="product:price:amount" content="' . $prix_produit . '"><meta property="product:price:currency" content="' . DEVISE_ISO . '">' : '')
+    . ($produit ? '<meta property="product:price:amount" content="' . $prix_produit . '"><meta property="product:price:currency" content="' . e(deviseIso($marche_produit)) . '">' : '')
     . '<meta name="twitter:card" content="summary_large_image">'
     . '<meta name="twitter:title" content="' . e($og_titre) . '">'
     . '<meta name="twitter:description" content="' . e($og_description) . '">'
@@ -370,9 +362,10 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/head.php';
             <div class="champ">
               <label class="champ-label" for="telephone_client">Numéro WhatsApp</label>
               <input class="champ-saisie" type="tel" id="telephone_client" name="telephone_client" required maxlength="30" autocomplete="tel" inputmode="tel"
-                     pattern="^(\+221|00221)?7[0-8][0-9]{7}$|^(\+269|00269)?[34][0-9]{6}$" placeholder="77 123 45 67"
+                     pattern="^(\+?<?= e($config_marche_produit['indicatif']) ?>|00<?= e($config_marche_produit['indicatif']) ?>)?[0-9]{<?= (int) $config_marche_produit['longueur_nationale'] ?>}$"
+                     placeholder="<?= e($config_marche_produit['exemple_numero']) ?>"
                      value="<?= e($_POST['telephone_client'] ?? '') ?>" aria-describedby="aide-telephone err-telephone_client">
-              <p class="champ-aide" id="aide-telephone">Vous serez contacté sur ce numéro pour confirmer la livraison.</p>
+              <p class="champ-aide" id="aide-telephone">Vous serez contacté sur ce numéro pour confirmer la livraison. Numéro +<?= e($config_marche_produit['indicatif']) ?> (<?= e($config_marche_produit['nom']) ?>).</p>
               <p class="champ-erreur" id="err-telephone_client" hidden></p>
             </div>
 

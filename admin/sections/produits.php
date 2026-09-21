@@ -16,9 +16,18 @@
         <label class="champ-label" for="produit-description">Description</label>
         <textarea class="champ-saisie" id="produit-description" name="description" rows="3"></textarea>
       </div>
+      <div class="champ">
+        <label class="champ-label" for="produit-marche">Marché</label>
+        <select class="champ-saisie" id="produit-marche" name="marche" required>
+          <?php foreach (marches() as $codeMarche => $configMarche): ?>
+            <option value="<?= e($codeMarche) ?>"><?= e($configMarche['nom']) ?> (<?= e($configMarche['devise_libelle']) ?>)</option>
+          <?php endforeach; ?>
+        </select>
+        <p class="champ-aide">Le produit n'apparaît que dans le catalogue des affiliés de ce marché, et son prix est dans la devise du marché.</p>
+      </div>
       <div class="grid grid-cols-2 gap-3">
         <div class="champ">
-          <label class="champ-label" for="produit-prix">Prix (FCFA)</label>
+          <label class="champ-label" for="produit-prix">Prix</label>
           <input class="champ-saisie chiffres" type="number" step="0.01" id="produit-prix" name="prix" required inputmode="decimal">
         </div>
         <div class="champ">
@@ -26,7 +35,7 @@
           <input class="champ-saisie chiffres" type="number" id="produit-commission" name="commission_pourcentage" value="10" min="0" max="100">
         </div>
       </div>
-      <p class="champ-aide">La commission versée à l'affilié suit la règle fixe du site (<?= e(formaterMontant(500)) ?> jusqu'à <?= e(formaterMontant(10000)) ?>, <?= e(formaterMontant(1000)) ?> au-delà). Le pourcentage est enregistré mais n'intervient pas dans le calcul.</p>
+      <p class="champ-aide">La commission versée à l'affilié suit la règle du marché choisi. Le pourcentage est enregistré mais n'intervient pas dans le calcul.</p>
       <button type="submit" name="action_produit" class="btn btn-primaire"><?= ico('loader-circle', 'ico-charge') ?><span data-libelle>Publier le produit</span></button>
     </div>
   </form>
@@ -57,7 +66,7 @@
               <td data-label="">
                 <span class="flex justify-end gap-1.5">
                   <button type="button" class="btn btn-sm btn-icone btn-secondaire" title="Modifier"
-                          onclick="ouvrirEditionProduit(<?= (int) $p['id'] ?>, '<?= e(addslashes($p['nom_produit'])) ?>', '<?= e(addslashes((string) $p['description'])) ?>', <?= (float) $p['prix_vente'] ?>, <?= (int) $p['commission_pct'] ?>)"
+                          onclick="ouvrirEditionProduit(<?= (int) $p['id'] ?>, '<?= e(addslashes($p['nom_produit'])) ?>', '<?= e(addslashes((string) $p['description'])) ?>', <?= (float) $p['prix_vente'] ?>, <?= (int) $p['commission_pct'] ?>, '<?= e(deviseLibelle($p['marche'])) ?>')"
                           aria-label="Modifier <?= e($p['nom_produit']) ?>"><?= ico('pencil', 'ico-16') ?></button>
                   <form action="" method="POST">
                     <input type="hidden" name="csrf_token" value="<?= e($csrf_token) ?>">

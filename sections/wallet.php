@@ -38,10 +38,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 // par mouvementSolde (refus si le solde deviendrait negatif, journal dans la meme transaction).
                 $note = $methode_r . ' : ' . $numero_r;
                 $stmtRetrait = $pdo->prepare(
-                    "INSERT INTO withdrawals (user_id, amount, status, method, note, created_at)
-                     VALUES (?, ?, 'en_attente', ?, ?, NOW())"
+                    "INSERT INTO withdrawals (user_id, amount, status, method, note, created_at, devise)
+                     VALUES (?, ?, 'en_attente', ?, ?, NOW(), ?)"
                 );
-                $stmtRetrait->execute([$user_id, $montant_r, $methode_r, $note]);
+                $stmtRetrait->execute([$user_id, $montant_r, $methode_r, $note, deviseIso($marche_membre)]);
                 $withdrawal_id = (int) $pdo->lastInsertId();
 
                 mouvementSolde($pdo, (int) $user_id, -$montant_r, 'retrait', 'RETRAIT-' . $withdrawal_id, 'en_attente',

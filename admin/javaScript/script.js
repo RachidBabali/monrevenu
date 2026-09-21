@@ -40,12 +40,15 @@
     });
 
     // --- Modale d'édition produit : pré-remplit les champs puis ouvre le <dialog> ---
-    function ouvrirEditionProduit(id, nom, description, prix, commission) {
+    function ouvrirEditionProduit(id, nom, description, prix, commission, devise) {
         document.getElementById('edit-produit-id').value = id;
         document.getElementById('edit-produit-nom').value = nom;
         document.getElementById('edit-produit-description').value = description;
         document.getElementById('edit-produit-prix').value = prix;
         document.getElementById('edit-produit-commission').value = commission;
+        // Le prix reste dans la devise du marche du produit : jamais de conversion.
+        var libelleDevise = document.getElementById('edit-produit-devise');
+        if (libelleDevise && devise) { libelleDevise.textContent = devise; }
         document.getElementById('modal-edition-produit').showModal();
     }
 

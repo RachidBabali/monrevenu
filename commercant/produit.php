@@ -15,6 +15,8 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/ui.php';
 
 $profil = exigerCommercant($pdo);
 $id = (int) $profil['user_id'];
+$marche_commercant = $profil['marche'];
+$regle_commission = marche($marche_commercant)['commission'];
 if (empty($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
 $produit_id = (int) ($_GET['id'] ?? $_POST['produit_id'] ?? 0);
@@ -148,9 +150,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'suppr
                 } else {
                     $moderation = $envoyer ? ((int) $profil['confiance'] === 1 ? 'approuve' : 'en_attente') : 'brouillon';
                     $pdo->prepare(
-                        "INSERT INTO vendeur_produits (vendeur_id, nom_produit, description, image, prix_vente, commission_pct, stock, date_limite, statut, moderation, created_by)
-                         VALUES (?, ?, ?, ?, ?, 0, ?, ?, 'actif', ?, ?)"
-                    )->execute([$id, $saisie['nom'], $saisie['description'], $image, $prix, $stock, $dateLimite, $moderation, $id]);
+                        "INSERT INTO vendeur_produits (vendeur_id, nom_produit, description, image, prix_vente, commission_pct, stock, date_limite, statut, moderation, created_by, devise)
+                         VALUES (?, ?, ?, ?, ?, 0, ?, ?, 'actif', ?, ?, ?)"
+                    )->execute([$id, $saisie['nom'], $saisie['description'], $image, $prix, $stock, $dateLimite, $moderation, $id, deviseIso($marche_commercant)]);
                     $produit_id = (int) $pdo->lastInsertId();
                     auditCritique($pdo, ['category' => 'produit', 'action' => 'produit_creation', 'entity_type' => 'produit', 'entity_id' => $produit_id,
                         'after' => ['nom_produit' => $saisie['nom'], 'prix_vente' => number_format($prix, 2, '.', ''), 'stock' => $stock,
@@ -219,10 +221,10 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
           <label class="champ-label" for="prix">Prix de vente</label>
           <div class="champ-groupe">
             <input class="champ-saisie chiffres" type="number" id="prix" name="prix" min="100" step="1" inputmode="numeric" required
-                   value="<?= e($saisie['prix']) ?>" data-seuil="<?= (int) SEUIL_PRIX_COMMISSION ?>" data-basse="<?= (int) COMMISSION_BASSE ?>" data-haute="<?= (int) COMMISSION_HAUTE ?>">
-            <span class="champ-prefixe rounded-l-none border-l-0 border-r"><?= e(DEVISE_LIBELLE) ?></span>
+                   value="<?= e($saisie['prix']) ?>" data-seuil="<?= (int) $regle_commission['seuil'] ?>" data-basse="<?= (int) $regle_commission['basse'] ?>" data-haute="<?= (int) $regle_commission['haute'] ?>">
+            <span class="champ-prefixe rounded-l-none border-l-0 border-r"><?= e(deviseLibelle($marche_commercant)) ?></span>
           </div>
-          <p class="champ-aide" id="aide-commission">Commission versée à l'affilié : <span id="commission-calculee" data-devise="<?= e(DEVISE_LIBELLE) ?>"><?= $commission !== null ? e(formaterMontant($commission)) : formaterMontant(COMMISSION_BASSE) . ' ou ' . formaterMontant(COMMISSION_HAUTE) ?></span>. Elle est fixée par MonRevenu et vous est facturée sur chaque vente validée.</p>
+          <p class="champ-aide" id="aide-commission">Commission versée à l'affilié : <span id="commission-calculee" data-devise="<?= e(deviseLibelle($marche_commercant)) ?>"><?= $commission !== null ? e(formaterMontant($commission, false, true, $marche_commercant)) : formaterMontant($regle_commission['basse'], false, true, $marche_commercant) . ' ou ' . formaterMontant($regle_commission['haute'], false, true, $marche_commercant) ?></span>. Elle est fixée par MonRevenu et vous est facturée sur chaque vente validée.</p>
         </div>
         <div class="champ">
           <label class="champ-label" for="stock">Stock disponible <span class="font-normal text-text-3">(facultatif)</span></label>

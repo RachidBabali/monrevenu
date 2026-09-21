@@ -11,6 +11,7 @@
  */
 
 require_once __DIR__ . '/env_loader.php';
+require_once __DIR__ . '/config_marche.php';
 
 if (!defined('SECRET_AFFILIATION')) {
     // A definir dans .env (cle AFFILIATION_SECRET) avec une valeur aleatoire longue et unique.
@@ -31,20 +32,11 @@ if (!defined('SECRET_AFFILIATION')) {
     }
 }
 
-if (!defined('SEUIL_PRIX_COMMISSION')) {
-    define('SEUIL_PRIX_COMMISSION', 10000);
-}
-if (!defined('COMMISSION_BASSE')) {
-    define('COMMISSION_BASSE', 500);
-}
-if (!defined('COMMISSION_HAUTE')) {
-    define('COMMISSION_HAUTE', 1000);
-}
-
 if (!function_exists('calculerCommission')) {
-    function calculerCommission(float $prix): int
+    /** Commission de l'affilie. La regle appartient au marche (includs/config_marche.php). */
+    function calculerCommission(float $prix, ?string $marche = null): int
     {
-        return $prix <= SEUIL_PRIX_COMMISSION ? COMMISSION_BASSE : COMMISSION_HAUTE;
+        return commissionMarche($prix, $marche);
     }
 }
 

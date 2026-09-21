@@ -60,6 +60,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Texte brut en base, echappe seulement a l'affichage (e()) : pas de double echappement.
         $nom = mb_substr(trim(preg_replace('/\s+/u', ' ', (string) ($_POST['nom'] ?? ''))), 0, 255);
         $description = mb_substr(trim((string) ($_POST['description'] ?? '')), 0, 2000);
+        // Marche du produit : celui du commercant pour qui l'administration publie (SN ou KM).
+        $marche_produit_admin = marcheValide($_POST['marche'] ?? '') ?? marcheDeCompte($admin);
         $prix = (float)$_POST['prix'];
         $commission = (int)$_POST['commission_pourcentage'];
 
@@ -113,12 +115,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($uploadOk && !empty($nom) && $prix > 0) {
-            $executer(function () use ($pdo, $admin, $nom, $description, $image, $prix, $commission, &$message) {
-                $pdo->prepare("INSERT INTO vendeur_produits (vendeur_id, nom_produit, description, image, prix_vente, commission_pct) VALUES (?, ?, ?, ?, ?, ?)")
-                    ->execute([$admin['id'], $nom, $description, $image, $prix, $commission]);
+            $executer(function () use ($pdo, $admin, $nom, $description, $image, $prix, $commission, $marche_produit_admin, &$message) {
+                $pdo->prepare("INSERT INTO vendeur_produits (vendeur_id, nom_produit, description, image, prix_vente, commission_pct, devise) VALUES (?, ?, ?, ?, ?, ?, ?)")
+                    ->execute([$admin['id'], $nom, $description, $image, $prix, $commission, deviseIso($marche_produit_admin)]);
                 $id = (int) $pdo->lastInsertId();
                 auditCritique($pdo, ['category' => 'produit', 'action' => 'produit_creation', 'entity_type' => 'produit', 'entity_id' => $id,
-                    'after' => ['nom_produit' => $nom, 'prix_vente' => $prix, 'commission_pct' => $commission, 'image' => str_starts_with($image, 'data:') ? '[defaut]' : $image]]);
+                    'after' => ['nom_produit' => $nom, 'prix_vente' => $prix, 'commission_pct' => $commission, 'marche' => $marche_produit_admin,
+                        'image' => str_starts_with($image, 'data:') ? '[defaut]' : $image]]);
                 $message = "Le produit a été publié avec succès au catalogue.";
             }, "Une erreur est survenue lors de la création du produit.");
         }
@@ -563,44 +566,60 @@ if (isset($_SESSION['flash_message']) || isset($_SESSION['flash_error'])) {
 }
 
 // --- RÉCUPÉRATION DES DONNÉES DISPONIBLES ---
-$produits = $pdo->query("SELECT * FROM vendeur_produits ORDER BY id DESC LIMIT 10")->fetchAll(PDO::FETCH_ASSOC);
+// Chaque liste porte le marche de la ligne : un montant n'est jamais affiche sans sa devise,
+// et deux devises ne sont jamais additionnees (voir includs/config_marche.php).
+$produits = $pdo->query(
+    "SELECT vp.*, proprio.pays_code, proprio.phone
+     FROM vendeur_produits vp LEFT JOIN users_monrevenu proprio ON proprio.id = vp.vendeur_id
+     ORDER BY vp.id DESC LIMIT 10"
+)->fetchAll(PDO::FETCH_ASSOC);
+foreach ($produits as &$p) { $p['marche'] = marcheDeDevise($p['devise'] ?? null) ?? marcheDeCompte($p); }
+unset($p);
 $utilisateurs = $pdo->query("SELECT id, fullname, role FROM users_monrevenu ORDER BY fullname ASC")->fetchAll(PDO::FETCH_ASSOC);
 
 $tous_utilisateurs = $pdo->query(
-    "SELECT id, fullname, email, phone, role, balance, is_active, status, created_at
+    "SELECT id, fullname, email, phone, pays_code, role, balance, is_active, status, created_at
      FROM users_monrevenu
      ORDER BY created_at DESC"
 )->fetchAll(PDO::FETCH_ASSOC);
+foreach ($tous_utilisateurs as &$u) { $u['marche'] = marcheDeCompte($u); }
+unset($u);
 
 $ventes = $pdo->query(
     "SELECT v.id, v.quantite, v.prix_unitaire, v.commission_earn, v.commission_creditee,
             v.nom_client, v.telephone_client, v.adresse_client, v.statut, v.created_at,
-            p.nom_produit AS produit_nom,
-            u.fullname AS vendeur_nom
+            v.devise, p.nom_produit AS produit_nom,
+            u.fullname AS vendeur_nom, u.pays_code, u.phone
      FROM vendeur_ventes v
      JOIN vendeur_produits p ON p.id = v.produit_id
      JOIN users_monrevenu u ON u.id = v.vendeur_id
      ORDER BY v.created_at DESC
      LIMIT 30"
 )->fetchAll(PDO::FETCH_ASSOC);
+foreach ($ventes as &$v) { $v['marche'] = marcheDeDevise($v['devise'] ?? null) ?? marcheDeCompte($v); }
+unset($v);
 
 $retraits = $pdo->query(
-    "SELECT w.id, w.amount, w.status, w.method, w.note, w.created_at,
-            u.fullname AS utilisateur_nom
+    "SELECT w.id, w.amount, w.status, w.method, w.note, w.created_at, w.devise,
+            u.fullname AS utilisateur_nom, u.pays_code, u.phone
      FROM withdrawals w
      JOIN users_monrevenu u ON u.id = w.user_id
      ORDER BY w.created_at DESC
      LIMIT 30"
 )->fetchAll(PDO::FETCH_ASSOC);
+foreach ($retraits as &$r) { $r['marche'] = marcheDeDevise($r['devise'] ?? null) ?? marcheDeCompte($r); }
+unset($r);
 
 $historique = $pdo->query(
-    "SELECT t.id, t.type, t.amount, t.reference, t.status, t.description, t.created_at,
-            u.fullname AS utilisateur_nom
+    "SELECT t.id, t.type, t.amount, t.reference, t.status, t.description, t.created_at, t.devise,
+            u.fullname AS utilisateur_nom, u.pays_code, u.phone
      FROM transactions_monrevenu t
      JOIN users_monrevenu u ON u.id = t.user_id
      ORDER BY t.created_at DESC
      LIMIT 50"
 )->fetchAll(PDO::FETCH_ASSOC);
+foreach ($historique as &$h) { $h['marche'] = marcheDeDevise($h['devise'] ?? null) ?? marcheDeCompte($h); }
+unset($h);
 
 // --- STOCK REVENDEURS ---
 $produits_catalogue_complet = $pdo->query("SELECT id, nom_produit, image, prix_vente, commission_fixe FROM produits_stock ORDER BY nom_produit ASC")->fetchAll(PDO::FETCH_ASSOC);

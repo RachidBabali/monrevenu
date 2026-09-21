@@ -13,6 +13,7 @@
  */
 
 require_once __DIR__ . '/audit.php';
+require_once __DIR__ . '/config_marche.php';
 
 if (!function_exists('mouvementSolde')) {
     class SoldeInsuffisant extends RuntimeException {}
@@ -30,10 +31,15 @@ if (!function_exists('mouvementSolde')) {
         $centimes = (int) round(((float) $montant) * 100);
         if ($centimes === 0) throw new InvalidArgumentException('Montant nul');
 
-        $st = $pdo->prepare("SELECT balance FROM users_monrevenu WHERE id = ? FOR UPDATE");
+        $st = $pdo->prepare("SELECT balance, pays_code, phone FROM users_monrevenu WHERE id = ? FOR UPDATE");
         $st->execute([$userId]);
-        $solde = $st->fetchColumn();
-        if ($solde === false) throw new RuntimeException('Utilisateur introuvable');
+        $compte = $st->fetch(PDO::FETCH_ASSOC);
+        if (!$compte) throw new RuntimeException('Utilisateur introuvable');
+        $solde = $compte['balance'];
+        // Un solde est toujours dans la devise du marche de son proprietaire : aucune conversion,
+        // aucun melange. La devise est inscrite sur la ligne pour que l'historique reste lisible
+        // meme si le compte change de pays plus tard.
+        $devise = deviseIso(marcheDeCompte($compte));
         $avantC = (int) round(((float) $solde) * 100);
         $apresC = $avantC + $centimes;
         if ($apresC < 0) throw new SoldeInsuffisant('Solde insuffisant');
@@ -47,9 +53,9 @@ if (!function_exists('mouvementSolde')) {
         $acteur = $acteurId ?? (isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null);
         try {
             $pdo->prepare(
-                "INSERT INTO transactions_monrevenu (user_id, type, amount, reference, status, description, balance_before, balance_after, actor_id)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-            )->execute([$userId, $type, $abs, $reference, $statut, $description, $avant, $apres, $acteur]);
+                "INSERT INTO transactions_monrevenu (user_id, type, amount, reference, status, description, balance_before, balance_after, actor_id, devise)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            )->execute([$userId, $type, $abs, $reference, $statut, $description, $avant, $apres, $acteur, $devise]);
         } catch (PDOException $e) {
             if (($e->errorInfo[1] ?? 0) === 1062) throw new ReferenceDejaUtilisee('Reference deja utilisee');
             throw $e;
@@ -68,6 +74,6 @@ if (!function_exists('mouvementSolde')) {
         ]);
         $pdo->prepare("UPDATE transactions_monrevenu SET audit_id = ? WHERE id = ?")->execute([$auditId, $txId]);
 
-        return ['transaction_id' => $txId, 'audit_id' => $auditId, 'avant' => $avant, 'apres' => $apres];
+        return ['transaction_id' => $txId, 'audit_id' => $auditId, 'avant' => $avant, 'apres' => $apres, 'devise' => $devise];
     }
 }

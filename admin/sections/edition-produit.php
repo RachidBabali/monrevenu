@@ -18,7 +18,7 @@
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div class="champ">
-          <label class="champ-label" for="edit-produit-prix">Prix (FCFA)</label>
+          <label class="champ-label" for="edit-produit-prix">Prix (<span id="edit-produit-devise"><?= e(deviseLibelle()) ?></span>)</label>
           <input class="champ-saisie chiffres" type="number" step="0.01" name="prix_edit" id="edit-produit-prix" required>
         </div>
         <div class="champ">

@@ -17,7 +17,7 @@
         <p class="champ-aide"><?= (int) $nb_utilisateurs ?> membres enregistrés.</p>
       </div>
       <div class="champ">
-        <label class="champ-label" for="ajust-montant">Montant (FCFA)</label>
+        <label class="champ-label" for="ajust-montant">Montant</label>
         <input class="champ-saisie chiffres" type="number" id="ajust-montant" name="montant" required inputmode="numeric" min="1">
       </div>
       <div class="champ">

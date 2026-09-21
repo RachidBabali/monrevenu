@@ -10,6 +10,8 @@
  *     retrouvent par vendeur_ventes.produit_id -> vendeur_produits.vendeur_id.
  */
 
+require_once __DIR__ . '/config_marche.php';
+
 require_once __DIR__ . '/env_loader.php';
 
 /** Condition SQL du catalogue public ; l'alias du produit est vp, celui du profil cp (LEFT JOIN). */
@@ -44,12 +46,18 @@ function exigerCommercant(PDO $pdo): array
     }
     $st = $pdo->prepare(
         "SELECT u.id AS user_id, u.role, u.is_active, u.status AS statut_compte, u.phone_verified, u.fullname,
+                u.pays_code, u.phone,
                 cp.nom_boutique, cp.ville, cp.description, cp.statut, cp.motif, cp.confiance
          FROM users_monrevenu u LEFT JOIN commercants_profils cp ON cp.user_id = u.id
          WHERE u.id = ? LIMIT 1"
     );
     $st->execute([(int) $_SESSION['user_id']]);
     $profil = $st->fetch(PDO::FETCH_ASSOC);
+    if ($profil) {
+        // Marche du commercant : ses produits, ses prix et ses commandes sont dans cette devise.
+        $profil['marche'] = marcheDeCompte($profil);
+        definirMarcheCourant($profil['marche']);
+    }
     if (!$profil || $profil['role'] !== 'commercant' || $profil['nom_boutique'] === null || (int) $profil['is_active'] !== 1) {
         require_once __DIR__ . '/audit.php';
         auditInfo($pdo, ['category' => 'systeme', 'action' => 'acces_refuse', 'result' => 'refus', 'entity_type' => 'page',

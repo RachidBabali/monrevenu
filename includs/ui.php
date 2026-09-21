@@ -4,11 +4,7 @@
  * e(), ico(), formaterMontant(), montant(), dateFr(), badgeStatut(), initiales(), nettoyerPictogrammes().
  */
 
-if (!defined('DEVISE_LIBELLE')) {
-    // Libelle unique de la devise affichee. Les montants stockes ne sont pas convertis.
-    define('DEVISE_LIBELLE', 'FCFA');
-    define('DEVISE_ISO', 'XOF');
-}
+require_once __DIR__ . '/config_marche.php';
 
 if (!function_exists('e')) {
     function e($valeur): string
@@ -38,24 +34,26 @@ if (!function_exists('ico')) {
 
 if (!function_exists('formaterMontant')) {
     /**
-     * "12 500 FCFA". Espace ordinaire, signe ASCII. $signe ajoute "+" aux montants positifs.
-     * Le retour ne contient que des chiffres, espaces et le libelle : sur a afficher tel quel.
+     * "12 500 FCFA" ou "12 500 KMF". Espace ordinaire, signe ASCII. $signe ajoute "+" aux
+     * montants positifs. $marche impose la devise (marche du proprietaire du montant) ; sans lui,
+     * la devise du marche de la page est utilisee. Le retour ne contient que des chiffres, des
+     * espaces et le libelle : sur a afficher tel quel.
      */
-    function formaterMontant($montant, bool $signe = false, bool $avecDevise = true): string
+    function formaterMontant($montant, bool $signe = false, bool $avecDevise = true, ?string $marche = null): string
     {
         $valeur = (float) ($montant ?? 0);
         $prefixe = $valeur < 0 ? '-' : ($signe && $valeur > 0 ? '+' : '');
         $decimales = fmod(abs($valeur), 1.0) >= 0.005 ? 2 : 0;
         $texte = $prefixe . number_format(abs($valeur), $decimales, ',', ' ');
-        return $avecDevise ? $texte . ' ' . DEVISE_LIBELLE : $texte;
+        return $avecDevise ? $texte . ' ' . deviseLibelle($marche) : $texte;
     }
 }
 
 if (!function_exists('montant')) {
     /** Montant dans un <span class="montant"> (tabulaire, sans retour a la ligne). */
-    function montant($valeur, bool $signe = false, string $classe = ''): string
+    function montant($valeur, bool $signe = false, string $classe = '', ?string $marche = null): string
     {
-        return '<span class="montant ' . e($classe) . '">' . formaterMontant($valeur, $signe) . '</span>';
+        return '<span class="montant ' . e($classe) . '">' . formaterMontant($valeur, $signe, true, $marche) . '</span>';
     }
 }
 

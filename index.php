@@ -8,11 +8,13 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/ui.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/affiliation_helpers.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/vitrine_accueil.php';
 
-// Chiffres repris du code : includs/affiliation_helpers.php (commission) et sections/wallet.php (retrait)
-$seuil_commission = SEUIL_PRIX_COMMISSION;
-$commission_basse = COMMISSION_BASSE;
-$commission_haute = COMMISSION_HAUTE;
-$minimum_retrait  = 1000;
+// Chiffres du marche affiche (includs/config_marche.php) : commission, minimum de retrait, devise.
+$marche_visiteur  = marcheCourant();
+$config_marche    = marche($marche_visiteur);
+$seuil_commission = $config_marche['commission']['seuil'];
+$commission_basse = $config_marche['commission']['basse'];
+$commission_haute = $config_marche['commission']['haute'];
+$minimum_retrait  = $config_marche['retrait_minimum'];
 $vitrine          = produitVitrineAccueil($pdo);
 $numero_whatsapp  = env('WHATSAPP_BUSINESS_DISPLAY_NUMBER', '+221 77 876 48 19');
 $numero_wa_me     = preg_replace('/\D/', '', $numero_whatsapp);
