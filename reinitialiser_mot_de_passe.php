@@ -79,6 +79,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_reinitialiser'
             $error = "Ce code a expiré. Merci de redemander un code.";
         } elseif (!password_verify($code_email_saisi, $user['reset_password_code'])) {
             $error = "Code incorrect.";
+            // Cinq essais au plus : au-dela, le code est detruit (un code a 6 chiffres ne doit pas pouvoir etre devine par force brute)
+            $_SESSION['reset_essais'] = (int) ($_SESSION['reset_essais'] ?? 0) + 1;
+            if ($_SESSION['reset_essais'] >= 5) {
+                $pdo->prepare("UPDATE users_monrevenu SET reset_password_code = NULL, reset_password_expires_at = NULL WHERE id = ?")->execute([$user_id]);
+                $_SESSION['reset_essais'] = 0;
+                $error = "Trop d'essais : ce code n'est plus valable. Demandez-en un nouveau.";
+            }
             auditInfo($pdo, ['category' => 'auth', 'action' => 'reinitialisation_echec', 'result' => 'echec', 'entity_type' => 'utilisateur',
                 'entity_id' => $user_id, 'actor_id' => null, 'actor_role' => null]);
         } elseif (($erreur_mdp = erreurMotDePasse($nouveau_code)) !== null) {

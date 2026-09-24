@@ -46,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_demander_reset
                     if ($resultat['ok']) {
                         $_SESSION['reset_password_user_id'] = $user['id'];
                         $_SESSION['reset_password_email']   = $user['email'];
+                        $_SESSION['reset_essais'] = 0;
                         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                         header('Location: reinitialiser_mot_de_passe.php');
                         exit();

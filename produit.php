@@ -99,7 +99,9 @@ $vendeur = null;
 if ($ref_valide && $ref_id > 0) {
     // is_active=1 AND status='active' : un compte suspendu ou supprimé ne doit
     // plus jamais faire créditer de commission via un ancien lien d'affiliation.
-    $stmtRef = $pdo->prepare("SELECT id, fullname, role FROM users_monrevenu WHERE id = ? AND is_active = 1 AND status = 'active' LIMIT 1");
+    // phone_verified = 1 : un affilie dont le numero n'est pas verifie n'obtient aucun lien ; s'il en forgeait un
+    // (cle de repli publique si AFFILIATION_SECRET manque), la commande ne lui serait pas attribuee.
+    $stmtRef = $pdo->prepare("SELECT id, fullname, role FROM users_monrevenu WHERE id = ? AND is_active = 1 AND status = 'active' AND phone_verified = 1 AND phone IS NOT NULL AND phone <> '' LIMIT 1");
     $stmtRef->execute([$ref_id]);
     $vendeur = $stmtRef->fetch();
 
