@@ -10,6 +10,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/incident.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/commercant.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/image_produit.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/affiliation_helpers.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/reglages_publication.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/ui.php';
 
 $profil = exigerCommercant($pdo);
@@ -43,14 +44,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $avant = ['statut' => $produit['statut'], 'moderation' => $produit['moderation']];
         $apres = null;
         $succes = '';
+        $motifModeration = null;
+        $publicationType = $produit['publication_type'] ?? 'manuel';
+        $publieAutoLe = $produit['publie_automatiquement_le'] ?? null;
 
         if ($action === 'soumettre' && in_array($produit['moderation'], ['brouillon', 'refuse'], true)) {
             if (!commercantPeutPublier($profil)) {
                 throw new RuntimeException('boutique_non_validee');
             }
-            $direct = (int) $profil['confiance'] === 1;
-            $apres = ['statut' => 'actif', 'moderation' => $direct ? 'approuve' : 'en_attente'];
-            $succes = $direct ? 'Produit publié dans le catalogue.' : 'Produit envoyé pour validation. Vous recevrez un message dès qu\'il sera traité.';
+            $decision = evaluerPublicationProduit($pdo, $profil,
+                ['nom' => $produit['nom_produit'], 'description' => (string) $produit['description'], 'prix' => (float) $produit['prix_vente'], 'image' => (string) $produit['image']],
+                $profil['marche'], $produit_id);
+            $apres = ['statut' => 'actif', 'moderation' => $decision['moderation']];
+            $motifModeration = $decision['motif'];
+            $publicationType = $decision['moderation'] === 'approuve' ? $decision['publication_type'] : 'manuel';
+            $publieAutoLe = ($decision['moderation'] === 'approuve' && $decision['publication_type'] === 'automatique') ? date('Y-m-d H:i:s') : null;
+            $succes = $decision['moderation'] === 'approuve'
+                ? 'Produit publié dans le catalogue.'
+                : 'Produit envoyé pour validation. Vous recevrez un message dès qu\'il sera traité.' . ($motifModeration ? ' Motif : ' . $motifModeration : '');
         } elseif ($action === 'brouillon' && $produit['moderation'] !== 'brouillon') {
             $apres = ['statut' => $produit['statut'], 'moderation' => 'brouillon'];
             $succes = 'Produit remis en brouillon : il n\'est plus visible dans le catalogue.';
@@ -81,11 +92,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($apres !== null) {
-            $pdo->prepare("UPDATE vendeur_produits SET statut = ?, moderation = ?, moderation_note = NULL WHERE id = ? AND vendeur_id = ?")
-                ->execute([$apres['statut'], $apres['moderation'], $produit_id, $id]);
+            $pdo->prepare(
+                "UPDATE vendeur_produits SET statut = ?, moderation = ?, moderation_note = ?, publication_type = ?, publie_automatiquement_le = ?
+                 WHERE id = ? AND vendeur_id = ?"
+            )->execute([$apres['statut'], $apres['moderation'], $motifModeration, $publicationType, $publieAutoLe, $produit_id, $id]);
             [$b, $a] = auditDiff($avant, $apres);
             auditCritique($pdo, ['category' => 'produit', 'action' => 'produit_' . $action, 'entity_type' => 'produit', 'entity_id' => $produit_id,
-                'before' => $b, 'after' => $a]);
+                'before' => $b, 'after' => $a, 'meta' => $motifModeration ? ['motif' => $motifModeration] : []]);
         }
 
         $pdo->commit();
@@ -192,6 +205,8 @@ $etats = ['tous' => 'Tous', 'publies' => 'Publiés', 'attente' => 'En attente', 
               <p class="meta mt-0.5"><?= formaterMontant($p['prix_vente']) ?>, commission affilié <?= formaterMontant($commission) ?><?= (int) $p['stock'] > 0 ? ', stock ' . (int) $p['stock'] : '' ?></p>
               <?php if ($p['moderation'] === 'refuse' && $p['moderation_note']): ?>
                 <p class="mt-1 text-sm text-danger">Motif du refus : <?= e($p['moderation_note']) ?></p>
+              <?php elseif ($p['moderation'] === 'en_attente' && $p['moderation_note']): ?>
+                <p class="mt-1 text-sm text-text-2">En attente de validation. Motif : <?= e($p['moderation_note']) ?></p>
               <?php endif; ?>
             </div>
             <div class="flex flex-wrap items-center gap-2 sm:justify-end">

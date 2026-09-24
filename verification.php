@@ -19,6 +19,7 @@ require_once __DIR__ . '/includs/audit.php';
 require_once __DIR__ . '/includs/incident.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/email_sender.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/whatsapp_sender.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/reglages_publication.php';
 
 /* ============================================================
    DÉTERMINER L'UTILISATEUR À VÉRIFIER
@@ -429,6 +430,24 @@ if (
                 auditInfo($pdo, ['category' => 'auth', 'action' => 'verification_email', 'entity_type' => 'utilisateur',
                     'entity_id' => $user_id, 'actor_id' => $user_id, 'actor_role' => $userVerif['role'],
                     'before' => ['phone_verified' => 0, 'is_active' => $userVerif['is_active'] ?? null], 'after' => ['phone_verified' => 1, 'is_active' => 1, 'status' => 'active']]);
+
+                // Publication automatique (bloc H) : une boutique devient valide des la verification
+                // de son compte, sauf en mode manuel (comportement historique, validation par un admin).
+                if ($userVerif['role'] === 'commercant') {
+                    $reglages = reglagesPublication($pdo);
+                    if ($reglages['mode'] !== 'manuelle') {
+                        $stmtBoutique = $pdo->prepare("SELECT statut FROM commercants_profils WHERE user_id = ? FOR UPDATE");
+                        $stmtBoutique->execute([$user_id]);
+                        $statutBoutique = $stmtBoutique->fetchColumn();
+                        if ($statutBoutique === 'en_attente') {
+                            $pdo->prepare("UPDATE commercants_profils SET statut = 'valide', valide_le = NOW() WHERE user_id = ?")
+                                ->execute([$user_id]);
+                            auditInfo($pdo, ['category' => 'admin', 'action' => 'commercant_validation_automatique', 'entity_type' => 'commercant',
+                                'entity_id' => $user_id, 'actor_id' => null, 'actor_role' => 'systeme',
+                                'before' => ['statut' => 'en_attente'], 'after' => ['statut' => 'valide'], 'meta' => ['mode' => $reglages['mode']]]);
+                        }
+                    }
+                }
 
                 /*
                  * Tout s'est bien passé.

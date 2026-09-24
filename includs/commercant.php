@@ -35,7 +35,7 @@ function commercantMaxProduits(): int { return max(1, (int) env('COMMERCANT_MAX_
 
 /**
  * Exige un commercant connecte (role relu en base, pas seulement en session). Retourne le profil
- * (user_id, nom_boutique, ville, description, statut, motif, confiance, phone_verified).
+ * (user_id, nom_boutique, ville, description, statut, motif, confiance, surveillance, phone_verified).
  */
 function exigerCommercant(PDO $pdo): array
 {
@@ -47,7 +47,7 @@ function exigerCommercant(PDO $pdo): array
     $st = $pdo->prepare(
         "SELECT u.id AS user_id, u.role, u.is_active, u.status AS statut_compte, u.phone_verified, u.fullname,
                 u.pays_code, u.phone,
-                cp.nom_boutique, cp.ville, cp.description, cp.statut, cp.motif, cp.confiance
+                cp.nom_boutique, cp.ville, cp.description, cp.statut, cp.motif, cp.confiance, cp.surveillance
          FROM users_monrevenu u LEFT JOIN commercants_profils cp ON cp.user_id = u.id
          WHERE u.id = ? LIMIT 1"
     );

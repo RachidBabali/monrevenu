@@ -11,6 +11,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/incident.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/commercant.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/image_produit.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/affiliation_helpers.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/reglages_publication.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/ui.php';
 
 $profil = exigerCommercant($pdo);
@@ -123,18 +124,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'suppr
                         || $avant['nom_produit'] !== $saisie['nom']
                         || (float) $avant['prix_vente'] !== $prix;
                     $moderation = $avant['moderation'];
-                    if ($envoyer) {
-                        $moderation = (int) $profil['confiance'] === 1 ? 'approuve' : 'en_attente';
-                    } elseif ($avant['moderation'] === 'approuve' && $modificationSensible && (int) $profil['confiance'] !== 1) {
-                        $moderation = 'en_attente';
+                    $publicationType = $avant['publication_type'] ?? 'manuel';
+                    $publieAutoLe = $avant['publie_automatiquement_le'] ?? null;
+                    $motifModeration = null;
+                    if ($envoyer || ($avant['moderation'] === 'approuve' && $modificationSensible)) {
+                        $decision = evaluerPublicationProduit($pdo, $profil,
+                            ['nom' => $saisie['nom'], 'description' => $saisie['description'], 'prix' => $prix, 'image' => $image],
+                            $marche_commercant, $produit_id);
+                        $moderation = $decision['moderation'];
+                        $motifModeration = $decision['motif'];
+                        $publicationType = $moderation === 'approuve' ? $decision['publication_type'] : 'manuel';
+                        $publieAutoLe = ($moderation === 'approuve' && $decision['publication_type'] === 'automatique') ? date('Y-m-d H:i:s') : null;
                     }
                     $statut = $envoyer && $avant['statut'] !== 'actif' ? 'actif' : $avant['statut'];
 
                     $pdo->prepare(
                         "UPDATE vendeur_produits SET nom_produit = ?, description = ?, image = ?, prix_vente = ?, stock = ?,
-                            date_limite = ?, statut = ?, moderation = ?, moderation_note = NULL
+                            date_limite = ?, statut = ?, moderation = ?, moderation_note = ?, publication_type = ?, publie_automatiquement_le = ?
                          WHERE id = ? AND vendeur_id = ?"
-                    )->execute([$saisie['nom'], $saisie['description'], $image, $prix, $stock, $dateLimite, $statut, $moderation, $produit_id, $id]);
+                    )->execute([$saisie['nom'], $saisie['description'], $image, $prix, $stock, $dateLimite, $statut, $moderation,
+                        $motifModeration, $publicationType, $publieAutoLe, $produit_id, $id]);
 
                     [$b, $a] = auditDiff(
                         ['nom_produit' => $avant['nom_produit'], 'prix_vente' => $avant['prix_vente'], 'stock' => $avant['stock'],
@@ -143,23 +152,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'suppr
                          'date_limite' => $dateLimite, 'statut' => $statut, 'moderation' => $moderation, 'image' => $image]
                     );
                     auditCritique($pdo, ['category' => 'produit', 'action' => 'produit_modification', 'entity_type' => 'produit',
-                        'entity_id' => $produit_id, 'before' => $b, 'after' => $a, 'meta' => ['nouvelle_validation' => $moderation === 'en_attente']]);
+                        'entity_id' => $produit_id, 'before' => $b, 'after' => $a,
+                        'meta' => ['nouvelle_validation' => $moderation === 'en_attente', 'motif' => $motifModeration]]);
                     $_SESSION['flash_success'] = $moderation === 'en_attente'
-                        ? 'Produit enregistré et envoyé pour validation.'
+                        ? 'Produit enregistré et envoyé pour validation.' . ($motifModeration ? ' Motif : ' . $motifModeration : '')
                         : ($moderation === 'approuve' ? 'Produit enregistré et publié.' : 'Brouillon enregistré.');
                 } else {
-                    $moderation = $envoyer ? ((int) $profil['confiance'] === 1 ? 'approuve' : 'en_attente') : 'brouillon';
+                    $motifModeration = null;
+                    $publicationType = 'manuel';
+                    $publieAutoLe = null;
+                    if ($envoyer) {
+                        $decision = evaluerPublicationProduit($pdo, $profil,
+                            ['nom' => $saisie['nom'], 'description' => $saisie['description'], 'prix' => $prix, 'image' => $image],
+                            $marche_commercant);
+                        $moderation = $decision['moderation'];
+                        $motifModeration = $decision['motif'];
+                        $publicationType = $decision['publication_type'];
+                        $publieAutoLe = ($moderation === 'approuve' && $publicationType === 'automatique') ? date('Y-m-d H:i:s') : null;
+                    } else {
+                        $moderation = 'brouillon';
+                    }
                     $pdo->prepare(
-                        "INSERT INTO vendeur_produits (vendeur_id, nom_produit, description, image, prix_vente, commission_pct, stock, date_limite, statut, moderation, created_by, devise)
-                         VALUES (?, ?, ?, ?, ?, 0, ?, ?, 'actif', ?, ?, ?)"
-                    )->execute([$id, $saisie['nom'], $saisie['description'], $image, $prix, $stock, $dateLimite, $moderation, $id, deviseIso($marche_commercant)]);
+                        "INSERT INTO vendeur_produits (vendeur_id, nom_produit, description, image, prix_vente, commission_pct, stock, date_limite, statut, moderation, moderation_note, publication_type, publie_automatiquement_le, created_by, devise)
+                         VALUES (?, ?, ?, ?, ?, 0, ?, ?, 'actif', ?, ?, ?, ?, ?, ?)"
+                    )->execute([$id, $saisie['nom'], $saisie['description'], $image, $prix, $stock, $dateLimite, $moderation,
+                        $motifModeration, $publicationType, $publieAutoLe, $id, deviseIso($marche_commercant)]);
                     $produit_id = (int) $pdo->lastInsertId();
                     auditCritique($pdo, ['category' => 'produit', 'action' => 'produit_creation', 'entity_type' => 'produit', 'entity_id' => $produit_id,
                         'after' => ['nom_produit' => $saisie['nom'], 'prix_vente' => number_format($prix, 2, '.', ''), 'stock' => $stock,
-                            'moderation' => $moderation, 'image' => $image]]);
+                            'moderation' => $moderation, 'image' => $image], 'meta' => ['motif' => $motifModeration, 'publication_type' => $publicationType]]);
                     $_SESSION['flash_success'] = $moderation === 'brouillon'
                         ? 'Brouillon enregistré. Envoyez-le pour validation quand il est prêt.'
-                        : ($moderation === 'approuve' ? 'Produit publié dans le catalogue.' : 'Produit envoyé pour validation.');
+                        : ($moderation === 'approuve' ? 'Produit publié dans le catalogue.' : 'Produit envoyé pour validation.' . ($motifModeration ? ' Motif : ' . $motifModeration : ''));
                 }
                 $pdo->commit();
 
