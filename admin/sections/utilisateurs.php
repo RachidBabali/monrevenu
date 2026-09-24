@@ -33,7 +33,7 @@
                   </span>
                 </span>
               </td>
-              <td data-label="Contact" class="text-text-2"><span class="block max-w-[200px] truncate"><?= e($u['email']) ?></span><span class="chiffres block"><?= e($u['phone']) ?></span></td>
+              <td data-label="Contact" class="text-text-2"><span class="block max-w-[200px] truncate"><?= e($u['email']) ?></span><span class="chiffres block"><?= e($u['phone']) ?></span><?php if (($u['geo_score'] ?? '') === 'FAIBLE'): ?><span class="pastille pastille-attente" title="<?= e((string) ($u['geo_raisons'] ?? '')) ?>">Pays à revoir</span><?php endif; ?></td>
               <td data-label="Rôle"><span class="pastille pastille-neutre"><?= e(['affilie' => 'Affilié', 'agent' => 'Agent', 'admin' => 'Admin', 'client' => 'Client'][$u['role']] ?? $u['role']) ?></span></td>
               <td data-label="Solde" class="col-montant"><?= montant($u['balance'], false, '', $u['marche']) ?></td>
               <td data-label="Statut"><?= badgeStatut($statut_u, 'compte') ?></td>

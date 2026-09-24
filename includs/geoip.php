@@ -3,14 +3,15 @@
  * includs/geoip.php
  * Détection du pays d'un visiteur à partir de son adresse IP publique.
  *
- * Utilise l'API gratuite ip-api.com (aucune clé requise, usage non
- * commercial, ~45 requêtes/minute par IP serveur). Le résultat est mis en
- * cache dans la session pour ne faire l'appel qu'une seule fois par visite.
+ * Utilise l'en-tête Cloudflare CF-IPCountry (gratuit, sans appel externe) ; à activer dans Cloudflare
+ * (réglage Réseau > Géolocalisation IP). Le résultat est mis en cache dans la session.
  *
  * Le site étant derrière Cloudflare, $_SERVER['REMOTE_ADDR'] contient
  * l'adresse de l'edge Cloudflare, pas celle du visiteur, on utilise donc
  * en priorité l'en-tête CF-Connecting-IP que Cloudflare ajoute toujours.
  */
+
+require_once __DIR__ . '/config_marche.php';
 
 if (!function_exists('adresseIpVisiteur')) {
     function adresseIpVisiteur(): string
@@ -19,6 +20,20 @@ if (!function_exists('adresseIpVisiteur')) {
             ?? $_SERVER['HTTP_X_FORWARDED_FOR']
             ?? $_SERVER['REMOTE_ADDR']
             ?? '';
+    }
+}
+
+if (!function_exists('paysIpCloudflare')) {
+    /**
+     * Pays de l'IP fourni gratuitement par Cloudflare (en-tete CF-IPCountry) : aucun appel externe, aucune
+     * latence. Remplace ip-api.com, dont l'offre gratuite est reservee a un usage non commercial.
+     * XX = inconnu, T1 = reseau Tor : traites comme indetectables. Hors Cloudflare (dev, local) : null.
+     * A ne croire que si le serveur n'est joignable que par Cloudflare.
+     */
+    function paysIpCloudflare(): ?string
+    {
+        $code = strtoupper(trim((string) ($_SERVER['HTTP_CF_IPCOUNTRY'] ?? '')));
+        return preg_match('/^[A-Z]{2}$/', $code) && !in_array($code, ['XX', 'T1'], true) ? $code : null;
     }
 }
 
@@ -35,29 +50,17 @@ if (!function_exists('detecterPaysVisiteur')) {
         $ip = adresseIpVisiteur();
 
         // IP locale/privée (dev, tests, réseau interne) : pas de géolocalisation possible.
-        if ($ip === '' || !filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+        if (paysIpCloudflare() === null) {
             $_SESSION['geo_pays_code'] = null;
             $_SESSION['geo_pays_nom']  = null;
             return ['code' => null, 'nom' => null];
         }
 
-        $code = null;
+        $code = paysIpCloudflare();
         $nom  = null;
-
-        // Delai court : cet appel bloque le premier affichage de la page pour tout visiteur sans
-        // session (voir dev/lot3/RESULTATS_I.md > I4, mesure de production), le pire cas doit
-        // rester bref plutot que de retarder le rendu de plusieurs secondes si l'API est lente.
-        $ch = curl_init('http://ip-api.com/json/' . urlencode($ip) . '?fields=status,countryCode,country');
-        curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT_MS => 1000, CURLOPT_CONNECTTIMEOUT_MS => 500]);
-        $reponse = curl_exec($ch);
-        curl_close($ch);
-
-        if ($reponse) {
-            $data = json_decode($reponse, true);
-            if (($data['status'] ?? '') === 'success') {
-                $code = $data['countryCode'] ?? null;
-                $nom  = $data['country'] ?? null;
-            }
+        if ($code !== null) {
+            $nom = marcheValide($code) ? marche($code)['nom']
+                : (class_exists('Locale') ? (Locale::getDisplayRegion('-' . $code, 'fr') ?: $code) : $code);
         }
 
         $_SESSION['geo_pays_code'] = $code;

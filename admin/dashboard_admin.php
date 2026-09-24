@@ -521,7 +521,7 @@ unset($p);
 $utilisateurs = $pdo->query("SELECT id, fullname, role FROM users_monrevenu ORDER BY fullname ASC")->fetchAll(PDO::FETCH_ASSOC);
 
 $tous_utilisateurs = $pdo->query(
-    "SELECT id, fullname, email, phone, pays_code, role, balance, is_active, status, created_at
+    "SELECT id, fullname, email, phone, pays_code, role, balance, is_active, status, created_at, geo_score, geo_raisons
      FROM users_monrevenu
      ORDER BY created_at DESC"
 )->fetchAll(PDO::FETCH_ASSOC);

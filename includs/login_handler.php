@@ -108,7 +108,7 @@ try {
 
     //  6. Rechercher l'utilisateur par téléphone 
     $stmt = $pdo->prepare("
-        SELECT id, fullname, email, password, role, is_active, phone_verified
+        SELECT id, fullname, email, phone, password, role, is_active, phone_verified
         FROM users_monrevenu
         WHERE phone = ? OR email = ?
         LIMIT 1
@@ -200,6 +200,10 @@ try {
     $pays = detecterPaysVisiteur();
 
     session_regenerate_id(true);
+
+    // Score de coherence du pays (signal pour le support, ne bloque rien) : includs/geo_coherence.php
+    require_once __DIR__ . '/geo_coherence.php';
+    geoCoherenceEnregistrer($pdo, (int) $user['id'], $user['phone'] ?? null);
 
     $_SESSION['user_id']       = $user['id'];
     $_SESSION['user_fullname'] = $user['fullname'];

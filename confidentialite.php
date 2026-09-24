@@ -52,6 +52,8 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/head.php';
   <tr><td>Numéro de téléphone</td><td>Identification et sécurité du compte</td></tr>
   <tr><td>Date de naissance</td><td>Vérification de l'âge minimum requis (18 ans)</td></tr>
   <tr><td>Mot de passe (haché)</td><td>Authentification sécurisée</td></tr>
+  <tr><td>Opérateur mobile money et numéro de réception</td><td>Paiement manuel de vos commissions par l'équipe MonRevenu</td></tr>
+  <tr><td>Pays de connexion (déduit de l'adresse IP) et fuseau horaire de votre navigateur</td><td>Adapter l'offre à votre pays et repérer les incohérences avec votre numéro. Seul le résultat de cette comparaison est conservé, pas l'adresse IP ni le fuseau</td></tr>
   <tr><td>Historique de transactions</td><td>Suivi de vos revenus, dépôts, retraits et transferts</td></tr>
 </table>
 <h2 id="securite-des-donnees">2. Sécurité des données</h2>
