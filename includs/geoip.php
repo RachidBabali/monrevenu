@@ -44,8 +44,11 @@ if (!function_exists('detecterPaysVisiteur')) {
         $code = null;
         $nom  = null;
 
+        // Delai court : cet appel bloque le premier affichage de la page pour tout visiteur sans
+        // session (voir dev/lot3/RESULTATS_I.md > I4, mesure de production), le pire cas doit
+        // rester bref plutot que de retarder le rendu de plusieurs secondes si l'API est lente.
         $ch = curl_init('http://ip-api.com/json/' . urlencode($ip) . '?fields=status,countryCode,country');
-        curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 3]);
+        curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT_MS => 1000, CURLOPT_CONNECTTIMEOUT_MS => 500]);
         $reponse = curl_exec($ch);
         curl_close($ch);
 

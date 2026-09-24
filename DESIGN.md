@@ -63,7 +63,33 @@ Lucide 0.469 (ISC) et WhatsApp de Simple Icons (CC0), tracés dans `includs/icon
 
 ## Helpers PHP (`includs/ui.php`)
 
-`e()`, `ico()`, `formaterMontant($m, $signe)` ("12 500 FCFA", constante `DEVISE_LIBELLE`), `montant()` (span tabulaire), `dateFr($d, 'long|court|heure|jour|jour_semaine')`, `badgeStatut()`, `initiales()`, `nettoyerPictogrammes()` (affichage des anciennes notifications), `typeNotification()`.
+`e()`, `ico()`, `formaterMontant($m, $signe, $avecDevise, $marche)` ("12 500 FCFA" ou "12 500 KMF" selon le marché, `includs/config_marche.php`), `montant()` (span tabulaire), `dateFr($d, 'long|court|heure|jour|jour_semaine')`, `badgeStatut()`, `initiales()`, `nettoyerPictogrammes()` (affichage des anciennes notifications), `typeNotification()`.
+
+## Performance (budget, page d'accueil)
+
+Mesuré en lecture seule sur la production le 24/09/2026 (`curl`, sans session ni cookie, cas le
+plus défavorable pour un nouveau visiteur) :
+
+| Ressource | Poids transféré (compressé) |
+|---|---|
+| HTML | ~8,8 Ko |
+| CSS (`app.css`) | ~8,2 Ko |
+| JS (`app-shell.js` + `public.js`) | ~5,7 Ko |
+| Polices (2 fichiers woff2) | ~46,8 Ko |
+| Icônes/favicon (apple-touch-icon, favicon-32, logo-64) | ~26,8 Ko |
+| Photo vitrine (webp, déjà optimisée) | ~40 Ko |
+| **Total, premier chargement** | **~136 Ko** |
+
+Budget retenu : rester sous 200 Ko transférés pour le premier chargement de la page d'accueil,
+sous 60 Ko pour le CSS et le JS combinés. Toute nouvelle dépendance front doit être mesurée avant
+merge si elle dépasse 20 Ko.
+
+Point trouvé pendant la mesure, hors poids réseau : la détection du pays visiteur
+(`includs/geoip.php`) appelait une API externe avec un délai de 3 secondes avant le premier rendu
+de la page pour tout visiteur sans session ; réduit à 1 seconde (0,5 s de connexion). Les images de
+produits envoyées par l'administration ou un commerçant sont toutes re-encodées en WebP
+(1200 px maximum, métadonnées retirées) à l'envoi ; `tools/generer-miniatures-webp.php` convertit
+les images plus anciennes (voir `dev/lot3/RESULTATS_I.md`).
 
 ## Règles
 
