@@ -12,6 +12,7 @@ $liens_admin = [
     'commercants' => ['/admin/commercants.php', 'Commerçants', 'store', $compteurs_admin['commercants'] ?? null],
     'moderation'  => ['/admin/moderation.php', 'Produits à valider', 'badge-check', $compteurs_admin['produits'] ?? null],
     'audit'       => ['/admin/audit.php', 'Audit', 'shield', null],
+    'reglages'    => ['/admin/reglages.php', 'Réglages', 'settings', null],
 ];
 $titre_page = $titre_page ?? 'Administration';
 $head_supp  = '<meta name="robots" content="noindex"><meta name="csrf-token" content="' . e($_SESSION['csrf_token'] ?? '') . '">';
