@@ -10,6 +10,7 @@ session_start();
 
 require_once __DIR__ . '/../basse_de_donner/monrevenu_bd.php';
 require_once __DIR__ . '/email_sender.php';
+require_once __DIR__ . '/config_marche.php';
 
 
 /* ============================================================
@@ -185,67 +186,24 @@ if ($age < 18) {
    NUMÉRO DE TÉLÉPHONE, Comores ou Sénégal
    ============================================================ */
 
-$phone_nettoye = preg_replace(
-    '/[^\d]/',
-    '',
-    $phone
-);
-
 /*
- * Retire un éventuel indicatif international déjà tapé par
- * l'utilisateur (00269/269 pour les Comores, 00221/221 pour
- * le Sénégal), et déduit le pays si l'indicatif est présent
- * même si le menu déroulant n'a pas été changé.
+ * Le marché choisi dans le formulaire sert d'indication de depart ; si le
+ * numero porte lui-meme un indicatif (00269/269, 00221/221), il l'emporte
+ * (voir includs/config_marche.php > normaliserNumero). Validation par
+ * longueur nationale seulement, sans plage de prefixes.
  */
+$phone_country_saisi = marcheValide($phone_country) ?? MARCHE_DEFAUT;
+$phone_normalise = normaliserNumero($phone, $phone_country_saisi) ?? normaliserNumero($phone);
 
-if (str_starts_with($phone_nettoye, '00269')) {
-    $phone_local = substr($phone_nettoye, 5);
-    $phone_country = 'KM';
-} elseif (str_starts_with($phone_nettoye, '00221')) {
-    $phone_local = substr($phone_nettoye, 5);
-    $phone_country = 'SN';
-} elseif (str_starts_with($phone_nettoye, '269') && strlen($phone_nettoye) === 10) {
-    $phone_local = substr($phone_nettoye, 3);
-    $phone_country = 'KM';
-} elseif (str_starts_with($phone_nettoye, '221') && strlen($phone_nettoye) === 12) {
-    $phone_local = substr($phone_nettoye, 3);
-    $phone_country = 'SN';
-} else {
-    $phone_local = $phone_nettoye;
+if ($phone_normalise === null) {
+    header(
+        'Location: /inscription.php?error=phone_invalide'
+    );
+    exit();
 }
 
-if ($phone_country === 'SN') {
-
-    /*
-     * Numéro local sénégalais : 9 chiffres, commence par 7
-     * (tous les opérateurs mobiles sénégalais : Orange, Free, Expresso).
-     */
-
-    if (!preg_match('/^7\d{8}$/', $phone_local)) {
-        header(
-            'Location: /inscription.php?error=phone_invalide'
-        );
-        exit();
-    }
-
-    $phone_normalise = '221' . $phone_local;
-
-} else {
-
-    /*
-     * Numéro local comorien : (3 ou 4) + 6 chiffres
-     *, 3 pour l'opérateur Huri, 4 pour l'opérateur Yas
-     */
-
-    if (!preg_match('/^[34]\d{6}$/', $phone_local)) {
-        header(
-            'Location: /inscription.php?error=phone_non_comorien'
-        );
-        exit();
-    }
-
-    $phone_normalise = '269' . $phone_local;
-}
+// Marche reel du compte : celui deduit du numero normalise (fiable), jamais la geolocalisation.
+$phone_country = marcheDeNumero($phone_normalise) ?? $phone_country_saisi;
 
 
 /* ============================================================
@@ -461,8 +419,9 @@ try {
 
     $pdo->beginTransaction();
 
-    require_once __DIR__ . '/geoip.php';
-    $pays = detecterPaysVisiteur();
+    // Le marche du compte est celui de son numero verifie, jamais la geolocalisation
+    // (peu fiable et modifiable par l'utilisateur) : voir includs/config_marche.php.
+    $pays = ['code' => $phone_country, 'nom' => marche($phone_country)['nom']];
 
     $stmt = $pdo->prepare(
         "INSERT INTO users_monrevenu

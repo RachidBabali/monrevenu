@@ -13,6 +13,7 @@ require_once __DIR__ . '/includs/audit.php';
 require_once __DIR__ . '/includs/incident.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/auth_middleware.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/whatsapp_sender.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/config_marche.php';
 
 exigerConnexion();
 
@@ -43,34 +44,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         auditCsrf($pdo, 'completer_telephone');
     } else {
         $phone_brut    = trim($_POST['phone'] ?? '');
-        $phone_country = trim($_POST['phone_country'] ?? 'KM');
-        $phone_nettoye = preg_replace('/[^\d]/', '', $phone_brut);
+        $phone_country = marcheValide($_POST['phone_country'] ?? '') ?? MARCHE_DEFAUT;
 
-        // Même logique de normalisation que l'inscription classique (register_handler.php)
-        if (str_starts_with($phone_nettoye, '00269')) {
-            $phone_local = substr($phone_nettoye, 5); $phone_country = 'KM';
-        } elseif (str_starts_with($phone_nettoye, '00221')) {
-            $phone_local = substr($phone_nettoye, 5); $phone_country = 'SN';
-        } elseif (str_starts_with($phone_nettoye, '269') && strlen($phone_nettoye) === 10) {
-            $phone_local = substr($phone_nettoye, 3); $phone_country = 'KM';
-        } elseif (str_starts_with($phone_nettoye, '221') && strlen($phone_nettoye) === 12) {
-            $phone_local = substr($phone_nettoye, 3); $phone_country = 'SN';
+        // Meme normalisation que l'inscription classique (includs/config_marche.php) : valide
+        // par longueur nationale, l'indicatif tape par l'utilisateur l'emporte sur le menu.
+        $phone_normalise = normaliserNumero($phone_brut, $phone_country) ?? normaliserNumero($phone_brut);
+        if ($phone_normalise === null) {
+            $erreur = 'Numéro invalide pour le marché choisi (' . marche($phone_country)['longueur_nationale'] . ' chiffres, exemple : ' . marche($phone_country)['exemple_numero'] . ').';
         } else {
-            $phone_local = $phone_nettoye;
-        }
-
-        if ($phone_country === 'SN') {
-            if (!preg_match('/^7\d{8}$/', $phone_local)) {
-                $erreur = 'Numéro sénégalais invalide (ex: 771234567).';
-            } else {
-                $phone_normalise = '221' . $phone_local;
-            }
-        } else {
-            if (!preg_match('/^[34]\d{6}$/', $phone_local)) {
-                $erreur = 'Numéro comorien invalide (ex: 3212345 ou 4212345).';
-            } else {
-                $phone_normalise = '269' . $phone_local;
-            }
+            $phone_country = marcheDeNumero($phone_normalise) ?? $phone_country;
         }
 
         if (!$erreur) {
@@ -88,14 +70,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $code_expiration        = date('Y-m-d H:i:s', strtotime('+10 minutes'));
 
             try {
+                // Le numero ajoute devient la source du marche du compte (devise, commissions,
+                // moyens de retrait) : voir includs/config_marche.php.
                 $pdo->prepare(
                     "UPDATE users_monrevenu
-                     SET phone = ?, verification_method = 'whatsapp',
+                     SET phone = ?, pays_code = ?, pays_nom = ?, verification_method = 'whatsapp',
                          verification_code = ?, code_expires_at = ?, code_sent_at = NOW()
                      WHERE id = ?"
-                )->execute([$phone_normalise, $code_verification_hash, $code_expiration, $user_id]);
+                )->execute([$phone_normalise, $phone_country, marche($phone_country)['nom'], $code_verification_hash, $code_expiration, $user_id]);
                 auditInfo($pdo, ['category' => 'compte', 'action' => 'telephone_ajout', 'entity_type' => 'utilisateur', 'entity_id' => $user_id,
-                    'after' => ['phone' => $phone_normalise, 'verification_method' => 'whatsapp']]);
+                    'after' => ['phone' => $phone_normalise, 'pays_code' => $phone_country, 'verification_method' => 'whatsapp']]);
 
                 $resultatEnvoi = envoyerCodeWhatsApp($phone_normalise, $code_verification);
 
@@ -132,12 +116,15 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_public_debut.php';
         <div class="champ-groupe">
           <label class="sr-only" for="pays-complet">Pays</label>
           <select class="champ-saisie w-[118px] shrink-0 rounded-r-none border-r-0 pr-8" id="pays-complet" name="phone_country" autocomplete="tel-country-code">
-            <option value="SN">SN +221</option>
-            <option value="KM">KM +269</option>
+            <?php foreach (marches() as $codeMarcheOption => $configMarcheOption): ?>
+              <option value="<?= e($codeMarcheOption) ?>"<?= ($_POST['phone_country'] ?? MARCHE_DEFAUT) === $codeMarcheOption ? ' selected' : '' ?>><?= e($codeMarcheOption) ?> +<?= e($configMarcheOption['indicatif']) ?></option>
+            <?php endforeach; ?>
           </select>
-          <input class="champ-saisie" type="tel" id="tel-complet" name="phone" required inputmode="numeric" maxlength="12" autocomplete="tel-national" placeholder="77 123 45 67" aria-describedby="aide-tel-complet">
+          <input class="champ-saisie" type="tel" id="tel-complet" name="phone" required inputmode="numeric"
+                 maxlength="<?= (int) max(array_column(marches(), 'longueur_nationale')) ?>" autocomplete="tel-national"
+                 placeholder="<?= e(marche(MARCHE_DEFAUT)['exemple_numero']) ?>" aria-describedby="aide-tel-complet">
         </div>
-        <p class="champ-aide" id="aide-tel-complet">Sénégal : 9 chiffres commençant par 7. Comores : 7 chiffres commençant par 3 ou 4.</p>
+        <p class="champ-aide" id="aide-tel-complet"><?php foreach (marches() as $configMarcheAide): ?><?= e($configMarcheAide['nom']) ?> : <?= (int) $configMarcheAide['longueur_nationale'] ?> chiffres. <?php endforeach; ?></p>
       </div>
       <button type="submit" class="btn btn-primaire btn-bloc"><?= ico('loader-circle', 'ico-charge') ?><span data-libelle>Recevoir le code sur WhatsApp</span></button>
     </form>

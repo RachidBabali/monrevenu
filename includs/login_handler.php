@@ -14,6 +14,7 @@
  */
 session_start();
 require_once __DIR__ . '/../basse_de_donner/monrevenu_bd.php';
+require_once __DIR__ . '/config_marche.php';
 
 // email_sender.php est optionnel : si absent, la connexion continue de
 // fonctionner normalement, juste sans l'email d'alerte de sécurité.
@@ -59,29 +60,9 @@ $est_email = str_contains($identifiant, '@');
 if ($est_email) {
     $cle_recherche = strtolower($identifiant);
 } else {
-    $phone_nettoye = preg_replace('/[^\d]/', '', $identifiant);
-
-    if (str_starts_with($phone_nettoye, '00269')) {
-        $phone_local = substr($phone_nettoye, 5);
-    } elseif (str_starts_with($phone_nettoye, '00221')) {
-        $phone_local = substr($phone_nettoye, 5);
-    } elseif (str_starts_with($phone_nettoye, '269') && strlen($phone_nettoye) === 10) {
-        $phone_local = substr($phone_nettoye, 3);
-    } elseif (str_starts_with($phone_nettoye, '221') && strlen($phone_nettoye) === 12) {
-        $phone_local = substr($phone_nettoye, 3);
-    } else {
-        $phone_local = $phone_nettoye;
-    }
-
-    if (preg_match('/^[34]\d{6}$/', $phone_local)) {
-        // Comores : (3 ou 4) + 6 chiffres, 3 = Huri, 4 = Yas
-        $cle_recherche = '269' . $phone_local;
-    } elseif (preg_match('/^7\d{8}$/', $phone_local)) {
-        // Sénégal : 7 + 8 chiffres (Orange, Free, Expresso)
-        $cle_recherche = '221' . $phone_local;
-    } else {
-        $cle_recherche = $phone_nettoye;
-    }
+    // Meme normalisation que l'inscription (includs/config_marche.php), sans distinction de
+    // marche impose : le numero seul suffit a retrouver le compte, quel que soit son marche.
+    $cle_recherche = normaliserNumero($identifiant) ?? preg_replace('/[^\d]/', '', $identifiant);
 }
 
 $ip = $_SERVER['REMOTE_ADDR'];
@@ -209,13 +190,12 @@ try {
     } catch (\PDOException $e) { /* colonne last_login absente, ignoré */
     }
 
+    // Le pays du compte (son marche : devise, commissions, moyens de retrait) vient de son
+    // numero verifie, jamais de la geolocalisation de la connexion en cours : un membre qui se
+    // connecte depuis un autre pays (voyage, VPN, reseau mal detecte) garde son marche d'origine.
+    // La geolocalisation reste utilisee ailleurs (page d'accueil) pour le visiteur non connecte.
     require_once __DIR__ . '/geoip.php';
     $pays = detecterPaysVisiteur();
-    try {
-        $pdo->prepare("UPDATE users_monrevenu SET pays_code = ?, pays_nom = ? WHERE id = ?")
-            ->execute([$pays['code'], $pays['nom'], $user['id']]);
-    } catch (\PDOException $e) { /* colonnes pays absentes, migration pas encore appliquée */
-    }
 
     session_regenerate_id(true);
 

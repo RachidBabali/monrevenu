@@ -13,8 +13,7 @@ $errors = [
     'champs_manquants'   => 'Remplissez tous les champs du formulaire.',
     'nom_invalide'       => 'Indiquez votre nom complet (2 à 100 caractères).',
     'email_invalide'     => 'Adresse email invalide. Exemple : nom@exemple.com.',
-    'phone_non_comorien' => 'Numéro comorien invalide : 7 chiffres commençant par 3 ou 4.',
-    'phone_invalide'     => 'Numéro invalide pour le pays choisi. Au Sénégal : 9 chiffres commençant par 7.',
+    'phone_invalide'     => 'Numéro invalide pour le marché choisi. Sénégal : 9 chiffres. Comores : 7 chiffres.',
     'code_invalide'      => 'Choisissez un mot de passe d\'au moins 8 caractères.',
     'code_different'     => 'Les deux mots de passe sont différents. Saisissez-les à nouveau.',
     'conditions'         => 'Cochez la case pour accepter les conditions générales.',
@@ -31,7 +30,6 @@ $champ_en_erreur = [
     'nom_invalide'       => 'fullname',
     'email_invalide'     => 'email',
     'existe_deja'        => 'email',
-    'phone_non_comorien' => 'phone',
     'phone_invalide'     => 'phone',
     'code_invalide'      => 'code',
     'code_different'     => 'confirmCode',
@@ -144,11 +142,12 @@ $pays_tel = $_GET['phone_country'] ?? 'SN';
         <div class="champ-groupe">
           <label class="sr-only" for="phoneCountry">Pays</label>
           <select class="champ-saisie w-[118px] shrink-0 rounded-r-none border-r-0 pr-8" id="phoneCountry" name="phone_country" autocomplete="tel-country-code">
-            <option value="SN"<?= $pays_tel === 'SN' ? ' selected' : '' ?>>SN +221</option>
-            <option value="KM"<?= $pays_tel === 'KM' ? ' selected' : '' ?>>KM +269</option>
+            <?php foreach (marches() as $codeMarcheOption => $configMarcheOption): ?>
+              <option value="<?= e($codeMarcheOption) ?>"<?= $pays_tel === $codeMarcheOption ? ' selected' : '' ?>><?= e($codeMarcheOption) ?> +<?= e($configMarcheOption['indicatif']) ?></option>
+            <?php endforeach; ?>
           </select>
           <input class="champ-saisie" type="tel" id="phone" name="phone" value="<?= $old_phone ?>" autocomplete="tel-national" inputmode="numeric"
-                 maxlength="9" required aria-describedby="err-phone"<?= attributErreur('phone', $champ_errone) ?>>
+                 maxlength="<?= (int) max(array_column(marches(), 'longueur_nationale')) ?>" required aria-describedby="err-phone"<?= attributErreur('phone', $champ_errone) ?>>
         </div>
         <p class="champ-erreur field-error" id="err-phone" hidden></p>
         <?php afficherErreurChamp('phone', $champ_errone, $errors, $error); ?>

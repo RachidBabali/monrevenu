@@ -145,10 +145,14 @@ try {
             'actor_id' => $user_id, 'actor_role' => 'affilie', 'after' => ['email' => $email, 'role' => 'affilie'], 'meta' => ['methode' => 'google']]);
     }
 
-    // Rafraîchit le pays détecté à chaque connexion (utile si le compte a
-    // changé d'appareil/réseau depuis sa création).
-    $pdo->prepare("UPDATE users_monrevenu SET pays_code = ?, pays_nom = ? WHERE id = ?")
-        ->execute([$pays['code'], $pays['nom'], $user_id]);
+    // Rafraichit le pays detecte uniquement tant que le compte n'a pas encore de numero
+    // verifie : une fois le marche fixe par un numero (completer-telephone.php), il ne doit
+    // plus bouger au fil des connexions (voyage, VPN, reseau mal detecte) car le solde, les
+    // produits et les commissions du compte restent dans cette devise.
+    if (!$phone_verified) {
+        $pdo->prepare("UPDATE users_monrevenu SET pays_code = ?, pays_nom = ? WHERE id = ?")
+            ->execute([$pays['code'], $pays['nom'], $user_id]);
+    }
 
     //  7. Ouvrir la session 
     session_regenerate_id(true);
