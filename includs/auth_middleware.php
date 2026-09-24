@@ -23,6 +23,26 @@ if (!function_exists('exigerConnexion')) {
     }
 }
 
+if (!function_exists('compteVerifie')) {
+    /**
+     * Le compte a-t-il verifie son numero de telephone (phone_verified = 1) ? Source de verite : la base,
+     * jamais la session ni le client. Fail-closed : toute erreur donne false.
+     * Un compte non verifie peut se connecter et naviguer, mais ne voit ni prix ni lien d'affiliation
+     * et ne peut rien faire (retrait, stock, signalement) tant qu'il n'a pas verifie son numero.
+     */
+    function compteVerifie(PDO $pdo, $userId): bool
+    {
+        try {
+            $stmt = $pdo->prepare("SELECT phone_verified FROM users_monrevenu WHERE id = ?");
+            $stmt->execute([(int) $userId]);
+            return (int) $stmt->fetchColumn() === 1;
+        } catch (PDOException $e) {
+            error_log('compteVerifie (fail-closed) : ' . $e->getMessage());
+            return false;
+        }
+    }
+}
+
 if (!function_exists('exigerAffiliationDebloquee')) {
     /**
      * Bloque l'accès aux pages/actions d'affiliation (boutique, stock, vente)

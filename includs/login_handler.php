@@ -166,7 +166,9 @@ try {
     }
 
     //  8bis. Numéro de téléphone vérifié 
-    if ((int) $user['phone_verified'] !== 1) {
+    // Un affilie, client ou commercant non verifie se connecte quand meme : ses actions sont bloquees cote
+    // serveur (compteVerifie) jusqu'a la verification. Admin et agent, eux, doivent etre verifies.
+    if ((int) $user['phone_verified'] !== 1 && in_array($user['role'], ['admin', 'agent'], true)) {
         $_SESSION['unverified_login_user_id'] = $user['id'];
         header('Location: /verification.php');
         exit();

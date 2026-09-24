@@ -6,7 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/auth_middleware.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/commercant.php';
-exigerAffiliationDebloquee($pdo);
+exigerConnexion();
 
 $user_id = $_SESSION['user_id'] ?? null;
 
@@ -23,11 +23,15 @@ $stmtMarche = $pdo->prepare("SELECT pays_code, phone FROM users_monrevenu WHERE 
 $stmtMarche->execute([$user_id]);
 $marche_affilie = definirMarcheCourant(marcheDeCompte($stmtMarche->fetch(PDO::FETCH_ASSOC) ?: null));
 
+// Compte non verifie : catalogue consultable, mais ni prix ni lien d'affiliation ne sont envoyes au navigateur
+// (la commission reste visible). Le masquage se fait ici, cote serveur, jamais en CSS ou en JS.
+$compte_verifie = compteVerifie($pdo, $user_id);
+
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'signaler') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'signaler' && $compte_verifie) {
     require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/audit.php';
     require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/signalement.php';
     if (!hash_equals($_SESSION['csrf_token'], (string) ($_POST['csrf_token'] ?? ''))) {
@@ -108,15 +112,18 @@ $commission_moyenne = $total_produits > 0
 
 /* Tri d'affichage (sur la liste deja chargee, requetes inchangees). */
 $tris = ['commission' => 'Commission la plus élevée', 'prix' => 'Prix croissant', 'nouveautes' => 'Nouveautés', 'nom' => 'Nom'];
+if (!$compte_verifie) unset($tris['prix']);
 $tri = $_GET['tri'] ?? 'commission';
-if (!isset($tris[$tri])) {
+if (!isset($tris[$tri]) || (!$compte_verifie && $tri === 'prix')) {
     $tri = 'commission';
 }
-usort($produits, static function ($a, $b) use ($tri) {
+usort($produits, static function ($a, $b) use ($tri, $compte_verifie) {
     $pa = (float) ($a['prix'] ?? 0);
     $pb = (float) ($b['prix'] ?? 0);
     return match ($tri) {
-        'commission' => [calculerCommission($pb), $pb] <=> [calculerCommission($pa), $pa],
+        'commission' => $compte_verifie
+            ? [calculerCommission($pb), $pb] <=> [calculerCommission($pa), $pa]
+            : calculerCommission($pb) <=> calculerCommission($pa),
         'prix'       => $pa <=> $pb,
         'nouveautes' => (int) $b['id'] <=> (int) $a['id'],
         default      => strcasecmp((string) $a['nom'], (string) $b['nom']),
@@ -183,8 +190,10 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
             $commission_montant_brut = calculerCommission($produit_prix_brut);
 
             $slug = slugify($produit_nom);
-            $token = genererTokenAffiliation($produit_id, (int) $user_id);
-            $lien_affiliation = BASE_URL_SITE . '/produit/' . $slug . '/' . $token;
+            if ($compte_verifie) {
+                $token = genererTokenAffiliation($produit_id, (int) $user_id);
+                $lien_affiliation = BASE_URL_SITE . '/produit/' . $slug . '/' . $token;
+            }
           ?>
           <li class="produit scroll-mt-20" id="produit-<?= $produit_id ?>">
             <div class="produit-image">
@@ -196,9 +205,11 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
             </div>
             <div class="produit-corps">
               <h3 class="produit-nom"><?= e($produit_nom) ?></h3>
-              <p class="produit-prix"><?= montant($produit_prix_brut) ?></p>
+              <?php if ($compte_verifie): ?><p class="produit-prix"><?= montant($produit_prix_brut) ?></p>
+              <?php else: ?><p class="produit-prix text-text-3">Prix visible après vérification</p><?php endif; ?>
               <p class="produit-commission"><span>Commission</span><?= montant($commission_montant_brut) ?></p>
             </div>
+            <?php if ($compte_verifie): ?>
             <div class="produit-actions">
               <button type="button" class="btn btn-sm btn-primaire min-w-0 sm:flex-1" data-produit-id="<?= $produit_id ?>" data-copier="<?= e($lien_affiliation) ?>"><?= ico('copy', 'ico-16') ?><span data-libelle>Copier le lien</span></button>
               <button type="button" class="btn btn-sm btn-secondaire sm:w-9 sm:px-0" data-partager="<?= e($lien_affiliation) ?>" data-texte="<?= e($produit_nom . ' : ' . formaterMontant($produit_prix_brut)) ?>" title="Partager"><?= ico('share-2', 'ico-16') ?><span class="sm:sr-only">Partager<span class="sr-only"> <?= e($produit_nom) ?></span></span></button>
@@ -214,6 +225,11 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
                 <button type="submit" class="lien text-text-3" onclick="return confirm('Signaler ce produit à l\'équipe MonRevenu ?');"><?= ico('circle-alert', 'ico-16') ?>Signaler ce produit</button>
               </form>
             </details>
+            <?php else: ?>
+            <div class="produit-actions">
+              <button type="button" class="btn btn-sm btn-secondaire min-w-0 sm:flex-1" disabled aria-disabled="true"><?= ico('lock', 'ico-16') ?><span>Vérifiez votre compte pour obtenir le lien</span></button>
+            </div>
+            <?php endif; ?>
           </li>
         <?php endforeach; ?>
       </ul>
