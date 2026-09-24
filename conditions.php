@@ -47,7 +47,7 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/head.php';
 <h2 id="objet">1. Objet</h2>
 <p>Les présentes Conditions Générales d'Utilisation (« CGU ») régissent l'accès et l'utilisation de la plateforme MonRevenu, accessible via son site web et son application mobile. En créant un compte, vous acceptez sans réserve les présentes CGU.</p>
 <h2 id="inscription-et-compte-utilisateur">2. Inscription et compte utilisateur</h2>
-<p>L'inscription est réservée aux personnes physiques âgées d'au moins 18 ans, disposant d'un numéro de téléphone comorien valide. Vous vous engagez à fournir des informations exactes et à jour, et à maintenir la confidentialité de votre mot de passe. Toute activité effectuée depuis votre compte est présumée effectuée par vous.</p>
+<p>L'inscription est réservée aux personnes physiques âgées d'au moins 18 ans, disposant d'un numéro de téléphone valide des Comores ou du Sénégal. Vous vous engagez à fournir des informations exactes et à jour, et à maintenir la confidentialité de votre mot de passe. Toute activité effectuée depuis votre compte est présumée effectuée par vous.</p>
 <h2 id="services-proposes">3. Services proposés</h2>
 <p>MonRevenu permet notamment de suivre ses revenus et dépenses, d'effectuer des dépôts, retraits et transferts, de participer à un programme de parrainage, et d'accéder à des formations. La disponibilité de ces services peut évoluer sans préavis.</p>
 <h2 id="programme-de-parrainage">4. Programme de parrainage</h2>

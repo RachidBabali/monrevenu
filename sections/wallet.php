@@ -13,7 +13,7 @@ $minimum_retrait    = retraitMinimum($marche_membre);
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'retrait') {
     require_once __DIR__ . '/../includs/auth_middleware.php';
     if (!compteVerifie($pdo, $user_id)) {
-        $retrait_error = 'Vérifiez votre numéro pour pouvoir demander un retrait.';
+        $retrait_error = 'Ajoutez et vérifiez votre numéro (voir le bandeau du tableau de bord) pour pouvoir demander un retrait.';
     } elseif (empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'])) {
         $retrait_error = 'Votre session a expiré. Rechargez la page puis recommencez.';
         require_once __DIR__ . '/../includs/audit.php';

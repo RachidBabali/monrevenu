@@ -25,7 +25,10 @@ $marche_affilie = definirMarcheCourant(marcheDeCompte($stmtMarche->fetch(PDO::FE
 
 // Compte non verifie : catalogue consultable, mais ni prix ni lien d'affiliation ne sont envoyes au navigateur
 // (la commission reste visible). Le masquage se fait ici, cote serveur, jamais en CSS ou en JS.
-$compte_verifie = compteVerifie($pdo, $user_id);
+$etat_compte    = etatVerification($pdo, $user_id);
+$compte_verifie = $etat_compte['verifie'];
+// Sans numero enregistre : seule l'image du produit est montree (ni nom, ni prix, ni commission)
+$montre_commission = $etat_compte['a_telephone'];
 
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -57,7 +60,8 @@ $message_success = $_SESSION['flash_success'] ?? '';
 $message_error   = $_SESSION['flash_error'] ?? '';
 unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 
-$recherche = trim($_GET['q'] ?? '');
+// Sans numero : ni recherche par nom, ni tri par gain (ils permettraient de deviner noms et gains)
+$recherche = $montre_commission ? trim($_GET['q'] ?? '') : '';
 
 $produits = [];
 try {
@@ -117,6 +121,10 @@ $tri = $_GET['tri'] ?? 'commission';
 if (!isset($tris[$tri]) || (!$compte_verifie && $tri === 'prix')) {
     $tri = 'commission';
 }
+if (!$montre_commission) {
+    $tri = 'nouveautes';
+    $tris = ['nouveautes' => $tris['nouveautes']];
+}
 usort($produits, static function ($a, $b) use ($tri, $compte_verifie) {
     $pa = (float) ($a['prix'] ?? 0);
     $pb = (float) ($b['prix'] ?? 0);
@@ -175,7 +183,7 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
     <?php else: ?>
       <p class="text-sm text-text-2">
         <span class="chiffres"><?= $total_produits ?></span> produit<?= $total_produits > 1 ? 's' : '' ?><?= $recherche !== '' ? ' pour "' . e($recherche) . '"' : '' ?>.
-        Commission moyenne : <?= montant(round($commission_moyenne)) ?>
+        <?php if ($montre_commission): ?>Commission moyenne : <?= montant(round($commission_moyenne)) ?><?php endif; ?>
         <?php if ($recherche !== ''): ?><a class="lien ml-1" href="/services/boutique.php">Effacer la recherche</a><?php endif; ?>
       </p>
 
@@ -204,10 +212,10 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
               <?php endif; ?>
             </div>
             <div class="produit-corps">
-              <h3 class="produit-nom"><?= e($produit_nom) ?></h3>
+              <?php if ($montre_commission): ?><h3 class="produit-nom"><?= e($produit_nom) ?></h3><?php endif; ?>
               <?php if ($compte_verifie): ?><p class="produit-prix"><?= montant($produit_prix_brut) ?></p>
-              <?php else: ?><p class="produit-prix text-text-3">Prix visible après vérification</p><?php endif; ?>
-              <p class="produit-commission"><span>Commission</span><?= montant($commission_montant_brut) ?></p>
+              <?php elseif ($montre_commission): ?><p class="produit-prix text-text-3">Prix visible après vérification</p><?php else: ?><p class="produit-prix text-text-3">Détails visibles après vérification</p><?php endif; ?>
+              <?php if ($montre_commission): ?><p class="produit-commission"><span>Commission</span><?= montant($commission_montant_brut) ?></p><?php endif; ?>
             </div>
             <?php if ($compte_verifie): ?>
             <div class="produit-actions">

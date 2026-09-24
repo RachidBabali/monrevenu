@@ -3,11 +3,9 @@
  * À inclure en haut de dashboard.php (et idéalement partout où l'utilisateur peut
  * naviguer), UNIQUEMENT si $_SESSION['phone_verified'] != 1 (ou récupéré depuis $pdo).
  *
- * Contrairement à l'ancien flux, cette bannière NE bloque PAS l'accès au dashboard :
- * elle informe. Le blocage réel se fait sur les pages/actions d'affiliation
- * (boutique.php, mon-stock.php, validation de vente...) via une fonction dédiée,
- * ex. exigerAffiliationDebloquee(), à créer sur le même modèle que exigerTelephoneVerifie()
- * mais qui n'affecte plus dashboard.php lui-même.
+ * Cette bannière NE bloque PAS la navigation : elle informe. Le blocage réel est côté serveur
+ * (includs/auth_middleware.php : etatVerification, compteVerifie, exigerAffiliationDebloquee).
+ * Compte sans numéro (inscription Google) : le numéro WhatsApp qui envoie le code devient celui du compte.
  *
  * Attendu disponible dans le scope : $pdo (PDO), $_SESSION['user_id'].
  */
@@ -23,6 +21,7 @@ $expireAtTimestamp = strtotime($verif['expire_at']); // pour le compte à rebour
 $numeroBusinessAffiche = $_ENV['WHATSAPP_BUSINESS_DISPLAY_NUMBER'] ?? '+221 77 876 48 19';
 $numeroBusinessWaMe = preg_replace('/\D/', '', $numeroBusinessAffiche); // format wa.me : chiffres seuls
 
+$sans_numero = !etatVerification($pdo, $_SESSION['user_id'])['a_telephone'];
 $lienWaMe = 'https://wa.me/' . $numeroBusinessWaMe . '?text=' . urlencode($code);
 ?>
 <section class="mr-verif-banner alerte alerte-attention flex-col gap-3" aria-labelledby="mr-verif-titre"
@@ -30,8 +29,8 @@ $lienWaMe = 'https://wa.me/' . $numeroBusinessWaMe . '?text=' . urlencode($code)
   <div class="flex items-start gap-3">
     <?= ico('lock', 'mt-0.5') ?>
     <div class="flex flex-col gap-1">
-      <h2 id="mr-verif-titre" class="text-sm font-semibold text-text">Vérifiez votre numéro WhatsApp pour débloquer le catalogue</h2>
-      <p class="text-sm text-text-2">Tant que votre numéro n'est pas vérifié, le catalogue, les liens d'affiliation et le stock restent bloqués. Envoyez ce code par WhatsApp au <strong class="whitespace-nowrap font-medium text-text"><?= e($numeroBusinessAffiche) ?></strong>.</p>
+      <h2 id="mr-verif-titre" class="text-sm font-semibold text-text"><?= $sans_numero ? 'Ajoutez et vérifiez votre numéro WhatsApp' : 'Vérifiez votre numéro WhatsApp' ?></h2>
+      <p class="text-sm text-text-2"><?= $sans_numero ? 'Votre compte n\'a pas encore de numéro : le catalogue est masqué et toutes les actions sont bloquées. Envoyez ce code depuis le numéro WhatsApp que vous voulez utiliser, il sera enregistré sur votre compte.' : 'Tant que votre numéro n\'est pas vérifié, les prix et les liens d\'affiliation restent masqués (la commission reste visible) et les actions sont bloquées. Envoyez ce code par WhatsApp.' ?> Numéro à contacter : <strong class="whitespace-nowrap font-medium text-text"><?= e($numeroBusinessAffiche) ?></strong>.</p>
     </div>
   </div>
   <div class="flex flex-wrap items-center gap-2 sm:pl-8">

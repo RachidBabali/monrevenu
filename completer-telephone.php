@@ -1,10 +1,10 @@
 <?php
 /**
  * completer-telephone.php
- * Page obligatoire pour les comptes créés/connectés via Google Sign-In
- * qui n'ont pas encore de téléphone vérifié (phone_verified = 0).
- * Tant que ce n'est pas fait, exigerTelephoneVerifie() (auth_middleware.php)
- * redirige systématiquement ici depuis les autres pages protégées.
+ * Saisie manuelle du numéro pour les comptes créés via Google Sign-In sans téléphone vérifié.
+ * Plus imposée par redirection : le compte navigue, ses actions sont bloquées côté serveur
+ * (auth_middleware.php > etatVerification) et la bannière du tableau de bord propose la
+ * vérification par WhatsApp, qui enregistre aussi le numéro du compte.
  */
 
 session_start();

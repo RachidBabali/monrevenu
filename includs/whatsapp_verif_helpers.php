@@ -107,7 +107,7 @@ function validerCodeWhatsapp(PDO $pdo, string $texteMessage, string $numeroExped
             $statut = 'ignore';
         } else {
             $stmt = $pdo->prepare(
-                "SELECT id, whatsapp_verif_expire_at FROM users_monrevenu
+                "SELECT id, phone, whatsapp_verif_expire_at FROM users_monrevenu
                  WHERE whatsapp_verif_code = ? AND phone_verified = 0"
             );
             $stmt->execute([$code]);
@@ -126,18 +126,42 @@ function validerCodeWhatsapp(PDO $pdo, string $texteMessage, string $numeroExped
                 // }
                 // if (!$prefixeOk) { $statut = 'code_inconnu'; }
 
-                $upd = $pdo->prepare(
-                    "UPDATE users_monrevenu
-                     SET phone_verified = 1,
-                         whatsapp_verif_numero = ?,
-                         whatsapp_verif_code = NULL,
-                         whatsapp_verif_expire_at = NULL
-                     WHERE id = ?"
-                );
-                $upd->execute([$numero, $user['id']]);
+                // Compte sans numero (inscription Google) : le numero WhatsApp expediteur devient le numero du
+                // compte, avec son marche (devise, commissions). Sans numero exploitable ou deja pris par un
+                // autre compte, rien n'est verifie : un compte ne se debloque jamais sans numero.
+                $phoneCompte = trim((string) ($user['phone'] ?? ''));
+                $majPhone = null;
+                $refus = null; // motif de refus (le statut journalise reste 'ignore' : la colonne est une ENUM)
+                if ($phoneCompte === '') {
+                    require_once __DIR__ . '/config_marche.php';
+                    $phoneNorm = normaliserNumero($numero);
+                    if ($phoneNorm === null) {
+                        $refus = 'numero_invalide';
+                    } else {
+                        $pris = $pdo->prepare("SELECT id FROM users_monrevenu WHERE phone = ? AND id != ? AND status != 'deleted'");
+                        $pris->execute([$phoneNorm, $user['id']]);
+                        if ($pris->fetch()) $refus = 'numero_deja_utilise'; else $majPhone = $phoneNorm;
+                    }
+                }
 
-                $statut = 'valide';
-                $matchedUserId = (int) $user['id'];
+                if ($refus === null) {
+                    $upd = $pdo->prepare(
+                        "UPDATE users_monrevenu
+                         SET phone_verified = 1,
+                             whatsapp_verif_numero = ?,
+                             whatsapp_verif_code = NULL,
+                             whatsapp_verif_expire_at = NULL
+                         WHERE id = ?"
+                    );
+                    $upd->execute([$numero, $user['id']]);
+                    if ($majPhone !== null) {
+                        $mk = marcheDeNumero($majPhone) ?? MARCHE_DEFAUT;
+                        $pdo->prepare("UPDATE users_monrevenu SET phone = ?, pays_code = ?, pays_nom = ? WHERE id = ?")
+                            ->execute([$majPhone, $mk, marche($mk)['nom'], $user['id']]);
+                    }
+                    $statut = 'valide';
+                    $matchedUserId = (int) $user['id'];
+                }
             }
         }
     }
@@ -154,7 +178,7 @@ function validerCodeWhatsapp(PDO $pdo, string $texteMessage, string $numeroExped
     require_once __DIR__ . '/audit.php';
     auditInfo($pdo, ['category' => 'auth', 'action' => $statut === 'valide' ? 'verification_whatsapp' : 'whatsapp_code_' . $statut,
         'result' => $statut === 'valide' ? 'ok' : 'refus', 'actor_id' => $matchedUserId, 'actor_role' => null,
-        'entity_type' => $matchedUserId ? 'utilisateur' : null, 'entity_id' => $matchedUserId, 'meta' => ['wa_from' => $numero, 'statut' => $statut]]);
+        'entity_type' => $matchedUserId ? 'utilisateur' : null, 'entity_id' => $matchedUserId, 'meta' => ['wa_from' => $numero, 'statut' => $statut, 'refus' => $refus ?? null]]);
 
     return [
         'success' => $statut === 'valide',

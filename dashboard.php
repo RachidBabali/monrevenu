@@ -18,7 +18,8 @@ $stmt->execute([$user_id]);
 $sender         = $stmt->fetch();
 $balance        = $sender['balance'] ?? 0;
 $role           = $sender['role'] ?? 'client';
-$phone_verifie  = (int) ($sender['phone_verified'] ?? 0);
+$etat_compte    = etatVerification($pdo, $user_id);
+$phone_verifie  = $etat_compte['verifie'] ? 1 : 0;
 $marche_membre  = marcheDeCompte($sender ?: null);
 
 if (empty($_SESSION['csrf_token'])) {
@@ -75,7 +76,7 @@ try {
     $st = $pdo->prepare(
         "SELECT vp.id, vp.nom_produit, vp.image, vp.prix_vente FROM vendeur_produits vp " . CATALOGUE_JOINTURE . "
          WHERE " . CATALOGUE_CONDITION . " AND " . catalogueFiltreMarche($marche_membre) . "
-         ORDER BY vp.prix_vente DESC, vp.id DESC LIMIT 4"
+         ORDER BY " . ($phone_verifie === 1 ? "vp.prix_vente DESC, " : "") . "vp.id DESC LIMIT 4"
     );
     $st->execute();
     $produits_a_promouvoir = $st->fetchAll();
@@ -201,10 +202,10 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
                   <?php endif; ?>
                 </span>
                 <span class="ligne-tx-corps">
-                  <span class="ligne-tx-titre block line-clamp-2"><?= e($p['nom_produit']) ?></span>
+                  <?php if ($etat_compte['a_telephone']): ?><span class="ligne-tx-titre block line-clamp-2"><?= e($p['nom_produit']) ?></span><?php endif; ?>
                   <?php if ($phone_verifie === 1): ?><span class="ligne-tx-meta"><?= montant($p['prix_vente'], false, 'font-normal', $marche_membre) ?></span><?php endif; ?>
                 </span>
-                <span class="ligne-tx-montant"><span class="meta block">Commission</span><?= montant(calculerCommission((float) $p['prix_vente'], $marche_membre), false, 'montant-entrant', $marche_membre) ?></span>
+                <?php if ($etat_compte['a_telephone']): ?><span class="ligne-tx-montant"><span class="meta block">Commission</span><?= montant(calculerCommission((float) $p['prix_vente'], $marche_membre), false, 'montant-entrant', $marche_membre) ?></span><?php endif; ?>
               </a>
             <?php endforeach; ?>
           </div>
