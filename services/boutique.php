@@ -27,6 +27,28 @@ if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'signaler') {
+    require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/audit.php';
+    require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/signalement.php';
+    if (!hash_equals($_SESSION['csrf_token'], (string) ($_POST['csrf_token'] ?? ''))) {
+        auditCsrf($pdo, 'boutique_signalement');
+        $_SESSION['flash_error'] = 'Votre session a expiré. Rechargez la page puis recommencez.';
+    } else {
+        $produit_a_signaler = (int) ($_POST['produit_id'] ?? 0);
+        try {
+            $resultat = signalerProduit($pdo, $produit_a_signaler, (int) $user_id, (string) ($_POST['motif'] ?? ''));
+            $_SESSION['flash_success'] = $resultat['deja_signale']
+                ? 'Vous avez déjà signalé ce produit.'
+                : 'Signalement enregistré. Merci, l\'équipe MonRevenu va vérifier ce produit.';
+        } catch (Throwable $t) {
+            require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/incident.php';
+            $_SESSION['flash_error'] = messageIncident(incidentEnregistrer($pdo, $t, 'boutique/signalement'), "Le signalement n'a pas pu être enregistré.");
+        }
+    }
+    header('Location: /services/boutique.php#produit-' . (int) ($_POST['produit_id'] ?? 0));
+    exit();
+}
+
 $message_success = $_SESSION['flash_success'] ?? '';
 $message_error   = $_SESSION['flash_error'] ?? '';
 unset($_SESSION['flash_success'], $_SESSION['flash_error']);
@@ -185,6 +207,12 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
               <summary class="flex h-9 cursor-pointer list-none items-center text-text-2 hover:text-text">Voir le lien</summary>
               <label class="sr-only" for="lien-input-<?= $produit_id ?>">Lien d'affiliation pour <?= e($produit_nom) ?></label>
               <input type="text" readonly id="lien-input-<?= $produit_id ?>" value="<?= e($lien_affiliation) ?>" class="mb-3 w-full rounded border border-line bg-surface-2 px-2 py-2 font-mono text-xs text-text-2">
+              <form method="POST" action="/services/boutique.php" class="mb-3">
+                <input type="hidden" name="csrf_token" value="<?= e($_SESSION['csrf_token']) ?>">
+                <input type="hidden" name="produit_id" value="<?= $produit_id ?>">
+                <input type="hidden" name="action" value="signaler">
+                <button type="submit" class="lien text-text-3" onclick="return confirm('Signaler ce produit à l\'équipe MonRevenu ?');"><?= ico('circle-alert', 'ico-16') ?>Signaler ce produit</button>
+              </form>
             </details>
           </li>
         <?php endforeach; ?>
