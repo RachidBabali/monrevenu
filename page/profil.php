@@ -91,6 +91,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: profil.php'); exit();
     }
 
+    // --- 2a. Compte de reception des commissions (operateur mobile money + numero) ---
+    // Paiement manuel : l'information dit a l'administration ou virer. Reserve aux comptes dont le numero est verifie.
+    if (isset($_POST['update_paiement'])) {
+        require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/auth_middleware.php';
+        require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/moyen_paiement.php';
+        require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/notifications.php';
+        try {
+            $st = $pdo->prepare("SELECT pays_code, phone, google_id, password, role FROM users_monrevenu WHERE id = ?");
+            $st->execute([$user_id]);
+            $compte_p = $st->fetch(PDO::FETCH_ASSOC) ?: [];
+            $marche_p = marcheDeCompte($compte_p ?: null);
+            if (in_array($compte_p['role'] ?? '', ['commercant', 'admin'], true)) {
+                $_SESSION['flash_error'] = "Ce compte n'a pas de commissions à recevoir.";
+            } elseif (!compteVerifie($pdo, $user_id)) {
+                $_SESSION['flash_error'] = "Vérifiez d'abord votre numéro pour enregistrer votre compte de réception.";
+            } elseif (empty($compte_p['google_id']) && !password_verify(trim((string) ($_POST['mot_de_passe_paiement'] ?? '')), (string) ($compte_p['password'] ?? ''))) {
+                // Changer l'endroit ou l'argent est envoye est sensible : le mot de passe est redemande (sauf compte Google, sans mot de passe utilisable)
+                $_SESSION['flash_error'] = 'Le mot de passe est incorrect.';
+                auditInfo($pdo, ['category' => 'compte', 'action' => 'moyen_paiement_echec', 'result' => 'echec', 'entity_type' => 'utilisateur', 'entity_id' => $user_id]);
+            } else {
+                moyenPaiementSauvegarder($pdo, (int) $user_id, $marche_p, (string) ($_POST['operateur'] ?? ''), (string) ($_POST['numero_paiement'] ?? ''));
+                $_SESSION['flash_success'] = 'Votre compte de réception des commissions est enregistré.';
+                envoyerNotification($pdo, (int) $user_id, "Votre compte de réception des commissions a été " . 'enregistré : ' . trim((string) ($_POST['operateur'] ?? '')) . '. Si ce n\'est pas vous, changez votre mot de passe.', 'Compte de réception', '/page/profil.php');
+            }
+        } catch (InvalidArgumentException $e) {
+            $_SESSION['flash_error'] = $e->getMessage();
+        } catch (Throwable $e) {
+            $_SESSION['flash_error'] = messageIncident(incidentEnregistrer($pdo, $e, 'profil/moyen_paiement'), "Le compte de réception n'a pas pu être enregistré. Réessayez dans un instant.");
+        }
+        header('Location: profil.php'); exit();
+    }
+
     // --- 2b. Changement du mot de passe ---
     if (isset($_POST['update_password'])) {
         $code_actuel  = trim((string) ($_POST['mot_de_passe_actuel'] ?? ''));
@@ -274,9 +306,20 @@ $user_pays_code = $user['pays_code'] ?? null;
 $user_pays_nom  = $user['pays_nom'] ?? null;
 $user_phone    = $user['phone'] ?? '';
 $est_compte_google = !empty($user['google_id']);
+$user_verifie_flag = 0; // renseigne plus bas apres chargement de auth_middleware
 
 // Affichage lisible du numero, quel que soit le marche (includs/config_marche.php).
 $user_phone_affiche = afficherNumero($user_phone);
+
+// Compte de reception des commissions (affilies) : liste d'operateurs du marche du compte
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/auth_middleware.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/moyen_paiement.php';
+$marche_profil   = marcheDeCompte($user ?: null);
+$role_profil     = $_SESSION['user_role'] ?? '';
+$paiement_visible = !in_array($role_profil, ['commercant', 'admin'], true);
+$compte_verifie_profil = compteVerifie($pdo, $user_id);
+$user_verifie_flag = $compte_verifie_profil ? 1 : 0;
+$moyen_paiement  = $paiement_visible ? moyenPaiementDuCompte($pdo, (int) $user_id) : null;
 
 // Initiales robustes : prend la première lettre de chaque mot du nom (max 2)
 $mots = preg_split('/\s+/', trim($user_fullname), -1, PREG_SPLIT_NO_EMPTY);
@@ -319,7 +362,7 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
               <span class="champ-label">Numéro WhatsApp</span>
               <p class="flex h-12 items-center justify-between gap-3 rounded border border-line bg-surface-2 px-3 lg:h-11">
                 <span class="chiffres text-text-2"><?= e($user_phone_affiche) ?></span>
-                <span class="pastille pastille-succes">Vérifié</span>
+                <?php if (!empty($user_phone) && (int) ($user_verifie_flag ?? 0) === 1): ?><span class="pastille pastille-succes">Vérifié</span><?php else: ?><span class="pastille">Non vérifié</span><?php endif; ?>
               </p>
               <p class="champ-aide">Le numéro sert à la connexion et ne peut pas être modifié ici.</p>
             </div>
@@ -327,6 +370,43 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
           <button type="submit" name="update_profile" class="btn btn-primaire self-start"><?= ico('loader-circle', 'ico-charge') ?><span data-libelle>Enregistrer</span></button>
         </div>
       </form>
+
+      <?php if ($paiement_visible): ?>
+      <form action="" method="POST" id="form-paiement" class="carte self-start">
+        <input type="hidden" name="csrf_token" value="<?= e($_SESSION['csrf_token']) ?>">
+        <h2 class="carte-entete carte-titre">Réception des commissions</h2>
+        <div class="flex flex-col gap-4 p-4">
+          <?php if (!$compte_verifie_profil): ?>
+            <p class="alerte alerte-attention"><?= ico('lock') ?><span>Vérifiez votre numéro (bandeau du tableau de bord) pour enregistrer votre compte de réception.</span></p>
+          <?php endif; ?>
+          <p class="text-sm text-text-2">Vos commissions sont payées à la main par l'équipe MonRevenu, sur l'opérateur et le numéro ci-dessous.</p>
+          <div class="champ">
+            <label class="champ-label" for="operateur">Opérateur mobile money</label>
+            <select class="champ-saisie" id="operateur" name="operateur" required<?= $compte_verifie_profil ? '' : ' disabled' ?>>
+              <option value="">Choisir un opérateur</option>
+              <?php foreach (moyensRetrait($marche_profil) as $op): ?>
+                <option value="<?= e($op) ?>"<?= ($moyen_paiement['operateur'] ?? '') === $op ? ' selected' : '' ?>><?= e($op) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="champ">
+            <label class="champ-label" for="numero_paiement">Numéro qui reçoit l'argent</label>
+            <input class="champ-saisie" type="tel" id="numero_paiement" name="numero_paiement" inputmode="tel" autocomplete="tel" required
+                   value="<?= e($moyen_paiement ? afficherNumero($moyen_paiement['numero']) : $user_phone_affiche) ?>"
+                   placeholder="<?= e(marche($marche_profil)['exemple_numero']) ?>"<?= $compte_verifie_profil ? '' : ' disabled' ?>>
+            <p class="champ-aide">Numéro <?= e(marche($marche_profil)['nom']) ?> (+<?= e(marche($marche_profil)['indicatif']) ?>). Sans numéro, l'enregistrement est impossible.</p>
+          </div>
+          <?php if (!$est_compte_google): ?>
+          <div class="champ">
+            <label class="champ-label" for="mot_de_passe_paiement">Mot de passe actuel</label>
+            <input class="champ-saisie" type="password" id="mot_de_passe_paiement" name="mot_de_passe_paiement" required maxlength="64" autocomplete="current-password"<?= $compte_verifie_profil ? '' : ' disabled' ?>>
+            <p class="champ-aide">Demandé pour confirmer qu'il s'agit bien de vous.</p>
+          </div>
+          <?php endif; ?>
+          <button type="submit" name="update_paiement" class="btn btn-primaire self-start"<?= $compte_verifie_profil ? '' : ' disabled' ?>><?= ico('loader-circle', 'ico-charge') ?><span data-libelle>Enregistrer</span></button>
+        </div>
+      </form>
+      <?php endif; ?>
 
       <form action="" method="POST" id="form-password" class="carte self-start">
         <input type="hidden" name="csrf_token" value="<?= e($_SESSION['csrf_token']) ?>">

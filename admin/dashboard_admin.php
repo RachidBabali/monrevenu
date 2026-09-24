@@ -543,7 +543,7 @@ foreach ($ventes as &$v) { $v['marche'] = marcheDeDevise($v['devise'] ?? null) ?
 unset($v);
 
 $retraits = $pdo->query(
-    "SELECT w.id, w.amount, w.status, w.method, w.note, w.created_at, w.devise,
+    "SELECT w.id, w.amount, w.status, w.method, w.note, w.created_at, w.devise, w.operateur, w.numero_paiement,
             u.fullname AS utilisateur_nom, u.pays_code, u.phone
      FROM withdrawals w
      JOIN users_monrevenu u ON u.id = w.user_id

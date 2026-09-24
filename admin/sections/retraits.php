@@ -18,7 +18,7 @@
             <tr>
               <td data-label=""><span class="font-mono font-medium">RETRAIT-<?= (int) $r['id'] ?></span><span class="chiffres block text-xs text-text-3"><?= e(dateFr($r['created_at'], 'heure')) ?></span></td>
               <td data-label="Membre"><?= e($r['utilisateur_nom']) ?></td>
-              <td data-label="Paiement vers"><span class="block"><?= e($r['method'] ?: 'Non précisé') ?></span><?php if (!empty($r['note'])): ?><span class="block font-mono text-xs text-text-2"><?= e(nettoyerPictogrammes($r['note'])) ?></span><?php endif; ?></td>
+              <td data-label="Paiement vers"><span class="block"><?= e($r['operateur'] ?: ($r['method'] ?: 'Non précisé')) ?></span><?php if (!empty($r['numero_paiement'])): ?><span class="flex items-center gap-2 font-mono text-sm"><span class="chiffres"><?= e(afficherNumero($r['numero_paiement'])) ?></span><button type="button" class="btn btn-sm btn-discret" onclick="navigator.clipboard&amp;&amp;navigator.clipboard.writeText('<?= e($r['numero_paiement']) ?>');this.textContent='Copié';" aria-label="Copier le numéro"><?= ico('copy', 'ico-16') ?></button></span><?php elseif (!empty($r['note'])): ?><span class="block font-mono text-xs text-text-2"><?= e(nettoyerPictogrammes($r['note'])) ?></span><?php endif; ?></td>
               <td data-label="Montant" class="col-montant"><?= montant($r['amount'], false, '', $r['marche']) ?></td>
               <td data-label="Statut"><?= badgeStatut($statut_norme, 'retrait') ?></td>
               <td data-label="">

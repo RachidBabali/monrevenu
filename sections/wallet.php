@@ -21,13 +21,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         auditInfo($pdo, ['category' => 'systeme', 'action' => 'csrf_echec', 'result' => 'refus', 'meta' => ['page' => 'portefeuille']]);
     } else {
         $montant_r = round(floatval($_POST['montant_retrait'] ?? 0), 2);
-        $methode_r = trim($_POST['methode_retrait'] ?? '');
-        $numero_r  = trim($_POST['numero_reception'] ?? '');
+        // Le paiement suit le compte de reception enregistre dans le profil (operateur + numero) : rien n'est lu
+        // dans le formulaire, l'administration paie toujours au meme endroit.
+        require_once __DIR__ . '/../includs/moyen_paiement.php';
+        $moyen_r   = moyenPaiementDuCompte($pdo, (int) $user_id);
+        $methode_r = (string) ($moyen_r['operateur'] ?? '');
+        $numero_r  = (string) ($moyen_r['numero'] ?? '');
 
-        if (!$montant_r || !$methode_r || !$numero_r) {
-            $retrait_error = 'Indiquez le montant, le moyen de retrait et le numéro de réception.';
-        } elseif (!in_array($methode_r, array_merge(moyensRetrait($marche_membre), ['Autre']), true)) {
-            $retrait_error = 'Choisissez un moyen de retrait proposé sur votre marché.';
+        if (!$moyen_r || !in_array($methode_r, moyensRetrait($marche_membre), true) || $numero_r === '') {
+            $retrait_error = "Enregistrez d'abord votre compte de réception (opérateur et numéro) dans votre profil.";
+        } elseif (!$montant_r) {
+            $retrait_error = 'Indiquez le montant à retirer.';
         } elseif ($montant_r < $minimum_retrait) {
             $retrait_error = 'Le minimum de retrait est de ' . formaterMontant($minimum_retrait, false, true, $marche_membre) . '. Saisissez un montant plus élevé.';
         } elseif ($montant_r > $balance) {
@@ -40,10 +44,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 // par mouvementSolde (refus si le solde deviendrait negatif, journal dans la meme transaction).
                 $note = $methode_r . ' : ' . $numero_r;
                 $stmtRetrait = $pdo->prepare(
-                    "INSERT INTO withdrawals (user_id, amount, status, method, note, created_at, devise)
-                     VALUES (?, ?, 'en_attente', ?, ?, NOW(), ?)"
+                    "INSERT INTO withdrawals (user_id, amount, status, method, note, created_at, devise, operateur, numero_paiement)
+                     VALUES (?, ?, 'en_attente', ?, ?, NOW(), ?, ?, ?)"
                 );
-                $stmtRetrait->execute([$user_id, $montant_r, $methode_r, $note, deviseIso($marche_membre)]);
+                $stmtRetrait->execute([$user_id, $montant_r, $methode_r, $note, deviseIso($marche_membre), $methode_r, $numero_r]);
                 $withdrawal_id = (int) $pdo->lastInsertId();
 
                 mouvementSolde($pdo, (int) $user_id, -$montant_r, 'retrait', 'RETRAIT-' . $withdrawal_id, 'en_attente',
@@ -124,25 +128,19 @@ $retrait_manque   = max(0, $minimum_retrait - $balance);
         <p class="champ-erreur" id="r_montant_err" hidden><?= ico('circle-alert', 'ico-16 mt-0.5') ?><span></span></p>
       </div>
 
-      <div class="champ">
-        <label class="champ-label" for="r_methode">Moyen de retrait</label>
-        <select class="champ-saisie" name="methode_retrait" id="r_methode" required aria-describedby="r_methode_err">
-          <option value="">Choisir un moyen</option>
-          <?php foreach (moyensRetrait($marche_membre) as $moyenRetraitOption): ?>
-            <option value="<?= e($moyenRetraitOption) ?>"><?= e($moyenRetraitOption) ?></option>
-          <?php endforeach; ?>
-          <option value="Autre">Autre</option>
-        </select>
-        <p class="champ-erreur" id="r_methode_err" hidden><?= ico('circle-alert', 'ico-16 mt-0.5') ?><span>Choisissez le moyen de retrait.</span></p>
-      </div>
-
-      <div class="champ">
-        <label class="champ-label" for="r_numero">Numéro de réception</label>
-        <input class="champ-saisie" type="tel" name="numero_reception" id="r_numero" inputmode="tel" autocomplete="tel" required
-               placeholder="<?= e(marche($marche_membre)['exemple_numero']) ?>" aria-describedby="r_numero_err">
-        <p class="champ-aide">Le paiement est envoyé sur ce numéro après validation par l'équipe MonRevenu.</p>
-        <p class="champ-erreur" id="r_numero_err" hidden><?= ico('circle-alert', 'ico-16 mt-0.5') ?><span>Indiquez le numéro qui recevra le paiement.</span></p>
-      </div>
+      <?php
+        require_once __DIR__ . '/../includs/moyen_paiement.php';
+        $moyen_affiche = moyenPaiementDuCompte($pdo, (int) $user_id);
+      ?>
+      <?php if ($moyen_affiche): ?>
+        <dl class="recap bg-surface">
+          <div class="recap-ligne"><dt>Paiement sur</dt><dd><?= e($moyen_affiche['operateur']) ?></dd></div>
+          <div class="recap-ligne"><dt>Numéro</dt><dd class="chiffres"><?= e(afficherNumero($moyen_affiche['numero'])) ?></dd></div>
+        </dl>
+        <p class="champ-aide">Le paiement est envoyé après validation par l'équipe MonRevenu. <a class="lien" href="/page/profil.php#form-paiement">Modifier dans mon profil</a></p>
+      <?php else: ?>
+        <p class="alerte alerte-attention"><?= ico('circle-alert') ?><span>Enregistrez d'abord votre opérateur mobile money et votre numéro de réception dans <a class="lien" href="/page/profil.php#form-paiement">votre profil</a>.</span></p>
+      <?php endif; ?>
 
       <dl class="recap" aria-live="polite">
         <div class="recap-ligne"><dt>Montant demandé</dt><dd class="montant" id="r_recap_montant"><?= formaterMontant(0, false, true, $marche_membre) ?></dd></div>
@@ -151,7 +149,7 @@ $retrait_manque   = max(0, $minimum_retrait - $balance);
     </div>
     <div class="feuille-pied">
       <button class="btn btn-secondaire" type="button" data-fermer>Annuler</button>
-      <button class="btn btn-primaire" type="submit"<?= $retrait_possible ? '' : ' disabled' ?>><?= ico('loader-circle', 'ico-charge') ?><span data-libelle>Confirmer le retrait</span></button>
+      <button class="btn btn-primaire" type="submit"<?= ($retrait_possible && $moyen_affiche) ? '' : ' disabled' ?>><?= ico('loader-circle', 'ico-charge') ?><span data-libelle>Confirmer le retrait</span></button>
     </div>
   </form>
 </dialog>
