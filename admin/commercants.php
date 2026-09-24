@@ -56,6 +56,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             auditCritique($pdo, ['category' => 'admin', 'action' => 'commercant_confiance', 'entity_type' => 'commercant', 'entity_id' => $cible,
                 'before' => ['confiance' => (int) $profil['confiance']], 'after' => ['confiance' => $nouvelle]]);
             $message = $nouvelle ? 'Ce commerçant publie désormais sans validation préalable.' : 'Les produits de ce commerçant repassent par la validation.';
+        } elseif ($action === 'surveillance') {
+            $nouvelle = (int) $profil['surveillance'] === 1 ? 0 : 1;
+            $pdo->prepare("UPDATE commercants_profils SET surveillance = ? WHERE user_id = ?")->execute([$nouvelle, $cible]);
+            auditCritique($pdo, ['category' => 'admin', 'action' => 'commercant_surveillance', 'entity_type' => 'commercant', 'entity_id' => $cible,
+                'before' => ['surveillance' => (int) $profil['surveillance']], 'after' => ['surveillance' => $nouvelle]]);
+            $message = $nouvelle ? 'Ce commerçant est marqué à surveiller : ses produits passent désormais par une validation manuelle.' : 'Ce commerçant n\'est plus marqué à surveiller.';
         } elseif ($action === 'reglement') {
             $montant = round((float) str_replace([' ', ','], ['', '.'], (string) ($_POST['montant'] ?? '')), 2);
             $reference = mb_substr(trim((string) ($_POST['reference'] ?? '')), 0, 100);
@@ -160,6 +166,7 @@ include __DIR__ . '/sections/coquille_debut.php';
               <div class="flex flex-col items-end gap-1">
                 <?= badgeStatut($c['statut'], 'boutique') ?>
                 <?php if ((int) $c['confiance'] === 1): ?><span class="pastille pastille-info">Publication directe</span><?php endif; ?>
+                <?php if ((int) $c['surveillance'] === 1): ?><span class="pastille pastille-attente">À surveiller</span><?php endif; ?>
               </div>
             </div>
 
@@ -191,6 +198,12 @@ include __DIR__ . '/sections/coquille_debut.php';
                 <input type="hidden" name="commercant_id" value="<?= (int) $c['user_id'] ?>">
                 <input type="hidden" name="action" value="confiance">
                 <button type="submit" class="btn btn-sm btn-secondaire"><?= ico('shield', 'ico-16') ?><?= (int) $c['confiance'] === 1 ? 'Repasser par la validation' : 'Autoriser la publication directe' ?></button>
+              </form>
+              <form method="POST" action="/admin/commercants.php">
+                <input type="hidden" name="csrf_token" value="<?= e($_SESSION['csrf_token']) ?>">
+                <input type="hidden" name="commercant_id" value="<?= (int) $c['user_id'] ?>">
+                <input type="hidden" name="action" value="surveillance">
+                <button type="submit" class="btn btn-sm btn-secondaire"><?= ico('eye', 'ico-16') ?><?= (int) $c['surveillance'] === 1 ? 'Retirer la surveillance' : 'Marquer à surveiller' ?></button>
               </form>
               <button type="button" class="btn btn-sm btn-secondaire" data-ouvrir="reglement-<?= (int) $c['user_id'] ?>" aria-haspopup="dialog"><?= ico('receipt', 'ico-16') ?>Enregistrer un règlement</button>
             </div>

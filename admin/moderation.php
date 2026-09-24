@@ -34,11 +34,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$produit) throw new RuntimeException('introuvable');
 
         if ($action === 'approuver') {
-            $pdo->prepare("UPDATE vendeur_produits SET moderation = 'approuve', moderation_note = NULL, statut = 'actif' WHERE id = ?")->execute([$produit_id]);
+            $pdo->prepare("UPDATE vendeur_produits SET moderation = 'approuve', moderation_note = NULL, statut = 'actif', publication_type = 'manuel', publie_automatiquement_le = NULL WHERE id = ?")->execute([$produit_id]);
             auditCritique($pdo, ['category' => 'produit', 'action' => 'produit_approbation', 'entity_type' => 'produit', 'entity_id' => $produit_id,
                 'before' => ['moderation' => $produit['moderation'], 'statut' => $produit['statut']], 'after' => ['moderation' => 'approuve', 'statut' => 'actif']]);
             $notification = [(int) $produit['vendeur_id'], "Votre produit « " . $produit['nom_produit'] . " » est publié dans le catalogue.", 'Produit publié'];
             $message = 'Produit approuvé et publié.';
+        } elseif ($action === 'marquer_verifie') {
+            $pdo->prepare("UPDATE produit_signalements SET statut = 'traite', traite_par = ?, traite_le = NOW() WHERE produit_id = ? AND statut = 'ouvert'")
+                ->execute([(int) $admin['id'], $produit_id]);
+            $pdo->prepare("UPDATE vendeur_produits SET nb_signalements = 0, statut = 'actif', moderation_note = NULL WHERE id = ?")->execute([$produit_id]);
+            auditCritique($pdo, ['category' => 'produit', 'action' => 'produit_revu', 'entity_type' => 'produit', 'entity_id' => $produit_id,
+                'before' => ['nb_signalements' => (int) $produit['nb_signalements'], 'statut' => $produit['statut']],
+                'after' => ['nb_signalements' => 0, 'statut' => 'actif']]);
+            $notification = [(int) $produit['vendeur_id'], "Votre produit « " . $produit['nom_produit'] . " » a été vérifié et reste publié dans le catalogue.", 'Produit vérifié'];
+            $message = 'Produit vérifié, remis en vente et retiré de la file « À revoir ».';
         } elseif ($action === 'refuser') {
             if ($motif === '') throw new RuntimeException('motif_manquant');
             $pdo->prepare("UPDATE vendeur_produits SET moderation = 'refuse', moderation_note = ?, statut = 'suspendu' WHERE id = ?")->execute([$motif, $produit_id]);
@@ -93,26 +102,38 @@ $message = $_SESSION['flash_message'] ?? '';
 $error   = $_SESSION['flash_error'] ?? '';
 unset($_SESSION['flash_message'], $_SESSION['flash_error']);
 
-$vue = in_array($_GET['vue'] ?? '', ['attente', 'publies', 'refuses'], true) ? $_GET['vue'] : 'attente';
+$vue = in_array($_GET['vue'] ?? '', ['attente', 'publies', 'refuses', 'a_revoir'], true) ? $_GET['vue'] : 'attente';
 $conditions = [
-    'attente' => "p.moderation = 'en_attente'",
-    'publies' => "p.moderation = 'approuve'",
-    'refuses' => "p.moderation = 'refuse'",
+    'attente'  => "p.moderation = 'en_attente'",
+    'publies'  => "p.moderation = 'approuve'",
+    'refuses'  => "p.moderation = 'refuse'",
+    // Suspendu par signalements : reste visible ici tant qu'aucune decision n'a ete prise (statut non filtre dans ce cas).
+    'a_revoir' => "p.moderation = 'approuve' AND p.publication_type = 'automatique'
+                   AND (p.nb_signalements > 0
+                        OR (p.statut = 'actif' AND (p.publie_automatiquement_le >= (NOW() - INTERVAL 7 DAY) OR cp.surveillance = 1)))",
 ];
 $produits = [];
 try {
     $st = $pdo->prepare(
-        "SELECT p.*, cp.nom_boutique, cp.statut AS statut_boutique, u.fullname
+        "SELECT p.*, cp.nom_boutique, cp.statut AS statut_boutique, cp.surveillance, u.fullname
          FROM vendeur_produits p
          JOIN commercants_profils cp ON cp.user_id = p.vendeur_id
          JOIN users_monrevenu u ON u.id = p.vendeur_id
-         WHERE " . $conditions[$vue] . " ORDER BY p.updated_at DESC, p.id DESC LIMIT 100"
+         WHERE " . $conditions[$vue] . "
+         ORDER BY " . ($vue === 'a_revoir' ? 'p.nb_signalements DESC, p.publie_automatiquement_le DESC' : 'p.updated_at DESC, p.id DESC') . "
+         LIMIT 100"
     );
     $st->execute();
     $produits = $st->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     $error = $error ?: messageIncident(incidentEnregistrer($pdo, $e, 'admin/moderation/liste'), "La liste n'a pas pu être chargée.");
 }
+$compteur_a_revoir = 0;
+try {
+    $compteur_a_revoir = (int) $pdo->query(
+        "SELECT COUNT(*) FROM vendeur_produits p JOIN commercants_profils cp ON cp.user_id = p.vendeur_id WHERE " . $conditions['a_revoir']
+    )->fetchColumn();
+} catch (PDOException $e) { /* compteur facultatif */ }
 
 $compteurs_admin = [
     'commercants' => (int) $pdo->query("SELECT COUNT(*) FROM commercants_profils WHERE statut = 'en_attente'")->fetchColumn(),
@@ -122,7 +143,7 @@ $titre_page = 'Produits à valider';
 $page_admin = 'moderation';
 include __DIR__ . '/sections/coquille_debut.php';
 
-$vues = ['attente' => 'À valider', 'publies' => 'Publiés', 'refuses' => 'Refusés'];
+$vues = ['attente' => 'À valider', 'a_revoir' => 'À revoir' . ($compteur_a_revoir > 0 ? ' (' . $compteur_a_revoir . ')' : ''), 'publies' => 'Publiés', 'refuses' => 'Refusés'];
 ?>
     <div class="flex flex-wrap items-end justify-between gap-3">
       <div>
@@ -164,7 +185,15 @@ $vues = ['attente' => 'À valider', 'publies' => 'Publiés', 'refuses' => 'Refus
                 <p class="font-medium text-text"><?= e($p['nom_produit']) ?></p>
                 <p class="montant mt-0.5"><?= formaterMontant($p['prix_vente']) ?></p>
                 <p class="meta">Commission affilié <?= formaterMontant(calculerCommission((float) $p['prix_vente'])) ?><?= (int) $p['stock'] > 0 ? ', stock ' . (int) $p['stock'] : '' ?></p>
-                <p class="meta mt-1"><?= e($p['nom_boutique']) ?> (<?= e($p['fullname']) ?>) <?= badgeStatut($p['statut_boutique'], 'boutique') ?></p>
+                <p class="meta mt-1"><?= e($p['nom_boutique']) ?> (<?= e($p['fullname']) ?>) <?= badgeStatut($p['statut_boutique'], 'boutique') ?>
+                  <?php if ((int) $p['surveillance'] === 1): ?><span class="pastille pastille-attente">À surveiller</span><?php endif; ?>
+                </p>
+                <?php if ($p['publication_type'] === 'automatique'): ?>
+                  <p class="meta">Publié automatiquement<?= $p['publie_automatiquement_le'] ? ' le ' . e(dateFr($p['publie_automatiquement_le'], 'court')) : '' ?></p>
+                <?php endif; ?>
+                <?php if ((int) $p['nb_signalements'] > 0): ?>
+                  <p class="meta text-danger"><?= (int) $p['nb_signalements'] ?> signalement<?= (int) $p['nb_signalements'] > 1 ? 's' : '' ?></p>
+                <?php endif; ?>
               </div>
             </div>
             <?php if ($p['description']): ?>
@@ -194,6 +223,21 @@ $vues = ['attente' => 'À valider', 'publies' => 'Publiés', 'refuses' => 'Refus
                   <input type="hidden" name="produit_id" value="<?= (int) $p['id'] ?>">
                   <input type="hidden" name="action" value="reactiver">
                   <button type="submit" class="btn btn-sm btn-secondaire"><?= ico('eye', 'ico-16') ?>Remettre en vente</button>
+                </form>
+              <?php endif; ?>
+              <?php if ($vue === 'a_revoir'): ?>
+                <form method="POST" action="/admin/moderation.php">
+                  <input type="hidden" name="csrf_token" value="<?= e($_SESSION['csrf_token']) ?>">
+                  <input type="hidden" name="produit_id" value="<?= (int) $p['id'] ?>">
+                  <input type="hidden" name="action" value="marquer_verifie">
+                  <button type="submit" class="btn btn-sm btn-secondaire"><?= ico('badge-check', 'ico-16') ?>Vérifié, rien à signaler</button>
+                </form>
+                <form method="POST" action="/admin/commercants.php">
+                  <input type="hidden" name="csrf_token" value="<?= e($_SESSION['csrf_token']) ?>">
+                  <input type="hidden" name="commercant_id" value="<?= (int) $p['vendeur_id'] ?>">
+                  <input type="hidden" name="action" value="suspendre">
+                  <input type="hidden" name="motif" value="Suspendu depuis la file À revoir (produits signalés ou à surveiller).">
+                  <button type="submit" class="btn btn-sm btn-discret text-danger"><?= ico('circle-x', 'ico-16') ?>Suspendre la boutique</button>
                 </form>
               <?php endif; ?>
             </div>
