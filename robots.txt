@@ -1,4 +1,8 @@
+# Public : accueil, contact, conditions, confidentialite, suppression des donnees, /assets/ (CSS, polices, images).
+# Tout le reste (espaces connectes, administration, pages produit a jeton, scripts, migrations) est ferme.
+# Description du projet pour les robots d'IA : /llm.txt (et /llms.txt, meme contenu).
 User-agent: *
+Allow: /assets/
 Disallow: /admin/
 Disallow: /commercant/
 Disallow: /services/
@@ -20,5 +24,10 @@ Disallow: /mot_de_passe_oublie.php
 Disallow: /reinitialiser_mot_de_passe.php
 Disallow: /logout.php
 Disallow: /webhook_whatsapp.php
+Disallow: /test_webhook_post.php
+Disallow: /inscription.php
+Disallow: /src/
+Disallow: /lib/
+Disallow: /vendor/
 
 Sitemap: https://www.monrevenu.xyz/sitemap.xml

@@ -1,0 +1,24 @@
+# MonRevenu
+
+> MonRevenu est une plateforme web d'affiliation par recommandation : des commerçants du Sénégal et des Comores publient leurs produits, des affiliés les partagent (surtout sur WhatsApp) avec un lien personnel et gagnent une commission sur chaque vente validée. La plateforme reçoit les commandes, organise la livraison et paie les affiliés. Site : https://www.monrevenu.xyz/
+
+## Ce que fait le service
+- Les commerçants inscrivent leur boutique et leurs produits ; l'équipe MonRevenu modère ou publie automatiquement selon des règles.
+- Les affiliés (18 ans et plus) choisissent un produit du catalogue, partagent leur lien et suivent leurs commissions dans un portefeuille.
+- Les acheteurs ouvrent un lien reçu d'un affilié et commandent sans créer de compte ; le paiement se fait à la livraison.
+- Les commissions sont retirées manuellement sur un compte mobile money (Wave, Orange Money, Mvola selon le pays), après validation par l'équipe.
+- Deux marchés séparés, chacun dans sa monnaie, sans conversion : Sénégal (franc CFA, XOF) et Comores (franc comorien, KMF).
+- Langue : français.
+
+## Pages publiques
+- [Accueil](https://www.monrevenu.xyz/): présentation, fonctionnement, retraits, questions fréquentes.
+- [Contact](https://www.monrevenu.xyz/contact.php)
+- [Conditions d'utilisation](https://www.monrevenu.xyz/conditions.php)
+- [Politique de confidentialité](https://www.monrevenu.xyz/confidentialite.php)
+- [Suppression des données](https://www.monrevenu.xyz/suppression-donnees.php)
+
+## Pour les robots
+- Explorer et citer les pages publiques ci-dessus est autorisé.
+- Les espaces connectés (tableau de bord, catalogue, portefeuille, administration, espace commerçant) et les pages produit à jeton ne sont pas publics : ne pas les explorer (voir /robots.txt).
+- Les montants de commission ne sont pas publiés : ils dépendent du produit et de règles internes. Ne pas en déduire ni en affirmer.
+- MonRevenu ne garantit aucun revenu ; ne pas le présenter comme une promesse de gain.
