@@ -45,8 +45,8 @@ if (!function_exists('etatVerification')) {
     /**
      * Etat d'acces d'un compte, lu en base (fail-closed) :
      *  - verifie      : telephone verifie, acces complet ;
-     *  - a_telephone  : un numero est enregistre. Sans numero (compte Google qui n'en a pas encore), rien
-     *                   n'est montre du catalogue sauf l'image des produits : ni prix ni commission.
+     *  - a_telephone  : un numero est enregistre. Sans numero (compte Google qui n'en a pas encore), seuls
+     *                   l'image et le nom des produits sont montres : ni prix ni commission.
      * Avec un numero non verifie : commission visible, prix et lien masques.
      */
     function etatVerification(PDO $pdo, $userId): array

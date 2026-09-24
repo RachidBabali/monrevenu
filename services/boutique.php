@@ -27,7 +27,7 @@ $marche_affilie = definirMarcheCourant(marcheDeCompte($stmtMarche->fetch(PDO::FE
 // (la commission reste visible). Le masquage se fait ici, cote serveur, jamais en CSS ou en JS.
 $etat_compte    = etatVerification($pdo, $user_id);
 $compte_verifie = $etat_compte['verifie'];
-// Sans numero enregistre : seule l'image du produit est montree (ni nom, ni prix, ni commission)
+// Sans numero enregistre : image et nom du produit seulement (ni prix, ni commission)
 $montre_commission = $etat_compte['a_telephone'];
 
 if (empty($_SESSION['csrf_token'])) {
@@ -60,8 +60,8 @@ $message_success = $_SESSION['flash_success'] ?? '';
 $message_error   = $_SESSION['flash_error'] ?? '';
 unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 
-// Sans numero : ni recherche par nom, ni tri par gain (ils permettraient de deviner noms et gains)
-$recherche = $montre_commission ? trim($_GET['q'] ?? '') : '';
+// Le nom du produit reste visible dans tous les cas ; sans numero, le tri par gain est desactive (il reveillerait les gains)
+$recherche = trim($_GET['q'] ?? '');
 
 $produits = [];
 try {
@@ -212,7 +212,7 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
               <?php endif; ?>
             </div>
             <div class="produit-corps">
-              <?php if ($montre_commission): ?><h3 class="produit-nom"><?= e($produit_nom) ?></h3><?php endif; ?>
+              <h3 class="produit-nom"><?= e($produit_nom) ?></h3>
               <?php if ($compte_verifie): ?><p class="produit-prix"><?= montant($produit_prix_brut) ?></p>
               <?php elseif ($montre_commission): ?><p class="produit-prix text-text-3">Prix visible après vérification</p><?php else: ?><p class="produit-prix text-text-3">Détails visibles après vérification</p><?php endif; ?>
               <?php if ($montre_commission): ?><p class="produit-commission"><span>Commission</span><?= montant($commission_montant_brut) ?></p><?php endif; ?>

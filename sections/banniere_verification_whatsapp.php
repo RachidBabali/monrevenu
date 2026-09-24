@@ -30,7 +30,7 @@ $lienWaMe = 'https://wa.me/' . $numeroBusinessWaMe . '?text=' . urlencode($code)
     <?= ico('lock', 'mt-0.5') ?>
     <div class="flex flex-col gap-1">
       <h2 id="mr-verif-titre" class="text-sm font-semibold text-text"><?= $sans_numero ? 'Ajoutez et vérifiez votre numéro WhatsApp' : 'Vérifiez votre numéro WhatsApp' ?></h2>
-      <p class="text-sm text-text-2"><?= $sans_numero ? 'Votre compte n\'a pas encore de numéro : le catalogue est masqué et toutes les actions sont bloquées. Envoyez ce code depuis le numéro WhatsApp que vous voulez utiliser, il sera enregistré sur votre compte.' : 'Tant que votre numéro n\'est pas vérifié, les prix et les liens d\'affiliation restent masqués (la commission reste visible) et les actions sont bloquées. Envoyez ce code par WhatsApp.' ?> Numéro à contacter : <strong class="whitespace-nowrap font-medium text-text"><?= e($numeroBusinessAffiche) ?></strong>.</p>
+      <p class="text-sm text-text-2"><?= $sans_numero ? 'Votre compte n\'a pas encore de numéro : les prix et les commissions sont masqués et toutes les actions sont bloquées. Envoyez ce code depuis le numéro WhatsApp que vous voulez utiliser, il sera enregistré sur votre compte.' : 'Tant que votre numéro n\'est pas vérifié, les prix et les liens d\'affiliation restent masqués (la commission reste visible) et les actions sont bloquées. Envoyez ce code par WhatsApp.' ?> Numéro à contacter : <strong class="whitespace-nowrap font-medium text-text"><?= e($numeroBusinessAffiche) ?></strong>.</p>
     </div>
   </div>
   <div class="flex flex-wrap items-center gap-2 sm:pl-8">
