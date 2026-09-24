@@ -191,4 +191,37 @@ if (!function_exists('marches')) {
         if ($valide !== null) $GLOBALS['__marche_courant'] = $valide;
         return marcheCourant();
     }
+
+    /**
+     * Condition SQL (fragment pret a inserer dans un WHERE, alias "vp" attendu sur
+     * vendeur_produits) qui limite le catalogue au marche donne. Une ligne sans devise
+     * (anterieure a la migration 010) est supposee du marche par defaut (SN, hypothese
+     * documentee dans dev/lot3/NOTES.md, valable tant qu'aucun produit n'appartient a un
+     * proprietaire du marche KM). Les deux valeurs inserees viennent uniquement de
+     * marches() (jamais d'une saisie libre) : aucun risque d'injection.
+     */
+    function catalogueFiltreMarche(?string $codeMarche = null): string
+    {
+        $code = marcheValide($codeMarche) ?? MARCHE_DEFAUT;
+        $devise = deviseIso($code);
+        $devise_defaut = deviseIso(MARCHE_DEFAUT);
+        if ($devise === $devise_defaut) {
+            return "(vp.devise = '{$devise}' OR vp.devise IS NULL)";
+        }
+        return "(vp.devise = '{$devise}')";
+    }
+
+    /**
+     * Expression SQL de la devise effective d'une ligne (colonne devise si renseignee,
+     * sinon celle du marche du proprietaire) : a utiliser dans un SELECT/GROUP BY pour ne
+     * jamais additionner XOF et KMF. $aliasLigne porte la colonne devise, $aliasProprietaire
+     * la colonne pays_code de users_monrevenu (peut etre le meme alias si la ligne est deja
+     * un compte). Deux valeurs possibles seulement (XOF/KMF) : aucun risque d'injection.
+     */
+    function deviseEffectiveSql(string $aliasLigne, string $aliasProprietaire): string
+    {
+        $devise_defaut = deviseIso(MARCHE_DEFAUT);
+        $devise_km = deviseIso('KM');
+        return "COALESCE({$aliasLigne}.devise, IF({$aliasProprietaire}.pays_code = 'KM', '{$devise_km}', '{$devise_defaut}'))";
+    }
 }

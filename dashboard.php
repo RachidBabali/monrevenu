@@ -13,12 +13,13 @@ $user_initials = strtoupper(substr($user_fullname, 0, 2));
 $prenom        = explode(' ', $user_fullname)[0];
 
 // Solde + phone + rôle (requis par wallet.php) + phone_verified (bannière WhatsApp)
-$stmt = $pdo->prepare("SELECT balance, role, phone, phone_verified FROM users_monrevenu WHERE id = ?");
+$stmt = $pdo->prepare("SELECT balance, role, phone, phone_verified, pays_code FROM users_monrevenu WHERE id = ?");
 $stmt->execute([$user_id]);
 $sender         = $stmt->fetch();
 $balance        = $sender['balance'] ?? 0;
 $role           = $sender['role'] ?? 'client';
 $phone_verifie  = (int) ($sender['phone_verified'] ?? 0);
+$marche_membre  = marcheDeCompte($sender ?: null);
 
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -73,7 +74,8 @@ try {
 
     $st = $pdo->prepare(
         "SELECT vp.id, vp.nom_produit, vp.image, vp.prix_vente FROM vendeur_produits vp " . CATALOGUE_JOINTURE . "
-         WHERE " . CATALOGUE_CONDITION . " ORDER BY vp.prix_vente DESC, vp.id DESC LIMIT 4"
+         WHERE " . CATALOGUE_CONDITION . " AND " . catalogueFiltreMarche($marche_membre) . "
+         ORDER BY vp.prix_vente DESC, vp.id DESC LIMIT 4"
     );
     $st->execute();
     $produits_a_promouvoir = $st->fetchAll();
@@ -98,8 +100,8 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
     <section class="carte flex flex-col gap-4 p-4 sm:flex-row sm:items-end sm:justify-between" aria-labelledby="t-solde">
       <div>
         <h3 id="t-solde" class="text-sm font-normal text-text-2">Solde disponible</h3>
-        <p class="montant mt-1 text-4xl"><?= formaterMontant($balance) ?></p>
-        <p class="meta mt-1">Retrait possible à partir de <?= formaterMontant(1000) ?></p>
+        <p class="montant mt-1 text-4xl"><?= formaterMontant($balance, false, true, $marche_membre) ?></p>
+        <p class="meta mt-1">Retrait possible à partir de <?= formaterMontant(retraitMinimum($marche_membre), false, true, $marche_membre) ?></p>
       </div>
       <div class="grid grid-cols-2 gap-2 sm:flex">
         <a class="btn btn-primaire" href="/page/portefeuille.php#retrait"><?= ico('banknote') ?>Retirer</a>
@@ -119,12 +121,12 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
       <dl class="indicateurs">
         <div class="indicateur">
           <dt class="indicateur-libelle">Commissions créditées</dt>
-          <dd class="indicateur-valeur"><?= formaterMontant($indic['creditees']) ?></dd>
+          <dd class="indicateur-valeur"><?= formaterMontant($indic['creditees'], false, true, $marche_membre) ?></dd>
           <dd class="indicateur-note"><?= (int) $indic['nb_creditees'] === 0 ? 'Aucune vente validée' : (int) $indic['nb_creditees'] . ' vente' . ($indic['nb_creditees'] > 1 ? 's validées' : ' validée') ?>, <?= e($libelle_periode) ?></dd>
         </div>
         <div class="indicateur">
           <dt class="indicateur-libelle">Commissions en attente</dt>
-          <dd class="indicateur-valeur"><?= formaterMontant($indic['attente']) ?></dd>
+          <dd class="indicateur-valeur"><?= formaterMontant($indic['attente'], false, true, $marche_membre) ?></dd>
           <dd class="indicateur-note"><?= (int) $indic['nb_attente'] === 0 ? 'Aucune commande' : (int) $indic['nb_attente'] . ' commande' . ($indic['nb_attente'] > 1 ? 's' : '') ?> à confirmer</dd>
         </div>
         <div class="indicateur">
@@ -135,7 +137,7 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
         <div class="indicateur">
           <dt class="indicateur-libelle">Dernier retrait</dt>
           <?php if ($dernier_retrait): ?>
-            <dd class="indicateur-valeur"><?= formaterMontant($dernier_retrait['amount']) ?></dd>
+            <dd class="indicateur-valeur"><?= formaterMontant($dernier_retrait['amount'], false, true, $marche_membre) ?></dd>
             <dd class="indicateur-note"><?= e(['valide' => 'Payé', 'rejete' => 'Refusé', 'en_attente' => 'En attente'][$dernier_retrait['status']] ?? $dernier_retrait['status']) ?>, demandé le <?= e(dateFr($dernier_retrait['created_at'], 'court')) ?></dd>
           <?php else: ?>
             <dd class="indicateur-valeur text-text-3">Aucun</dd>
@@ -170,7 +172,7 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
                   <td data-label="" class="font-medium"><span><?= e($c['nom_produit']) ?><?= (int) $c['quantite'] > 1 ? ' <span class="font-normal text-text-3">x' . (int) $c['quantite'] . '</span>' : '' ?></span></td>
                   <td data-label="Date" class="chiffres whitespace-nowrap text-text-2"><?= e(dateFr($c['created_at'], 'court')) ?></td>
                   <td data-label="Statut"><?= badgeStatut($c['statut'], 'commission') ?></td>
-                  <td data-label="Commission" class="col-montant"><?= montant($c['commission_earn'], $c['statut'] === 'validee', $c['statut'] === 'validee' ? 'montant-entrant' : ($c['statut'] === 'annulee' ? 'text-text-3 line-through' : '')) ?></td>
+                  <td data-label="Commission" class="col-montant"><?= montant($c['commission_earn'], $c['statut'] === 'validee', $c['statut'] === 'validee' ? 'montant-entrant' : ($c['statut'] === 'annulee' ? 'text-text-3 line-through' : ''), $marche_membre) ?></td>
                 </tr>
               <?php endforeach; ?>
               </tbody>
@@ -200,9 +202,9 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
                 </span>
                 <span class="ligne-tx-corps">
                   <span class="ligne-tx-titre block line-clamp-2"><?= e($p['nom_produit']) ?></span>
-                  <span class="ligne-tx-meta"><?= montant($p['prix_vente'], false, 'font-normal') ?></span>
+                  <span class="ligne-tx-meta"><?= montant($p['prix_vente'], false, 'font-normal', $marche_membre) ?></span>
                 </span>
-                <span class="ligne-tx-montant"><span class="meta block">Commission</span><?= montant(calculerCommission((float) $p['prix_vente']), false, 'montant-entrant') ?></span>
+                <span class="ligne-tx-montant"><span class="meta block">Commission</span><?= montant(calculerCommission((float) $p['prix_vente'], $marche_membre), false, 'montant-entrant', $marche_membre) ?></span>
               </a>
             <?php endforeach; ?>
           </div>

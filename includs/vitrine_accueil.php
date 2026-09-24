@@ -9,6 +9,7 @@
 
 require_once __DIR__ . '/affiliation_helpers.php';
 require_once __DIR__ . '/commercant.php';
+require_once __DIR__ . '/config_marche.php';
 
 if (!defined('VITRINE_CACHE_SECONDES')) {
     define('VITRINE_CACHE_SECONDES', 600);
@@ -25,10 +26,12 @@ if (!function_exists('urlImageProduit')) {
 }
 
 if (!function_exists('produitVitrineAccueil')) {
-    function produitVitrineAccueil(PDO $pdo): ?array
+    /** Produit vitrine du marche donne (chaque marche a son propre cache : jamais de prix de l'autre devise). */
+    function produitVitrineAccueil(PDO $pdo, ?string $codeMarche = null): ?array
     {
-        $cle     = 'monrevenu_vitrine_accueil';
-        $fichier = dirname(__DIR__) . '/storage/cache/vitrine_accueil.json';
+        $marche  = marcheValide($codeMarche) ?? MARCHE_DEFAUT;
+        $cle     = 'monrevenu_vitrine_accueil_' . $marche;
+        $fichier = dirname(__DIR__) . '/storage/cache/vitrine_accueil_' . $marche . '.json';
         $apcu    = function_exists('apcu_fetch') && (bool) ini_get('apc.enabled');
 
         if ($apcu) {
@@ -45,7 +48,8 @@ if (!function_exists('produitVitrineAccueil')) {
             $stmt = $pdo->prepare(
                 "SELECT vp.id, vp.nom_produit, vp.image, vp.prix_vente
                  FROM vendeur_produits vp " . CATALOGUE_JOINTURE . "
-                 WHERE " . CATALOGUE_CONDITION . " AND vp.image <> '' AND vp.image NOT LIKE 'data:%'
+                 WHERE " . CATALOGUE_CONDITION . " AND " . catalogueFiltreMarche($marche) . "
+                       AND vp.image <> '' AND vp.image NOT LIKE 'data:%'
                  ORDER BY vp.created_at DESC, vp.id DESC
                  LIMIT 1"
             );
@@ -81,7 +85,8 @@ if (!function_exists('produitVitrineAccueil')) {
                     'hauteur'    => $hauteur,
                     'octets'     => $octets,
                     'prix'       => $prix,
-                    'commission' => calculerCommission($prix),
+                    'commission' => calculerCommission($prix, $marche),
+                    'marche'     => $marche,
                 ];
             }
         }

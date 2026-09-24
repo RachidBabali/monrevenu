@@ -17,6 +17,12 @@ if (!$user_id) {
 $user_fullname = $_SESSION['user_fullname'] ?? 'Utilisateur';
 $user_initials = strtoupper(substr($user_fullname, 0, 2)) ?: 'U';
 
+// Marche de l'affilie : le catalogue ne montre que les produits de son marche
+// (les prix et commissions restent dans une seule devise, includs/config_marche.php).
+$stmtMarche = $pdo->prepare("SELECT pays_code, phone FROM users_monrevenu WHERE id = ?");
+$stmtMarche->execute([$user_id]);
+$marche_affilie = definirMarcheCourant(marcheDeCompte($stmtMarche->fetch(PDO::FETCH_ASSOC) ?: null));
+
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
@@ -33,7 +39,7 @@ try {
         $stmt = $pdo->prepare(
             "SELECT vp.id, vp.nom_produit AS nom, vp.description, vp.image, vp.prix_vente AS prix
              FROM vendeur_produits vp " . CATALOGUE_JOINTURE . "
-             WHERE " . CATALOGUE_CONDITION . " AND vp.nom_produit LIKE ?
+             WHERE " . CATALOGUE_CONDITION . " AND " . catalogueFiltreMarche($marche_affilie) . " AND vp.nom_produit LIKE ?
              ORDER BY vp.nom_produit ASC"
         );
         $stmt->execute(['%' . $recherche . '%']);
@@ -41,7 +47,7 @@ try {
         $stmt = $pdo->prepare(
             "SELECT vp.id, vp.nom_produit AS nom, vp.description, vp.image, vp.prix_vente AS prix
              FROM vendeur_produits vp " . CATALOGUE_JOINTURE . "
-             WHERE " . CATALOGUE_CONDITION . "
+             WHERE " . CATALOGUE_CONDITION . " AND " . catalogueFiltreMarche($marche_affilie) . "
              ORDER BY vp.nom_produit ASC"
         );
         $stmt->execute();
