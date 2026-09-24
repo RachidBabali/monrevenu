@@ -22,7 +22,7 @@ Définis une seule fois en variables CSS (canaux RGB) dans `:root` et `.dark`, e
 | `warning` / `-soft` | #8A5700 / #FBF1DC | #E3A33B / #3A2B10 | en attente |
 | `danger` / `-soft` | #B3261E / #FBEAE8 | #F2877E / #3D1C1A | refus, erreur, suppression |
 
-Primaire rééchantillonné sur `Logo/logo.jpg` : mot-symbole moyen #18478B, primaire retenu #123F91. Le cyan du symbole n'apparaît que dans le logo.
+Primaire #123F91 (bleu du logo). Fichiers du logo et usages : `assets/img/README.md`. Le cyan du symbole n'apparaît que dans le logo.
 Écarts avec les valeurs de départ du brief, pour tenir l'AA : `text-3` #6B7686 vers #5F6B7C (4,3 vers 5,05:1 sur `bg`), `success` #12805C vers #0F7453 (4,34 vers 5,09:1 sur son fond doux), `warning` #9A6200 vers #8A5700 (4,54 vers 5,43:1).
 Contrastes vérifiés (4,5:1 minimum) : primaire sur blanc 9,79 ; `text-3` sur `surface-2` 4,87 ; toutes les paires sombres entre 5,2 et 15,7.
 
@@ -76,7 +76,7 @@ plus défavorable pour un nouveau visiteur) :
 | CSS (`app.css`) | ~8,2 Ko |
 | JS (`app-shell.js` + `public.js`) | ~5,7 Ko |
 | Polices (2 fichiers woff2) | ~46,8 Ko |
-| Icônes/favicon (apple-touch-icon, favicon-32, logo-64) | ~26,8 Ko |
+| Icônes/favicon (jeu `assets/img/favicon/`) et symbole SVG | voir `assets/img/README.md` |
 | Photo vitrine (webp, déjà optimisée) | ~40 Ko |
 | **Total, premier chargement** | **~136 Ko** |
 

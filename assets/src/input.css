@@ -707,3 +707,6 @@
 @keyframes apparait { from { opacity: 0; transform: translateY(8px); } }
 @keyframes monte { from { transform: translateY(100%); } }
 @keyframes glisse { from { transform: translateY(12px); } }
+
+/* Logo : symbole fond clair par defaut ; version fond sombre uniquement dans le theme sombre (voir assets/img/README.md) */
+.dark img.logo-marque{content:url(/assets/img/svg/monrevenu-marque-sombre.svg)}

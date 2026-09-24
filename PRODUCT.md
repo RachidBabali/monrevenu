@@ -8,14 +8,14 @@ web
 
 ## Users
 
-- Affiliés : 18 à 35 ans, Sénégal et Mali (héritage Comores dans le code), téléphone Android d'entrée de gamme, 4G irrégulière, forfait data limité. Ils choisissent un produit dans le catalogue, copient leur lien et le partagent surtout sur WhatsApp, puis suivent leurs commissions et demandent un retrait.
+- Affiliés : 18 à 35 ans, Sénégal et Comores (deux marchés séparés, chacun dans sa monnaie), téléphone Android d'entrée de gamme, 4G irrégulière, forfait data limité. Ils choisissent un produit dans le catalogue, copient leur lien et le partagent surtout sur WhatsApp, puis suivent leurs commissions et demandent un retrait.
 - Acheteurs : ouvrent un lien d'affiliation reçu sur WhatsApp, commandent sans créer de compte (nom, téléphone, adresse), sont rappelés pour la livraison.
 - Agents revendeurs : détiennent un stock physique confié par l'admin et déclarent leurs ventes.
 - Administrateur : saisit les produits (y compris pour le compte d'un commerçant), valide les commandes et les retraits, gère utilisateurs, publicités et stocks.
 
 ## Product Purpose
 
-Plateforme d'affiliation : un affilié gagne une commission fixe sur chaque vente validée réalisée avec son lien, créditée sur son portefeuille MonRevenu, puis retirée. Réussite : l'affilié comprend en quelques secondes combien il gagne par produit, partage son lien en un geste et voit clairement l'état de ses commissions et retraits.
+Plateforme d'affiliation : un affilié gagne une commission sur chaque vente validée réalisée avec son lien, créditée sur son portefeuille MonRevenu, puis retirée. La commission est sa part (30 %) d'un supplément calculé par tranches sur le prix net du commerçant ; l'affilié ne voit jamais le détail du calcul, seulement le prix affiché (une fois son numéro vérifié) et son gain. Réussite : l'affilié comprend en quelques secondes combien il gagne par produit, partage son lien en un geste et voit clairement l'état de ses commissions et retraits.
 
 ## Positioning
 
@@ -31,15 +31,16 @@ MonRevenu est un intermédiaire : des commerçants externes fournissent les prod
 ## Capabilities and Constraints
 
 - PHP procédural sur Hostinger mutualisé, pas de Node en production, Cloudflare devant, images sur `cdn.monrevenu.xyz` (R2).
-- Commission : 500 si prix inférieur ou égal à 10 000, sinon 1 000 (`includs/affiliation_helpers.php`).
-- Retrait minimum 1 000, transfert minimum 100. Moyen de retrait présent dans le code : Mvola seulement (décision ouverte).
-- Devise affichée : FCFA (décision du brief), montants stockés non convertis.
+- Commission : part de l'affilié dans un supplément progressif par tranches, barème et répartition stockés en base et éditables dans l'administration (`includs/commission.php`, page Admin > Commissions). Chaque commande garde une copie figée du calcul. Les anciens paliers fixes (500 / 1 000) n'existent plus.
+- Marchés : Sénégal (XOF, affiché FCFA) et Comores (KMF), sans conversion (`includs/config_marche.php`). Retrait minimum 1 000 ; moyens de retrait par marché : Wave, Orange Money, Free Money (Sénégal), Mvola (Comores). Paiement des commissions manuel, validé par l'équipe.
+- Accès selon la vérification du compte : non vérifié = prix et lien d'affiliation masqués côté serveur (commission visible) et actions bloquées ; sans numéro = image et nom du produit seulement ; vérifié = accès complet.
+- Mot de passe : 8 à 64 caractères avec lettre, chiffre et caractère spécial (`includs/mot_de_passe.php`).
 - Aucun suivi de clics, aucune catégorie de produit en base.
-- Fonctions secondaires : publicités rémunérées, quiz, annuaire de prestataires, messagerie, stock revendeur. La page Formations côté affilié est abandonnée.
+- Fonctions secondaires : publicités rémunérées, quiz, annuaire de prestataires, messagerie, stock revendeur. Formations, publicités, portefeuille avancé et quiz sont en pause. La page Formations côté affilié est abandonnée.
 
 ## Brand Commitments
 
-- Nom : MonRevenu. Logo : `Logo/logo.jpg` (mot-symbole bleu profond, symbole cyan).
+- Nom : MonRevenu. Logo par défaut : symbole bleu (cercle) avec flèche noire sur fond blanc ; la version fond noir n'apparaît que dans le thème sombre. Fichiers et usages : `assets/img/README.md`. L'ancien `Logo/logo.jpg` n'est plus la référence.
 - Voix : vouvoiement, sobre, factuel, aucune promesse de gain, aucun point d'exclamation.
 
 ## Evidence on Hand

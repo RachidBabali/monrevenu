@@ -16,15 +16,16 @@ require_once __DIR__ . '/commission.php';
 
 if (!defined('SECRET_AFFILIATION')) {
     // A definir dans .env (cle AFFILIATION_SECRET) avec une valeur aleatoire longue et unique.
-    // Valeur absente ou vide : cle de repli (liens existants preserves), signalee en critique
-    // par la page Sante et journalisee une fois par jour.
+    // Valeur absente ou vide : cle ALEATOIRE propre a la requete (aucun lien ne se valide, aucun lien
+    // ne peut etre forge), signalee en critique par la page Sante et journalisee une fois par jour.
+    // Avant, une constante publiee dans le depot servait de cle de repli.
     $secretAffiliation = (string) env('AFFILIATION_SECRET', '');
     define('SECRET_AFFILIATION_REPLI', $secretAffiliation === '');
-    define('SECRET_AFFILIATION', SECRET_AFFILIATION_REPLI ? 'change-moi-avec-une-longue-cle-aleatoire-unique' : $secretAffiliation);
+    define('SECRET_AFFILIATION', SECRET_AFFILIATION_REPLI ? bin2hex(random_bytes(32)) : $secretAffiliation);
     unset($secretAffiliation);
 
     if (SECRET_AFFILIATION_REPLI) {
-        error_log('[affiliation_helpers] AFFILIATION_SECRET absent du .env : clé de repli utilisée.');
+        error_log('[affiliation_helpers] AFFILIATION_SECRET absent du .env : clé aléatoire de repli utilisée : les liens d\'affiliation ne fonctionneront pas.');
         if (isset($GLOBALS['pdo']) && $GLOBALS['pdo'] instanceof PDO) {
             require_once __DIR__ . '/audit.php';
             auditInfoLimite($GLOBALS['pdo'], 'env_affiliation_secret', 86400, ['category' => 'systeme', 'action' => 'variable_env_manquante',

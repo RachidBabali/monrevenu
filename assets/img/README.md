@@ -1,6 +1,6 @@
 # Identité visuelle : quel fichier pour quel usage
 
-Logo par défaut : symbole bleu (cercle) avec flèche noire sur fond blanc. Les quatre variantes existent en
+Logo par défaut : symbole bleu (cercle) avec flèche noire sur fond blanc. La version fond noir n'est appelée que dans les thèmes sombres (`.dark img.logo-marque` dans `assets/src/input.css`, favicon `favicon-sombre/` pour les navigateurs en thème sombre). Les quatre variantes existent en
 SVG, WebP et JPEG ; le format se choisit selon ce que le contexte de rendu sait afficher. Correspondance des
 variantes (la numérotation des fichiers n'est pas la même selon le format) :
 
@@ -14,6 +14,7 @@ variantes (la numérotation des fichiers n'est pas la même selon le format) :
 | Contexte | Fichier | Format et raison |
 |---|---|---|
 | En-têtes, barres latérales, pieds de page, pages publiques (28 à 32 px) | `svg/monrevenu-marque.svg` | **SVG** : reste net à toutes les tailles et écrans (mise à l'échelle sans perte), léger, pas de version 2x à maintenir. C'est le symbole seul (recadrage du logo `svg/monrevenulog4.svg`, sans le nom, illisible à cette taille). |
+| Symbole seul en thème sombre (remplace automatiquement le précédent via CSS) | `svg/monrevenu-marque-sombre.svg` | **SVG** : recadrage de `svg/monrevenulog2.svg`, fond noir retiré pour rester transparent sur le thème sombre. |
 | Grande zone d'affichage du logo complet, fond clair | `svg/monrevenulog4.svg` (par défaut), `svg/monrevenulog3.svg` (flèche bleue) | **SVG** : mise à l'échelle sans perte. |
 | Fond bleu ou fond sombre (bandeaux, écrans de lancement) | `svg/monrevenulog1.svg` (fond bleu), `svg/monrevenulog2.svg` (fond noir, avec le slogan) | **SVG**. |
 | Bannières et visuels raster à insérer dans des pages | `webp/monrevenulogo1..4.webp` | **WebP** sans perte avec transparence : bien plus léger que le PNG à qualité égale, pris en charge par tous les navigateurs récents. |

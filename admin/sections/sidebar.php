@@ -18,7 +18,7 @@ $onglets_admin = [
 ?>
 <aside class="barre-laterale" aria-label="Navigation de l'administration">
   <div class="flex h-14 shrink-0 items-center gap-2 border-b border-line px-4">
-    <img src="/assets/img/svg/monrevenu-marque.svg" alt="" width="28" height="28" class="h-7 w-7">
+    <img src="/assets/img/svg/monrevenu-marque.svg" alt="" width="28" height="28" class="logo-marque h-7 w-7">
     <span class="font-semibold text-primary-ink">MonRevenu</span>
     <span class="pastille pastille-neutre ml-auto">Admin</span>
   </div>

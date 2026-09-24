@@ -1,7 +1,7 @@
 <header class="sticky top-0 z-30 border-b border-line bg-surface">
   <div class="conteneur flex h-16 items-center justify-between gap-3">
     <a href="/" class="flex min-h-[44px] min-w-[44px] shrink-0 items-center gap-2" aria-label="MonRevenu, accueil">
-      <img src="/assets/img/svg/monrevenu-marque.svg" alt="" width="32" height="32" class="h-8 w-8">
+      <img src="/assets/img/svg/monrevenu-marque.svg" alt="" width="32" height="32" class="logo-marque h-8 w-8">
       <span class="hidden text-lg font-semibold text-primary-ink min-[400px]:inline">MonRevenu</span>
     </a>
     <nav class="hidden items-center gap-1 lg:flex" aria-label="Sections de la page">
