@@ -32,8 +32,12 @@ $url_canonique  = $url_canonique ?? ('https://www.monrevenu.xyz' . $chemin_coura
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="MonRevenu">
 <link rel="manifest" href="/manifest.json">
-<link rel="icon" type="image/png" sizes="32x32" href="/assets/img/favicon-32.png">
-<link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
+<?php /* Favicons : voir assets/img/README.md. Jeu clair par defaut, jeu sombre pour les navigateurs en theme sombre. */ ?>
+<link rel="icon" href="/assets/img/favicon/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/img/favicon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/img/favicon/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/img/favicon-sombre/favicon-32x32.png" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="/assets/img/favicon/apple-touch-icon.png">
 <link rel="preload" href="/assets/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/ibm-plex-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="<?= e(actif('/assets/css/app.css')) ?>">
@@ -43,7 +47,7 @@ $url_canonique  = $url_canonique ?? ('https://www.monrevenu.xyz' . $chemin_coura
 <meta property="og:title" content="<?= e($titre_page === 'MonRevenu' ? 'MonRevenu' : $titre_page . ' | MonRevenu') ?>">
 <meta property="og:description" content="<?= e($description_page) ?>">
 <meta property="og:url" content="<?= e($url_canonique) ?>">
-<meta property="og:image" content="https://www.monrevenu.xyz/assets/img/og-image.png">
+<meta property="og:image" content="https://www.monrevenu.xyz/assets/img/jpeg/og-image.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">

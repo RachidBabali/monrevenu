@@ -11,7 +11,7 @@ include __DIR__ . '/head.php';
 <header class="border-b border-line bg-surface">
   <div class="conteneur flex h-14 items-center">
     <a href="/" class="flex min-h-[44px] items-center gap-2" aria-label="MonRevenu, accueil">
-      <img src="/assets/img/logo-64.png" alt="" width="28" height="28" class="h-7 w-7">
+      <img src="/assets/img/svg/monrevenu-marque.svg" alt="" width="28" height="28" class="h-7 w-7">
       <span class="font-semibold text-primary-ink">MonRevenu</span>
     </a>
   </div>

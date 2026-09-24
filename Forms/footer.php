@@ -2,7 +2,7 @@
   <div class="conteneur flex flex-col gap-6 py-10 md:flex-row md:items-start md:justify-between">
     <div class="flex max-w-sm flex-col gap-3">
       <a href="/" class="flex min-h-[44px] items-center gap-2" aria-label="MonRevenu, accueil">
-        <img src="/assets/img/logo-64.png" alt="" width="28" height="28" class="h-7 w-7" loading="lazy">
+        <img src="/assets/img/svg/monrevenu-marque.svg" alt="" width="28" height="28" class="h-7 w-7" loading="lazy">
         <span class="font-semibold text-primary-ink">MonRevenu</span>
       </a>
       <p class="text-sm text-text-2">Plateforme d'affiliation : partagez les produits de commerçants partenaires et touchez une commission fixe sur chaque vente validée.</p>

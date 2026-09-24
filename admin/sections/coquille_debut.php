@@ -23,7 +23,7 @@ include __DIR__ . '/../../includs/head.php';
 
 <aside class="barre-laterale" aria-label="Navigation de l'administration">
   <div class="flex h-14 shrink-0 items-center gap-2 border-b border-line px-4">
-    <img src="/assets/img/logo-64.png" alt="" width="28" height="28" class="h-7 w-7">
+    <img src="/assets/img/svg/monrevenu-marque.svg" alt="" width="28" height="28" class="h-7 w-7">
     <span class="font-semibold text-primary-ink">MonRevenu</span>
     <span class="pastille pastille-neutre ml-auto">Admin</span>
   </div>
@@ -51,7 +51,7 @@ include __DIR__ . '/../../includs/head.php';
   <header class="entete-app">
     <div class="conteneur flex h-14 max-w-[1400px] items-center justify-between gap-3">
       <div class="flex min-w-0 items-center gap-2">
-        <img src="/assets/img/logo-64.png" alt="" width="28" height="28" class="h-7 w-7 lg:hidden">
+        <img src="/assets/img/svg/monrevenu-marque.svg" alt="" width="28" height="28" class="h-7 w-7 lg:hidden">
         <h1 class="truncate text-lg font-semibold"><?= e($titre_page) ?></h1>
       </div>
       <a class="btn btn-sm btn-discret" href="/admin/dashboard_admin.php"><?= ico('layout-dashboard', 'ico-16') ?><span class="hidden sm:inline">Tableau de bord</span></a>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'monrevenu-actifs-v2';
+const CACHE_NAME = 'monrevenu-actifs-v3';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -35,8 +35,8 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'MonRevenu';
   const options = {
     body: data.body || '',
-    icon: '/assets/img/icon-192.png',
-    badge: '/assets/img/badge-96.png',
+    icon: '/assets/img/favicon/android-chrome-192x192.png',
+    badge: '/assets/img/favicon/badge-96.png',
     tag: data.tag || 'monrevenu',
     renotify: data.renotify !== false,
     timestamp: data.timestamp || Date.now(),

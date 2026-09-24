@@ -83,7 +83,7 @@ function gabaritEmail(string $titre, string $contenuHtml, ?array $bouton = null)
 <body style='margin:0; padding:0; background:#F6F7F9;'>
 <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background:#F6F7F9;'><tr><td align='center' style='padding:24px 12px;'>
 <table role='presentation' width='600' cellpadding='0' cellspacing='0' style='width:100%; max-width:600px; background:#ffffff; border:1px solid #E3E6EB; border-radius:8px; font-family:Arial, Helvetica, sans-serif; color:#141A24;'>
-<tr><td style='padding:24px 32px 8px;'><img src='{$base}/assets/img/logo-64.png' width='32' height='32' alt='MonRevenu' style='display:block; border:0;'></td></tr>
+<tr><td style='padding:24px 32px 8px;'><img src='{$base}/assets/img/jpeg/monrevenu-email.jpg' width='32' height='32' alt='MonRevenu' style='display:block; border:0;'></td></tr>
 <tr><td style='padding:8px 32px 0;'><h1 style='margin:0; font-size:20px; line-height:28px; font-weight:bold; color:#141A24;'>{$titre}</h1></td></tr>
 <tr><td style='padding:12px 32px 16px; font-size:15px; line-height:24px; color:#4A5565;'>{$contenuHtml}</td></tr>
 {$btn}

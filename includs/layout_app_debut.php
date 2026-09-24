@@ -65,7 +65,7 @@ include __DIR__ . '/head.php';
 
 <aside class="barre-laterale" aria-label="Navigation principale">
   <a href="<?= e($nav_accueil) ?>" class="flex h-14 shrink-0 items-center gap-2 border-b border-line px-4">
-    <img src="/assets/img/logo-64.png" alt="" width="28" height="28" class="h-7 w-7 rounded">
+    <img src="/assets/img/svg/monrevenu-marque.svg" alt="" width="28" height="28" class="h-7 w-7 rounded">
     <span class="text-base font-semibold text-primary-ink">MonRevenu</span>
   </a>
   <nav class="flex flex-1 flex-col gap-0.5 overflow-y-auto p-3">
@@ -94,7 +94,7 @@ include __DIR__ . '/head.php';
   <header class="entete-app">
     <div class="conteneur flex h-14 items-center justify-between gap-3">
       <div class="flex min-w-0 items-center gap-2">
-        <img src="/assets/img/logo-64.png" alt="" width="28" height="28" class="h-7 w-7 rounded lg:hidden">
+        <img src="/assets/img/svg/monrevenu-marque.svg" alt="" width="28" height="28" class="h-7 w-7 rounded lg:hidden">
         <h1 class="truncate text-lg font-semibold"><?= e($titre_page) ?></h1>
       </div>
       <div class="flex shrink-0 items-center gap-1">

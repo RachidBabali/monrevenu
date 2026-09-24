@@ -248,7 +248,7 @@ if ($produit) {
     if (str_starts_with($imageProduit, 'data:')) {
         // Une data URI n'est pas utilisable comme image de partage (WhatsApp/Facebook
         // exigent une vraie URL http/https) : on retombe sur le placeholder générique.
-        $og_image = BASE_URL . '/assets/img/produit-placeholder.png';
+        $og_image = BASE_URL . '/assets/img/jpeg/og-image.jpg';
     } elseif (preg_match('#^https?://#', $imageProduit)) {
         // Déjà une URL absolue (image hébergée sur R2/cdn.monrevenu.xyz)
         $og_image = $imageProduit;
@@ -256,12 +256,12 @@ if ($produit) {
         // Ancien chemin local relatif (produit créé avant la migration vers R2)
         $og_image = BASE_URL . '/admin/' . $imageProduit;
     } else {
-        $og_image = BASE_URL . '/assets/img/produit-placeholder.png';
+        $og_image = BASE_URL . '/assets/img/jpeg/og-image.jpg';
     }
 } else {
     $og_titre       = 'Produit indisponible | MonRevenu';
     $og_description = 'Ce lien n\'est plus valide ou le produit n\'est plus disponible à la vente.';
-    $og_image       = BASE_URL . '/assets/img/produit-placeholder.png';
+    $og_image       = BASE_URL . '/assets/img/jpeg/og-image.jpg';
 }
 $og_url = BASE_URL . '/produit.php' . (!empty($_SERVER['QUERY_STRING']) ? '?' . $_SERVER['QUERY_STRING'] : '');
 $image_brute = (string) ($produit['image'] ?? '');
@@ -292,7 +292,7 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/head.php';
 <header class="border-b border-line bg-surface">
   <div class="conteneur flex h-14 items-center">
     <a href="/" class="flex min-h-[44px] items-center gap-2" aria-label="MonRevenu, accueil">
-      <img src="/assets/img/logo-64.png" alt="" width="28" height="28" class="h-7 w-7">
+      <img src="/assets/img/svg/monrevenu-marque.svg" alt="" width="28" height="28" class="h-7 w-7">
       <span class="font-semibold text-primary-ink">MonRevenu</span>
     </a>
   </div>

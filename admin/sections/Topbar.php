@@ -1,7 +1,7 @@
 <header class="entete-app">
   <div class="conteneur flex h-14 max-w-[1400px] items-center justify-between gap-3">
     <div class="flex min-w-0 items-center gap-2">
-      <img src="/assets/img/logo-64.png" alt="" width="28" height="28" class="h-7 w-7 lg:hidden">
+      <img src="/assets/img/svg/monrevenu-marque.svg" alt="" width="28" height="28" class="h-7 w-7 lg:hidden">
       <h1 class="truncate text-lg font-semibold">Administration</h1>
     </div>
     <div class="flex items-center gap-1">
