@@ -17,24 +17,31 @@ $avant = (int) ($_GET['avant'] ?? 0);
 if ($avant > 0) { $ou[] = 't.id < ?'; $p[] = $avant; }
 
 $st = $pdo->prepare(
-    "SELECT t.*, u.fullname FROM transactions_monrevenu t JOIN users_monrevenu u ON u.id = t.user_id
+    "SELECT t.*, u.fullname, u.pays_code FROM transactions_monrevenu t JOIN users_monrevenu u ON u.id = t.user_id
      WHERE " . implode(' AND ', $ou) . " ORDER BY t.id DESC LIMIT 51"
 );
 $st->execute($p);
 $mouvements = $st->fetchAll(PDO::FETCH_ASSOC);
+foreach ($mouvements as &$m) { $m['marche'] = marcheDeDevise($m['devise'] ?? null) ?? marcheDeCompte($m); }
+unset($m);
 $suite = count($mouvements) > 50;
 if ($suite) array_pop($mouvements);
 
+// Totaux jamais melanges entre devises : une ligne par type ET par devise.
 $totaux = totauxArgent($pdo, 30);
 $parType = [];
 foreach ($totaux as $t) {
-    $parType[$t['type']]['n'] = ($parType[$t['type']]['n'] ?? 0) + (int) $t['n'];
-    $parType[$t['type']]['total'] = ($parType[$t['type']]['total'] ?? 0) + (float) $t['total'];
+    $cle = $t['type'] . '|' . $t['devise'];
+    $parType[$cle]['type']   = $t['type'];
+    $parType[$cle]['marche'] = marcheDeDevise($t['devise']) ?? MARCHE_DEFAUT;
+    $parType[$cle]['n']      = ($parType[$cle]['n'] ?? 0) + (int) $t['n'];
+    $parType[$cle]['total']  = ($parType[$cle]['total'] ?? 0) + (float) $t['total'];
 }
 $rapprochement = rapprochementSoldes($pdo);
 $anomalies = count($rapprochement['ecarts']) + count($rapprochement['negatifs']) + count($rapprochement['doublons'])
     + count($rapprochement['ventes_sans_commission']) + count($rapprochement['commissions_sans_vente'])
-    + count($rapprochement['retraits_anciens']) + count($rapprochement['comptes_bloques_avec_liens']);
+    + count($rapprochement['retraits_anciens']) + count($rapprochement['comptes_bloques_avec_liens'])
+    + count($rapprochement['devises_incoherentes']);
 ?>
     <section class="flex flex-col gap-3" aria-labelledby="t-rapprochement">
       <h2 id="t-rapprochement" class="section-titre">Rapprochement des soldes</h2>
@@ -55,6 +62,7 @@ $anomalies = count($rapprochement['ecarts']) + count($rapprochement['negatifs'])
             ['commissions_sans_vente', 'Commissions sans vente validée', ['id' => 'Transaction', 'user_id' => 'Compte', 'amount' => 'Montant', 'reference' => 'Référence']],
             ['retraits_anciens', 'Retraits en attente depuis plus de 7 jours', ['id' => 'Retrait', 'user_id' => 'Compte', 'amount' => 'Montant', 'created_at' => 'Demandé le']],
             ['comptes_bloques_avec_liens', 'Comptes suspendus avec des ventes en cours', ['id' => 'Compte', 'fullname' => 'Nom', 'status' => 'Statut', 'ventes_en_cours' => 'Ventes en cours']],
+            ['devises_incoherentes', 'Devise différente du marché du propriétaire', ['table' => 'Table', 'id' => 'Ligne', 'libelle' => 'Repère', 'devise_ligne' => 'Devise de la ligne', 'proprietaire' => 'Propriétaire', 'pays_proprietaire' => 'Marché du propriétaire']],
         ];
         foreach ($sections as [$cle, $titre, $colonnes]):
             if (!$rapprochement[$cle]) continue; ?>
@@ -78,10 +86,10 @@ $anomalies = count($rapprochement['ecarts']) + count($rapprochement['negatifs'])
     <section class="flex flex-col gap-3" aria-labelledby="t-totaux">
       <h2 id="t-totaux" class="section-titre">Totaux par type (30 jours)</h2>
       <dl class="indicateurs">
-        <?php foreach ($parType as $t => $v): ?>
+        <?php foreach ($parType as $v): ?>
           <div class="indicateur">
-            <dt class="indicateur-libelle"><?= e(ucfirst($t)) ?></dt>
-            <dd class="indicateur-valeur"><?= formaterMontant($v['total']) ?></dd>
+            <dt class="indicateur-libelle"><?= e(ucfirst($v['type'])) ?> <span class="meta">(<?= e($v['marche']) ?>)</span></dt>
+            <dd class="indicateur-valeur"><?= formaterMontant($v['total'], false, true, $v['marche']) ?></dd>
             <dd class="indicateur-note"><?= (int) $v['n'] ?> mouvement(s)</dd>
           </div>
         <?php endforeach; ?>
@@ -131,8 +139,8 @@ $anomalies = count($rapprochement['ecarts']) + count($rapprochement['negatifs'])
                 <td data-label="Type"><?= e(ucfirst($m['type'])) ?><?= $m['actor_id'] ? '<br><span class="meta">par #' . (int) $m['actor_id'] . '</span>' : '' ?></td>
                 <td data-label="Référence" class="chiffres text-text-2"><?= e((string) $m['reference']) ?>
                   <?= $m['audit_id'] ? '<br><a class="lien meta" href="?onglet=journal&entite=transaction&entite_id=' . (int) $m['id'] . '">journal</a>' : '' ?></td>
-                <td data-label="Montant" class="col-montant"><?= montant($m['amount']) ?></td>
-                <td data-label="Solde après" class="col-montant chiffres"><?= $m['balance_after'] !== null ? e(formaterMontant($m['balance_after'])) : '<span class="text-text-3">inconnu</span>' ?></td>
+                <td data-label="Montant" class="col-montant"><?= montant($m['amount'], false, '', $m['marche']) ?></td>
+                <td data-label="Solde après" class="col-montant chiffres"><?= $m['balance_after'] !== null ? e(formaterMontant($m['balance_after'], false, true, $m['marche'])) : '<span class="text-text-3">inconnu</span>' ?></td>
                 <td data-label="Statut"><?= badgeStatut($m['status'], 'transaction') ?></td>
               </tr>
             <?php endforeach; ?>

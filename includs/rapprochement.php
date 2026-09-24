@@ -12,14 +12,16 @@
  */
 
 if (!function_exists('rapprochementSoldes')) {
+    require_once __DIR__ . '/config_marche.php';
     function centimes($valeur): int { return (int) round(((float) $valeur) * 100); }
     function enFrancs(int $centimes): string { return number_format($centimes / 100, 2, '.', ''); }
 
-    /** @return array{ecarts: array, negatifs: array, doublons: array, ventes_sans_commission: array, commissions_sans_vente: array, retraits_anciens: array, comptes_bloques_avec_liens: array, total_comptes: int} */
+    /** @return array{ecarts: array, negatifs: array, doublons: array, ventes_sans_commission: array, commissions_sans_vente: array, retraits_anciens: array, comptes_bloques_avec_liens: array, devises_incoherentes: array, total_comptes: int} */
     function rapprochementSoldes(PDO $pdo, int $limite = 500): array
     {
         $resultat = ['ecarts' => [], 'negatifs' => [], 'doublons' => [], 'ventes_sans_commission' => [],
-            'commissions_sans_vente' => [], 'retraits_anciens' => [], 'comptes_bloques_avec_liens' => [], 'total_comptes' => 0];
+            'commissions_sans_vente' => [], 'retraits_anciens' => [], 'comptes_bloques_avec_liens' => [],
+            'devises_incoherentes' => [], 'total_comptes' => 0];
 
         $comptes = $pdo->query(
             "SELECT u.id, u.fullname, u.balance, u.role, u.is_active, u.status
@@ -117,16 +119,43 @@ if (!function_exists('rapprochementSoldes')) {
              HAVING ventes_en_cours > 0 LIMIT 50"
         )->fetchAll(PDO::FETCH_ASSOC);
 
+        // Devise d'une ligne differente du marche du proprietaire (jamais pour un pays_code
+        // inconnu des deux marches : rien a comparer dans ce cas, voir marcheDeCompte).
+        $devise_km = deviseIso('KM');
+        $incoherences = [];
+        foreach ([
+            'vendeur_produits'       => ['vendeur_id', 'nom_produit'],
+            'vendeur_ventes'         => ['vendeur_id', 'nom_client'],
+            'transactions_monrevenu' => ['user_id', 'reference'],
+            'withdrawals'            => ['user_id', 'method'],
+        ] as $table => [$colonneProprietaire, $colonneLibelle]) {
+            $lignes = $pdo->query(
+                "SELECT l.id, l.devise, l.{$colonneLibelle} AS libelle, u.id AS proprietaire_id, u.fullname, u.pays_code
+                 FROM {$table} l JOIN users_monrevenu u ON u.id = l.{$colonneProprietaire}
+                 WHERE l.devise IS NOT NULL AND u.pays_code IN ('SN', 'KM')
+                   AND l.devise <> IF(u.pays_code = 'KM', '{$devise_km}', '" . deviseIso(MARCHE_DEFAUT) . "')
+                 LIMIT 50"
+            )->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($lignes as $l) {
+                $incoherences[] = ['table' => $table, 'id' => (int) $l['id'], 'libelle' => (string) $l['libelle'],
+                    'devise_ligne' => $l['devise'], 'proprietaire' => $l['fullname'], 'pays_proprietaire' => $l['pays_code']];
+            }
+        }
+        $resultat['devises_incoherentes'] = $incoherences;
+
         return $resultat;
     }
 
-    /** Totaux par type et par jour (page Argent). */
+    /** Totaux par type, par jour et par devise (page Argent) : jamais de somme XOF+KMF. */
     function totauxArgent(PDO $pdo, int $jours = 30): array
     {
+        require_once __DIR__ . '/config_marche.php';
         $st = $pdo->prepare(
-            "SELECT DATE(created_at) AS jour, type, COUNT(*) AS n, SUM(amount) AS total
-             FROM transactions_monrevenu WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
-             GROUP BY jour, type ORDER BY jour DESC, type"
+            "SELECT DATE(t.created_at) AS jour, t.type, " . deviseEffectiveSql('t', 'u') . " AS devise,
+                    COUNT(*) AS n, SUM(t.amount) AS total
+             FROM transactions_monrevenu t JOIN users_monrevenu u ON u.id = t.user_id
+             WHERE t.created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+             GROUP BY jour, t.type, devise ORDER BY jour DESC, t.type, devise"
         );
         $st->execute([$jours]);
         return $st->fetchAll(PDO::FETCH_ASSOC);
