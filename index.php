@@ -2,7 +2,18 @@
 session_start();
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/geoip.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/config_marche.php';
 enregistrerVisitePays($pdo, $_SESSION['user_id'] ?? null);
+
+// Selecteur de marche du visiteur (SN/KM), memorise par cookie un an : voir G5.
+// Redirection sans le parametre pour eviter de le garder dans l'URL partagee.
+$marche_demandee = marcheValide($_GET['marche'] ?? null);
+if ($marche_demandee !== null) {
+    setcookie('marche', $marche_demandee, ['expires' => time() + 31536000, 'path' => '/', 'samesite' => 'Lax']);
+    $sansParametre = preg_replace('/[?&]marche=[^&]*/', '', $_SERVER['REQUEST_URI']);
+    header('Location: ' . ($sansParametre !== '' ? $sansParametre : '/'));
+    exit();
+}
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/ui.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/affiliation_helpers.php';
@@ -15,7 +26,7 @@ $seuil_commission = $config_marche['commission']['seuil'];
 $commission_basse = $config_marche['commission']['basse'];
 $commission_haute = $config_marche['commission']['haute'];
 $minimum_retrait  = $config_marche['retrait_minimum'];
-$vitrine          = produitVitrineAccueil($pdo);
+$vitrine          = produitVitrineAccueil($pdo, $marche_visiteur);
 $numero_whatsapp  = env('WHATSAPP_BUSINESS_DISPLAY_NUMBER', '+221 77 876 48 19');
 $numero_wa_me     = preg_replace('/\D/', '', $numero_whatsapp);
 

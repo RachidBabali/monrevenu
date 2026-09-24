@@ -21,7 +21,7 @@
       <p class="max-w-lecture text-text-2">Votre solde se retire depuis le portefeuille de votre espace, sur un compte mobile money.</p>
       <dl class="recap bg-surface">
         <div class="recap-ligne"><dt>Montant minimum</dt><dd class="montant"><?= formaterMontant($minimum_retrait) ?></dd></div>
-        <div class="recap-ligne"><dt>Moyen de retrait proposé</dt><dd>Mvola</dd></div>
+        <div class="recap-ligne"><dt>Moyen<?= count(moyensRetrait($marche_visiteur)) > 1 ? 's de retrait proposés' : ' de retrait proposé' ?></dt><dd><?= e(implode(', ', moyensRetrait($marche_visiteur))) ?></dd></div>
         <div class="recap-ligne"><dt>Traitement</dt><dd>Validation par l'équipe MonRevenu</dd></div>
         <div class="recap-ligne"><dt>Demande refusée</dt><dd>Montant recrédité sur le solde</dd></div>
       </dl>
