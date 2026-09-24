@@ -10,9 +10,18 @@
 -- Aucune donnee existante n'est modifiee ici : voir la note sur l'hypothese FCFA dans
 -- dev/lot3/DEPLOIEMENT_G.md, a appliquer separement et seulement si le controle est vert.
 --
--- Idempotente (ADD COLUMN IF NOT EXISTS). Retour arriere : 010_devise_par_ligne_retour.sql
+-- Idempotente (ADD COLUMN IF NOT EXISTS) : peut etre relancee sans erreur si la colonne existe deja.
+-- A EXECUTER SEUL, dans phpMyAdmin (onglet SQL). Ne PAS lancer avec _retour.sql (il supprime la colonne).
+-- Controle en fin de fichier : il lit information_schema, jamais la colonne elle-meme.
+-- Retour arriere : 010_devise_par_ligne_retour.sql
 
 ALTER TABLE vendeur_produits       ADD COLUMN IF NOT EXISTS devise CHAR(3) DEFAULT NULL COMMENT 'XOF ou KMF, renseignee par l application';
 ALTER TABLE vendeur_ventes         ADD COLUMN IF NOT EXISTS devise CHAR(3) DEFAULT NULL COMMENT 'XOF ou KMF, renseignee par l application';
 ALTER TABLE transactions_monrevenu ADD COLUMN IF NOT EXISTS devise CHAR(3) DEFAULT NULL COMMENT 'XOF ou KMF, renseignee par l application';
 ALTER TABLE withdrawals            ADD COLUMN IF NOT EXISTS devise CHAR(3) DEFAULT NULL COMMENT 'XOF ou KMF, renseignee par l application';
+
+-- Controle : les quatre lignes doivent afficher 'presente'.
+SELECT t.nom_table, IF(c.column_name IS NULL, 'ABSENTE', 'presente') AS colonne_devise
+FROM (SELECT 'vendeur_produits' AS nom_table UNION ALL SELECT 'vendeur_ventes' AS nom_table UNION ALL SELECT 'transactions_monrevenu' AS nom_table UNION ALL SELECT 'withdrawals' AS nom_table) t
+LEFT JOIN information_schema.columns c
+  ON c.table_schema = DATABASE() AND c.table_name = t.nom_table AND c.column_name = 'devise';
