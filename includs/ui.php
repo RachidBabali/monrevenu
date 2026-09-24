@@ -170,20 +170,9 @@ if (!function_exists('actif')) {
 }
 
 if (!function_exists('numeroWhatsapp')) {
-    /** Numero au format wa.me (chiffres avec indicatif) : Senegal 221, Comores 269. */
+    /** Numero au format wa.me (chiffres avec indicatif), quel que soit le marche. */
     function numeroWhatsapp(?string $tel): string
     {
-        $n = preg_replace('/\D/', '', (string) $tel);
-        $n = preg_replace('/^00/', '', $n);
-        if (preg_match('/^(221|269)\d{7,9}$/', $n)) {
-            return $n;
-        }
-        if (preg_match('/^7\d{8}$/', $n)) {
-            return '221' . $n;
-        }
-        if (preg_match('/^[34]\d{6}$/', $n)) {
-            return '269' . $n;
-        }
-        return $n;
+        return normaliserNumero((string) $tel) ?? preg_replace('/\D/', '', (string) $tel);
     }
 }

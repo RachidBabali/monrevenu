@@ -285,11 +285,8 @@ $user_pays_nom  = $user['pays_nom'] ?? null;
 $user_phone    = $user['phone'] ?? '';
 $est_compte_google = !empty($user['google_id']);
 
-// Affichage lisible du numéro comorien : +269 XX XX XXX
-$user_phone_affiche = $user_phone;
-if (preg_match('/^269(\d{7})$/', $user_phone, $m)) {
-    $user_phone_affiche = '+269 ' . $m[1];
-}
+// Affichage lisible du numero, quel que soit le marche (includs/config_marche.php).
+$user_phone_affiche = afficherNumero($user_phone);
 
 // Initiales robustes : prend la première lettre de chaque mot du nom (max 2)
 $mots = preg_split('/\s+/', trim($user_fullname), -1, PREG_SPLIT_NO_EMPTY);
@@ -299,9 +296,6 @@ if (count($mots) >= 2) {
     $user_initials = mb_strtoupper(mb_substr($mots[0], 0, 2));
 } else {
     $user_initials = 'U';
-}
-if (preg_match('/^221(\d{2})(\d{3})(\d{2})(\d{2})$/', $user_phone, $m)) {
-    $user_phone_affiche = '+221 ' . $m[1] . ' ' . $m[2] . ' ' . $m[3] . ' ' . $m[4];
 }
 $titre_page   = 'Compte';
 $scripts_page = ['/assets/js/profil.js'];
