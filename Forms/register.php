@@ -1,4 +1,5 @@
 <?php
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/mot_de_passe.php'; // MOT_DE_PASSE_AIDE
 /**
  * register.php, Formulaire d'inscription sécurisé (en modale)
  * À placer dans : Forms/register.php
