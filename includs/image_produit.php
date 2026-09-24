@@ -21,29 +21,27 @@ const IMAGE_PRODUIT_SOURCE_MAX = 8000;
 const IMAGE_PRODUIT_PIXELS_MAX = 40000000;
 
 /**
- * @param array $fichier entree de $_FILES
- * @return array{ok: bool, url?: string, cle?: string, octets?: int, largeur?: int, hauteur?: int, erreur?: string}
+ * Controle et re-encode un fichier image deja sur disque (JPEG/PNG/WebP, 200 a 8000 px, 40 Mpx
+ * au plus) en WebP (JPEG si WebP indisponible), 1200 px au plus sur le grand cote, metadonnees
+ * retirees. Commun a traiterImageProduit() (upload) et tools/generer-miniatures-webp.php
+ * (images deja en ligne).
+ *
+ * @return array{ok: bool, tmp?: string, ext?: string, octets?: int, largeur?: int, hauteur?: int, erreur?: string}
  */
-function traiterImageProduit(array $fichier, int $commercantId): array
+function reencoderImageEnWebp(string $cheminSource): array
 {
     $err = static fn(string $m) => ['ok' => false, 'erreur' => $m];
 
-    if (($fichier['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_INI_SIZE || ($fichier['error'] ?? 0) === UPLOAD_ERR_FORM_SIZE) {
-        return $err("L'image dépasse 2 Mo. Réduisez-la puis envoyez-la de nouveau.");
-    }
-    if (($fichier['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file_ou_test($fichier['tmp_name'] ?? '')) {
-        return $err("L'image n'a pas été reçue. Réessayez.");
-    }
-    if ((int) $fichier['size'] > IMAGE_PRODUIT_MAX_OCTETS || filesize($fichier['tmp_name']) > IMAGE_PRODUIT_MAX_OCTETS) {
+    if (!is_file($cheminSource) || filesize($cheminSource) > IMAGE_PRODUIT_MAX_OCTETS) {
         return $err("L'image dépasse 2 Mo. Réduisez-la puis envoyez-la de nouveau.");
     }
 
-    $mime = (new finfo(FILEINFO_MIME_TYPE))->file($fichier['tmp_name']);
+    $mime = (new finfo(FILEINFO_MIME_TYPE))->file($cheminSource);
     $types = ['image/jpeg' => IMAGETYPE_JPEG, 'image/png' => IMAGETYPE_PNG, 'image/webp' => IMAGETYPE_WEBP];
     if (!isset($types[$mime])) {
         return $err('Format non accepté. Envoyez une photo JPG, PNG ou WebP.');
     }
-    $info = @getimagesize($fichier['tmp_name']);
+    $info = @getimagesize($cheminSource);
     if (!$info || $info[2] !== $types[$mime]) {
         return $err('Ce fichier n\'est pas une image valide. Envoyez une photo JPG, PNG ou WebP.');
     }
@@ -56,9 +54,9 @@ function traiterImageProduit(array $fichier, int $commercantId): array
     }
 
     $source = match ($mime) {
-        'image/jpeg' => @imagecreatefromjpeg($fichier['tmp_name']),
-        'image/png'  => @imagecreatefrompng($fichier['tmp_name']),
-        'image/webp' => @imagecreatefromwebp($fichier['tmp_name']),
+        'image/jpeg' => @imagecreatefromjpeg($cheminSource),
+        'image/png'  => @imagecreatefrompng($cheminSource),
+        'image/webp' => @imagecreatefromwebp($cheminSource),
     };
     if (!$source) {
         return $err('Ce fichier n\'est pas une image valide. Envoyez une photo JPG, PNG ou WebP.');
@@ -66,7 +64,7 @@ function traiterImageProduit(array $fichier, int $commercantId): array
 
     // Orientation des photos de telephone : appliquee avant de perdre les metadonnees
     if ($mime === 'image/jpeg' && function_exists('exif_read_data')) {
-        $exif = @exif_read_data($fichier['tmp_name']);
+        $exif = @exif_read_data($cheminSource);
         $rotation = [3 => 180, 6 => -90, 8 => 90][(int) ($exif['Orientation'] ?? 1)] ?? 0;
         if ($rotation) { $tourne = imagerotate($source, $rotation, 0); if ($tourne) { imagedestroy($source); $source = $tourne; } }
     }
@@ -87,9 +85,34 @@ function traiterImageProduit(array $fichier, int $commercantId): array
     imagedestroy($cible);
     if (!$ok) { @unlink($tmp); return $err('L\'image n\'a pas pu être traitée. Essayez une autre photo.'); }
 
-    $cle = 'merchants/' . $commercantId . '/' . bin2hex(random_bytes(12)) . '.' . $ext;
-    $octets = filesize($tmp);
-    $type = $webp ? 'image/webp' : 'image/jpeg';
+    return ['ok' => true, 'tmp' => $tmp, 'ext' => $ext, 'octets' => filesize($tmp), 'largeur' => $nl, 'hauteur' => $nh];
+}
+
+/**
+ * @param array $fichier entree de $_FILES
+ * @param string $prefixeCle Dossier R2 (merchants pour un commercant, produits-admin ou
+ *   produits-stock pour un produit cree par l'administration : voir admin/dashboard_admin.php).
+ * @return array{ok: bool, url?: string, cle?: string, octets?: int, largeur?: int, hauteur?: int, erreur?: string}
+ */
+function traiterImageProduit(array $fichier, int $commercantId, string $prefixeCle = 'merchants'): array
+{
+    $err = static fn(string $m) => ['ok' => false, 'erreur' => $m];
+
+    if (($fichier['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_INI_SIZE || ($fichier['error'] ?? 0) === UPLOAD_ERR_FORM_SIZE) {
+        return $err("L'image dépasse 2 Mo. Réduisez-la puis envoyez-la de nouveau.");
+    }
+    if (($fichier['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file_ou_test($fichier['tmp_name'] ?? '')) {
+        return $err("L'image n'a pas été reçue. Réessayez.");
+    }
+
+    $reencodage = reencoderImageEnWebp($fichier['tmp_name']);
+    if (!$reencodage['ok']) {
+        return $err($reencodage['erreur']);
+    }
+    ['tmp' => $tmp, 'ext' => $ext, 'octets' => $octets, 'largeur' => $nl, 'hauteur' => $nh] = $reencodage;
+
+    $cle = $prefixeCle . '/' . $commercantId . '/' . bin2hex(random_bytes(12)) . '.' . $ext;
+    $type = $ext === 'webp' ? 'image/webp' : 'image/jpeg';
 
     $r2Configure = env('R2_ACCOUNT_ID') && env('R2_ACCESS_KEY_ID') && env('R2_SECRET_ACCESS_KEY') && env('R2_BUCKET_NAME') && env('R2_PUBLIC_URL');
     if (!$r2Configure && env('APP_ENV') === 'local') {

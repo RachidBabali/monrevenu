@@ -8,6 +8,7 @@ require_once '../basse_de_donner/monrevenu_bd.php';
 require_once '../includs/env_loader.php';
 require_once '../includs/r2_uploader.php';
 require_once '../includs/image_helper.php';
+require_once '../includs/image_produit.php';
 require_once 'auth_middleware.php';
 require_once '../includs/ui.php';
 require_once '../includs/audit.php';
@@ -69,48 +70,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $uploadOk = true;
 
         if (isset($_FILES['image_produit']) && $_FILES['image_produit']['error'] !== UPLOAD_ERR_NO_FILE) {
+            // Meme controle et re-encodage WebP que cote commercant (includs/image_produit.php) :
+            // dimensions, format, metadonnees retirees, 1200 px au plus sur le grand cote.
+            $resultat = traiterImageProduit($_FILES['image_produit'], (int) $admin['id'], 'produits');
+            auditInfo($pdo, ['category' => $resultat['ok'] ? 'produit' : 'systeme', 'action' => $resultat['ok'] ? 'r2_envoi' : 'r2_envoi_echec',
+                'result' => $resultat['ok'] ? 'ok' : 'echec', 'entity_type' => 'r2_objet', 'entity_id' => $resultat['cle'] ?? null,
+                'meta' => ['taille' => (int) $_FILES['image_produit']['size']]]);
 
-            $fichier = $_FILES['image_produit'];
-
-            if ($fichier['error'] !== UPLOAD_ERR_OK) {
+            if ($resultat['ok']) {
+                $image = $resultat['url'];
+            } else {
                 $uploadOk = false;
-                $error = "Erreur lors de l'envoi du fichier (code " . $fichier['error'] . ").";
-            }
-
-            if ($uploadOk && $fichier['size'] > 2 * 1024 * 1024) {
-                $uploadOk = false;
-                $error = "L'image dépasse la taille maximale autorisée (2 Mo).";
-            }
-
-            $typesAutorises = [
-                'image/jpeg' => 'jpg',
-                'image/png'  => 'png',
-                'image/webp' => 'webp',
-            ];
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $mimeReel = finfo_file($finfo, $fichier['tmp_name']);
-            finfo_close($finfo);
-
-            if ($uploadOk && !array_key_exists($mimeReel, $typesAutorises)) {
-                $uploadOk = false;
-                $error = "Format de fichier non autorisé. Utilisez JPG, PNG ou WEBP.";
-            }
-
-            if ($uploadOk) {
-                $extension = $typesAutorises[$mimeReel];
-                $nomFichier = 'produit_' . uniqid() . '_' . time() . '.' . $extension;
-
-                $resultat = uploaderVersR2($fichier['tmp_name'], 'produits/' . $nomFichier, $mimeReel);
-                auditInfo($pdo, ['category' => $resultat['ok'] ? 'produit' : 'systeme', 'action' => $resultat['ok'] ? 'r2_envoi' : 'r2_envoi_echec',
-                    'result' => $resultat['ok'] ? 'ok' : 'echec', 'entity_type' => 'r2_objet', 'entity_id' => 'produits/' . $nomFichier,
-                    'meta' => ['taille' => (int) $fichier['size'], 'type' => $mimeReel]]);
-
-                if ($resultat['ok']) {
-                    $image = $resultat['url'];
-                } else {
-                    $uploadOk = false;
-                    $error = "" . $resultat['error'];
-                }
+                $error = $resultat['erreur'];
             }
         }
 
@@ -414,50 +385,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $uploadOkStock = true;
 
         if (isset($_FILES['image_produit_stock']) && $_FILES['image_produit_stock']['error'] !== UPLOAD_ERR_NO_FILE) {
-            $fichierStock = $_FILES['image_produit_stock'];
+            // Meme controle et re-encodage WebP que les autres images de produit.
+            $resultat = traiterImageProduit($_FILES['image_produit_stock'], (int) $admin['id'], 'produits-stock');
+            auditInfo($pdo, ['category' => $resultat['ok'] ? 'produit' : 'systeme', 'action' => $resultat['ok'] ? 'r2_envoi' : 'r2_envoi_echec',
+                'result' => $resultat['ok'] ? 'ok' : 'echec', 'entity_type' => 'r2_objet', 'entity_id' => $resultat['cle'] ?? null,
+                'meta' => ['taille' => (int) $_FILES['image_produit_stock']['size']]]);
 
-            if ($fichierStock['error'] !== UPLOAD_ERR_OK) {
+            if ($resultat['ok']) {
+                $image_produit_stock = $resultat['url'];
+            } else {
                 $uploadOkStock = false;
-                $error = "Erreur lors de l'envoi du fichier (code " . $fichierStock['error'] . ").";
-            }
-
-            if ($uploadOkStock && $fichierStock['size'] > 2 * 1024 * 1024) {
-                $uploadOkStock = false;
-                $error = "L'image dépasse la taille maximale autorisée (2 Mo).";
-            }
-
-            $typesAutorisesStock = [
-                'image/jpeg' => 'jpg',
-                'image/png'  => 'png',
-                'image/webp' => 'webp',
-            ];
-
-            if ($uploadOkStock) {
-                $finfo = finfo_open(FILEINFO_MIME_TYPE);
-                $mimeStock = finfo_file($finfo, $fichierStock['tmp_name']);
-                finfo_close($finfo);
-
-                if (!array_key_exists($mimeStock, $typesAutorisesStock)) {
-                    $uploadOkStock = false;
-                    $error = "Format de fichier non autorisé. Utilisez JPG, PNG ou WEBP.";
-                }
-            }
-
-            if ($uploadOkStock) {
-                $extensionStock = $typesAutorisesStock[$mimeStock];
-                $nomFichierStock = 'produitstock_' . uniqid() . '_' . time() . '.' . $extensionStock;
-
-                $resultat = uploaderVersR2($fichierStock['tmp_name'], 'produits-stock/' . $nomFichierStock, $mimeStock);
-                auditInfo($pdo, ['category' => $resultat['ok'] ? 'produit' : 'systeme', 'action' => $resultat['ok'] ? 'r2_envoi' : 'r2_envoi_echec',
-                    'result' => $resultat['ok'] ? 'ok' : 'echec', 'entity_type' => 'r2_objet', 'entity_id' => 'produits-stock/' . $nomFichierStock,
-                    'meta' => ['taille' => (int) $fichierStock['size'], 'type' => $mimeStock]]);
-
-                if ($resultat['ok']) {
-                    $image_produit_stock = $resultat['url'];
-                } else {
-                    $uploadOkStock = false;
-                    $error = "" . $resultat['error'];
-                }
+                $error = $resultat['erreur'];
             }
         }
 
