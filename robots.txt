@@ -1,0 +1,24 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /commercant/
+Disallow: /services/
+Disallow: /page/
+Disallow: /includs/
+Disallow: /basse_de_donner/
+Disallow: /migrations/
+Disallow: /tools/
+Disallow: /dev/
+Disallow: /storage/
+Disallow: /Forms/
+Disallow: /sections/
+Disallow: /produit.php
+Disallow: /produit/
+Disallow: /dashboard.php
+Disallow: /verification.php
+Disallow: /completer-telephone.php
+Disallow: /mot_de_passe_oublie.php
+Disallow: /reinitialiser_mot_de_passe.php
+Disallow: /logout.php
+Disallow: /webhook_whatsapp.php
+
+Sitemap: https://www.monrevenu.xyz/sitemap.xml

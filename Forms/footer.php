@@ -14,7 +14,7 @@
       <a class="cible text-text-2 hover:text-primary-ink" href="/confidentialite.php">Confidentialité</a>
       <a class="cible text-text-2 hover:text-primary-ink" href="#questions">Questions</a>
       <a class="cible text-text-2 hover:text-primary-ink" href="/suppression-donnees.php">Suppression des données</a>
-      <a class="cible text-text-2 hover:text-primary-ink" href="mailto:contact@monrevenu.xyz">Contact</a>
+      <a class="cible text-text-2 hover:text-primary-ink" href="/contact.php">Contact</a>
     </nav>
   </div>
   <div class="border-t border-line">

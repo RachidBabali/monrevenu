@@ -33,6 +33,8 @@ $numero_wa_me     = preg_replace('/\D/', '', $numero_whatsapp);
 $titre_page       = 'MonRevenu';
 $description_page = "Gagnez une commission fixe sur chaque vente réalisée avec votre lien d'affiliation MonRevenu. Partage par WhatsApp, retrait sur votre compte mobile money.";
 $page_publique    = true;
+$page_indexable   = true;
+$url_canonique    = 'https://www.monrevenu.xyz/';
 $head_supp        = '<meta name="google-signin-client_id" content="' . e(env('GOOGLE_CLIENT_ID', '')) . '">'
     . '<script src="https://accounts.google.com/gsi/client" async defer></script>';
 include $_SERVER['DOCUMENT_ROOT'] . '/includs/head.php';

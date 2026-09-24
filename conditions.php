@@ -8,6 +8,7 @@
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/ui.php';
 $titre_page    = "Conditions générales d'utilisation";
 $page_publique = true;
+$page_indexable = true;
 include $_SERVER['DOCUMENT_ROOT'] . '/includs/head.php';
 ?>
 <body class="bg-surface">
@@ -76,6 +77,7 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/head.php';
     <a class="cible hover:text-primary-ink" href="/conditions.php">Conditions générales</a>
     <a class="cible hover:text-primary-ink" href="/confidentialite.php">Confidentialité</a>
     <a class="cible hover:text-primary-ink" href="/suppression-donnees.php">Suppression des données</a>
+    <a class="cible hover:text-primary-ink" href="/contact.php">Contact</a>
     <a class="cible hover:text-primary-ink" href="mailto:contact@monrevenu.xyz">contact@monrevenu.xyz</a>
   </div>
 </footer>
