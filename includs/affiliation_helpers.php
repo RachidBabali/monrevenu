@@ -42,7 +42,14 @@ if (!function_exists('calculerCommission')) {
     function calculerCommission(float $prix, ?string $marche = null): int
     {
         $code = marcheValide($marche) ?? marche($marche)['code'];
-        return commissionDepuisPrixFinal($prix, commissionConfigMarche($code))['gain_affilie'];
+        try {
+            return commissionDepuisPrixFinal($prix, commissionConfigMarche($code))['gain_affilie'];
+        } catch (Throwable $e) {
+            // Bareme absent ou base indisponible : une page publique ne doit jamais tomber en erreur 500 pour un
+            // montant d'exemple. Le probleme reste visible dans le journal d'erreurs.
+            error_log('[calculerCommission] ' . get_class($e) . ' : ' . $e->getMessage());
+            return 0;
+        }
     }
 }
 

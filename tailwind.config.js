@@ -5,7 +5,8 @@ module.exports = {
   darkMode: 'class',
   content: [
     './*.php',
-    './{includs,sections,services,page,admin,joueur,Forms}/**/*.php',
+    './{includs,sections,services,page,admin,commercant,joueur,Forms}/**/*.php',
+    './commercant/*.php',
     './assets/js/**/*.js',
     './js/**/*.js',
     './dev/apercu-systeme.html',
