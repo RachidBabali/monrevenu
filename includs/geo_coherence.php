@@ -44,6 +44,11 @@ if (!function_exists('geoCoherenceEnregistrer')) {
     function geoCoherenceEnregistrer(PDO $pdo, int $userId, ?string $telephone): void
     {
         try {
+            if ($telephone === null) { // numero non fourni par l'appelant : lu en base
+                $st = $pdo->prepare("SELECT phone FROM users_monrevenu WHERE id = ?");
+                $st->execute([$userId]);
+                $telephone = (string) $st->fetchColumn();
+            }
             if (trim((string) $telephone) === '') return; // compte sans numero : rien a comparer
             $paysIp = paysIpCloudflare(); // lu a chaque evaluation (pas le cache de session d'avant connexion)
             [$score, $raison] = scoreCoherencePays((string) $telephone, $paysIp, fuseauNavigateur());

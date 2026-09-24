@@ -155,6 +155,10 @@ try {
     }
 
     //  7. Ouvrir la session 
+    // Score de coherence du pays (compte Google deja pourvu d'un numero ; sans numero : ignore)
+    require_once __DIR__ . '/geo_coherence.php';
+    geoCoherenceEnregistrer($pdo, (int) $user_id, null);
+
     session_regenerate_id(true);
 
     $_SESSION['user_id']       = $user_id;

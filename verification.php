@@ -461,6 +461,10 @@ if (
 
                 session_regenerate_id(true);
 
+                // Score de coherence du pays (signal pour le support, ne bloque rien)
+                require_once __DIR__ . '/includs/geo_coherence.php';
+                geoCoherenceEnregistrer($pdo, (int) $userVerif['id'], null);
+
                 $_SESSION['user_id'] =
                     $userVerif['id'];
 

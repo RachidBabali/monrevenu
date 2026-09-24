@@ -472,6 +472,8 @@ try {
 
 
     $nouvel_utilisateur_id = (int) $pdo->lastInsertId();
+    require_once __DIR__ . '/geo_coherence.php';
+    geoCoherenceEnregistrer($pdo, $nouvel_utilisateur_id, $phone_normalise ?? null);
 
     if ($type_compte === 'commercant') {
         $pdo->prepare("INSERT INTO commercants_profils (user_id, nom_boutique, ville) VALUES (?, ?, ?)")
