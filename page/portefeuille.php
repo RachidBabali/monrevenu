@@ -9,11 +9,14 @@ exigerConnexion();
 $user_id       = $_SESSION['user_id'];
 $user_fullname = $_SESSION['user_fullname'] ?? 'Utilisateur';
 
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/config_marche.php';
+
 // Meme lecture que dashboard.php (variables requises par sections/wallet.php)
-$stmt = $pdo->prepare("SELECT balance, role, phone, phone_verified FROM users_monrevenu WHERE id = ?");
+$stmt = $pdo->prepare("SELECT balance, role, phone, phone_verified, pays_code FROM users_monrevenu WHERE id = ?");
 $stmt->execute([$user_id]);
-$sender  = $stmt->fetch();
-$balance = $sender['balance'] ?? 0;
+$sender         = $stmt->fetch();
+$balance        = $sender['balance'] ?? 0;
+$marche_membre  = marcheDeCompte($sender ?: null);
 
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -67,7 +70,7 @@ echo $bloc_portefeuille;
                 <td data-label="Moyen"><?= e($r['method'] ?: 'Non précisé') ?></td>
                 <td data-label="Référence" class="font-mono text-text-2">RETRAIT-<?= (int) $r['id'] ?></td>
                 <td data-label="Statut"><?= badgeStatut($r['status'], 'retrait') ?></td>
-                <td data-label="Montant" class="col-montant"><?= montant($r['amount']) ?></td>
+                <td data-label="Montant" class="col-montant"><?= montant($r['amount'], false, '', $marche_membre) ?></td>
               </tr>
             <?php endforeach; ?>
             </tbody>
