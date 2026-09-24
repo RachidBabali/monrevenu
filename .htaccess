@@ -16,6 +16,14 @@ RewriteRule ^produit/([a-z0-9\-]+)/([A-Za-z0-9_\-]+)/?$ produit.php?slug=$1&toke
     # Protection MIME sniffing
     Header always set X-Content-Type-Options "nosniff"
 
+    # N'envoie l'URL complete du referrer qu'aux origines identiques ; une origine seule (sans
+    # chemin ni jeton) pour un lien externe (I5, signale par la page Sante).
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # Desactive les API navigateur non utilisees par le site (aucun appareil photo, micro,
+    # geolocalisation ni paiement demande cote client).
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+
     # Masquage signature PHP
     Header unset X-Powered-By
 </IfModule>
