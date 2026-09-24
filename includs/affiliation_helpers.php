@@ -12,6 +12,7 @@
 
 require_once __DIR__ . '/env_loader.php';
 require_once __DIR__ . '/config_marche.php';
+require_once __DIR__ . '/commission.php';
 
 if (!defined('SECRET_AFFILIATION')) {
     // A definir dans .env (cle AFFILIATION_SECRET) avec une valeur aleatoire longue et unique.
@@ -33,10 +34,14 @@ if (!defined('SECRET_AFFILIATION')) {
 }
 
 if (!function_exists('calculerCommission')) {
-    /** Commission de l'affilie. La regle appartient au marche (includs/config_marche.php). */
+    /**
+     * Gain de l'affilie pour un produit vendu au prix AFFICHE $prix : sa part du supplement, selon le
+     * bareme en base (includs/commission.php). Ne renvoie que le montant, jamais le detail du calcul.
+     */
     function calculerCommission(float $prix, ?string $marche = null): int
     {
-        return commissionMarche($prix, $marche);
+        $code = marcheValide($marche) ?? marche($marche)['code'];
+        return commissionDepuisPrixFinal($prix, commissionConfigMarche($code))['gain_affilie'];
     }
 }
 

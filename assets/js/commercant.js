@@ -1,23 +1,22 @@
-// Espace commercant : commission affichee en direct sous le prix saisi (meme regle que le serveur).
+// Espace commercant : prix affiche au client, calcule par le serveur sous le prix net saisi.
 (function () {
   'use strict';
   var prix = document.getElementById('prix');
-  var sortie = document.getElementById('commission-calculee');
+  var sortie = document.getElementById('prix-final-calcule');
   if (!prix || !sortie) return;
 
-  var seuil = parseInt(prix.getAttribute('data-seuil'), 10) || 10000;
-  var basse = parseInt(prix.getAttribute('data-basse'), 10) || 500;
-  var haute = parseInt(prix.getAttribute('data-haute'), 10) || 1000;
-  var devise = sortie.getAttribute('data-devise') || 'FCFA';
+  var devise = prix.getAttribute('data-devise') || 'FCFA';
+  var minuterie = null;
 
   function formater(n) {
     return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' ' + devise;
   }
   function maj() {
-    var v = parseFloat(String(prix.value).replace(',', '.'));
-    if (!isFinite(v) || v <= 0) { sortie.textContent = formater(basse) + ' ou ' + formater(haute); return; }
-    sortie.textContent = formater(v <= seuil ? basse : haute);
+    var v = String(prix.value).replace(',', '.');
+    fetch('/commercant/prix_final.php?net=' + encodeURIComponent(v), { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { sortie.textContent = d && d.ok ? formater(d.prix_final) : '—'; })
+      .catch(function () { sortie.textContent = '—'; });
   }
-  prix.addEventListener('input', maj);
-  maj();
+  prix.addEventListener('input', function () { clearTimeout(minuterie); minuterie = setTimeout(maj, 250); });
 })();

@@ -164,15 +164,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_commander'])) 
                 . $config_marche_produit['longueur_nationale'] . " chiffres (exemple : " . $config_marche_produit['exemple_numero'] . ").";
         } else {
             $prix_unitaire        = (float) $produit['prix'];
-            $commission_unitaire  = calculerCommission($prix_unitaire, $marche_produit);
+            // Calcul figé pour cette commande : copie du barème et de la répartition du moment (jamais recalculée).
+            $cfg_commission       = commissionConfigMarche($marche_produit);
+            $calcul_commande      = commissionDepuisPrixFinal($prix_unitaire, $cfg_commission);
+            $commission_unitaire  = $calcul_commande['gain_affilie'];
             $commission_totale    = $commission_unitaire * $quantite;
+            $snapshot_commande    = commissionSnapshot($calcul_commande['prix_net'], $cfg_commission);
 
             try {
                 $stmtVente = $pdo->prepare(
                     "INSERT INTO vendeur_ventes
                         (produit_id, vendeur_id, quantite, prix_unitaire, commission_pct, commission_earn,
-                         nom_client, telephone_client, adresse_client, statut, commission_creditee, devise)
-                     VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, 'en_attente', 0, ?)"
+                         nom_client, telephone_client, adresse_client, statut, commission_creditee, devise, calcul_snapshot)
+                     VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, 'en_attente', 0, ?, ?)"
                 );
                 $stmtVente->execute([
                     $produit['id'],
@@ -184,6 +188,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_commander'])) 
                     $telephone_client,
                     $adresse_client !== '' ? $adresse_client : null,
                     deviseIso($marche_produit),
+                    $snapshot_commande,
                 ]);
                 $commande_id = (int) $pdo->lastInsertId();
                 auditInfo($pdo, ['category' => 'commande', 'action' => 'commande_creation', 'entity_type' => 'commande', 'entity_id' => $commande_id,

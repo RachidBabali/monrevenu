@@ -13,7 +13,6 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/ui.php';
 $profil = exigerCommercant($pdo);
 $id = (int) $profil['user_id'];
 $marche_commercant = $profil['marche'];
-$regle_commission = marche($marche_commercant)['commission'];
 
 $message_success = $_SESSION['flash_success'] ?? '';
 $message_error   = $_SESSION['flash_error'] ?? '';
@@ -143,7 +142,7 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
       <ul class="flex list-disc flex-col gap-1 pl-5 text-sm text-text-2">
         <li>Chaque produit est vérifié par MonRevenu avant d'apparaître dans le catalogue des affiliés.</li>
         <li>Vous traitez vos commandes jusqu'à la réception du colis ; MonRevenu valide ensuite la vente et paie l'affilié.</li>
-        <li>La commission de l'affilié (<?= formaterMontant($regle_commission['basse'], false, true, $marche_commercant) ?> par article jusqu'à <?= formaterMontant($regle_commission['seuil'], false, true, $marche_commercant) ?>, <?= formaterMontant($regle_commission['haute'], false, true, $marche_commercant) ?> au-delà) est due à MonRevenu pour chaque vente validée.</li>
+        <li>Le prix affiché au client est votre prix net augmenté d'un supplément MonRevenu, qui rémunère l'affilié et la plateforme. Vous recevez votre prix net sur chaque vente validée.</li>
       </ul>
     </section>
 <?php include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_fin.php'; ?>

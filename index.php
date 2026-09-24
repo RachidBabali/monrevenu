@@ -22,9 +22,9 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/vitrine_accueil.php';
 // Chiffres du marche affiche (includs/config_marche.php) : commission, minimum de retrait, devise.
 $marche_visiteur  = marcheCourant();
 $config_marche    = marche($marche_visiteur);
-$seuil_commission = $config_marche['commission']['seuil'];
-$commission_basse = $config_marche['commission']['basse'];
-$commission_haute = $config_marche['commission']['haute'];
+// Exemples d'affichage : gains calculés par le barème en base (le barème lui-même n'est jamais publié).
+$commission_basse = calculerCommission(8500, $marche_visiteur);
+$commission_haute = calculerCommission(15000, $marche_visiteur);
 $minimum_retrait  = $config_marche['retrait_minimum'];
 $vitrine          = produitVitrineAccueil($pdo, $marche_visiteur);
 $numero_whatsapp  = env('WHATSAPP_BUSINESS_DISPLAY_NUMBER', '+221 77 876 48 19');

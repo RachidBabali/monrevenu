@@ -23,7 +23,7 @@
       </details>
       <details class="accordeon">
         <summary>Combien vais-je gagner ?<?= ico('chevron-down') ?></summary>
-        <p class="pb-4 text-text-2">Cela dépend uniquement des ventes validées : <?= formaterMontant($commission_basse) ?> par article pour un produit jusqu'à <?= formaterMontant($seuil_commission) ?>, <?= formaterMontant($commission_haute) ?> au-delà. MonRevenu ne garantit aucun revenu.</p>
+        <p class="pb-4 text-text-2">Cela dépend uniquement des ventes validées : le montant indiqué sur la fiche de chaque produit, par article vendu (par exemple <?= formaterMontant($commission_basse) ?> pour un produit à <?= formaterMontant(8500) ?>). MonRevenu ne garantit aucun revenu.</p>
       </details>
       <details class="accordeon">
         <summary>Je vends des produits : puis-je les proposer ici ?<?= ico('chevron-down') ?></summary>

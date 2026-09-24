@@ -79,3 +79,66 @@ if (!function_exists('commissionSnapshot')) {
             JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
     }
 }
+
+if (!function_exists('commissionDepuisPrixFinal')) {
+    /**
+     * Retrouve le calcul a partir du prix AFFICHE (prix net + supplement).
+     * Le prix final croit strictement avec le prix net entier : recherche dichotomique du plus grand
+     * prix net dont le prix final ne depasse pas le prix donne. Interne : ne jamais renvoyer le
+     * resultat complet a un affilie, seulement gain_affilie.
+     */
+    function commissionDepuisPrixFinal(float $prixFinal, array $cfg): array
+    {
+        $bas = 0;
+        $haut = (int) floor($prixFinal);
+        while ($bas < $haut) {
+            $mil = intdiv($bas + $haut + 1, 2);
+            if (commissionCalculer((float) $mil, $cfg)['prix_final'] <= $prixFinal) $bas = $mil; else $haut = $mil - 1;
+        }
+        return commissionCalculer((float) $bas, $cfg);
+    }
+}
+
+if (!function_exists('commissionConfigMarche')) {
+    /** Config d'un marche, lue une seule fois par requete. */
+    function commissionConfigMarche(string $marche): array
+    {
+        static $cache = [];
+        if (!isset($cache[$marche])) {
+            if (!isset($GLOBALS['pdo']) || !($GLOBALS['pdo'] instanceof PDO)) {
+                throw new RuntimeException('Connexion base indisponible pour le calcul de commission');
+            }
+            $cache[$marche] = commissionConfig($GLOBALS['pdo'], $marche);
+        }
+        return $cache[$marche];
+    }
+}
+
+if (!function_exists('commissionRecalculerProduits')) {
+    /**
+     * Recalcule le prix affiche (prix_vente) des produits d'un marche a partir de leur prix net, apres
+     * un changement de bareme. Les produits sans prix net prennent leur prix actuel comme prix net.
+     * Les commandes deja passees ne sont jamais touchees (elles gardent leur snapshot).
+     * Retourne le nombre de produits dont le prix affiche a change.
+     */
+    function commissionRecalculerProduits(PDO $pdo, string $marche): int
+    {
+        $cfg = commissionConfig($pdo, $marche);
+        $iso = marche($marche)['devise'];
+        $st = $pdo->prepare("SELECT vp.id, vp.prix_vente, vp.prix_net FROM vendeur_produits vp
+            LEFT JOIN users_monrevenu u ON u.id = vp.vendeur_id
+            WHERE " . deviseEffectiveSql('vp', 'u') . " = ?");
+        $st->execute([$iso]);
+        $maj = $pdo->prepare("UPDATE vendeur_produits SET prix_net = ?, prix_vente = ? WHERE id = ?");
+        $n = 0;
+        foreach ($st->fetchAll(PDO::FETCH_ASSOC) as $p) {
+            $net = $p['prix_net'] !== null ? (float) $p['prix_net'] : (float) $p['prix_vente'];
+            $final = commissionCalculer($net, $cfg)['prix_final'];
+            if ($p['prix_net'] === null || (float) $p['prix_vente'] !== (float) $final) {
+                $maj->execute([$net, $final, $p['id']]);
+                $n++;
+            }
+        }
+        return $n;
+    }
+}

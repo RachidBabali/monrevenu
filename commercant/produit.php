@@ -17,7 +17,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/ui.php';
 $profil = exigerCommercant($pdo);
 $id = (int) $profil['user_id'];
 $marche_commercant = $profil['marche'];
-$regle_commission = marche($marche_commercant)['commission'];
+$cfg_commission = commissionConfigMarche($marche_commercant);
 if (empty($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
 $produit_id = (int) ($_GET['id'] ?? $_POST['produit_id'] ?? 0);
@@ -38,7 +38,7 @@ $erreur = '';
 $saisie = [
     'nom' => $produit['nom_produit'] ?? '',
     'description' => $produit['description'] ?? '',
-    'prix' => $produit ? (string) (float) $produit['prix_vente'] : '',
+    'prix' => $produit ? (string) (float) ($produit['prix_net'] ?? $produit['prix_vente']) : '',
     'stock' => $produit && (int) $produit['stock'] > 0 ? (string) (int) $produit['stock'] : '',
     'date_limite' => $produit['date_limite'] ?? '',
 ];
@@ -56,7 +56,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'suppr
             'date_limite' => trim((string) ($_POST['date_limite'] ?? '')),
         ];
         $envoyer = ($_POST['action'] ?? '') === 'envoyer';
-        $prix = round((float) str_replace([' ', ','], ['', '.'], $saisie['prix']), 2);
+        $prix = round((float) str_replace([' ', ','], ['', '.'], $saisie['prix']), 2); // prix net du commercant
+        $prix_final = $prix >= 100 ? (float) commissionCalculer($prix, $cfg_commission)['prix_final'] : $prix;
         $stock = $saisie['stock'] === '' ? 0 : (int) $saisie['stock'];
         $dateLimite = $saisie['date_limite'] !== '' ? $saisie['date_limite'] : null;
 
@@ -65,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'suppr
         } elseif (mb_strlen($saisie['description']) > 2000) {
             $erreur = 'La description ne doit pas dépasser 2000 caractères.';
         } elseif ($prix < 100 || $prix > 10000000) {
-            $erreur = 'Indiquez un prix de vente entre ' . formaterMontant(100) . ' et ' . formaterMontant(10000000) . '.';
+            $erreur = 'Indiquez un prix net entre ' . formaterMontant(100) . ' et ' . formaterMontant(10000000) . '.';
         } elseif ($stock < 0 || $stock > 100000) {
             $erreur = 'Le stock doit être un nombre entre 0 et 100 000.';
         } elseif ($dateLimite !== null && (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateLimite) || $dateLimite < date('Y-m-d'))) {
@@ -122,7 +123,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'suppr
                     // Nom, prix ou image modifies sur un produit deja publie : nouvelle validation
                     $modificationSensible = $imageChangee
                         || $avant['nom_produit'] !== $saisie['nom']
-                        || (float) $avant['prix_vente'] !== $prix;
+                        || (float) ($avant['prix_net'] ?? $avant['prix_vente']) !== $prix
+                        || (float) $avant['prix_vente'] !== $prix_final;
                     $moderation = $avant['moderation'];
                     $publicationType = $avant['publication_type'] ?? 'manuel';
                     $publieAutoLe = $avant['publie_automatiquement_le'] ?? null;
@@ -139,16 +141,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'suppr
                     $statut = $envoyer && $avant['statut'] !== 'actif' ? 'actif' : $avant['statut'];
 
                     $pdo->prepare(
-                        "UPDATE vendeur_produits SET nom_produit = ?, description = ?, image = ?, prix_vente = ?, stock = ?,
+                        "UPDATE vendeur_produits SET nom_produit = ?, description = ?, image = ?, prix_net = ?, prix_vente = ?, stock = ?,
                             date_limite = ?, statut = ?, moderation = ?, moderation_note = ?, publication_type = ?, publie_automatiquement_le = ?
                          WHERE id = ? AND vendeur_id = ?"
-                    )->execute([$saisie['nom'], $saisie['description'], $image, $prix, $stock, $dateLimite, $statut, $moderation,
+                    )->execute([$saisie['nom'], $saisie['description'], $image, $prix, $prix_final, $stock, $dateLimite, $statut, $moderation,
                         $motifModeration, $publicationType, $publieAutoLe, $produit_id, $id]);
 
                     [$b, $a] = auditDiff(
                         ['nom_produit' => $avant['nom_produit'], 'prix_vente' => $avant['prix_vente'], 'stock' => $avant['stock'],
                          'date_limite' => $avant['date_limite'], 'statut' => $avant['statut'], 'moderation' => $avant['moderation'], 'image' => $avant['image']],
-                        ['nom_produit' => $saisie['nom'], 'prix_vente' => number_format($prix, 2, '.', ''), 'stock' => $stock,
+                        ['nom_produit' => $saisie['nom'], 'prix_vente' => number_format($prix_final, 2, '.', ''), 'stock' => $stock,
                          'date_limite' => $dateLimite, 'statut' => $statut, 'moderation' => $moderation, 'image' => $image]
                     );
                     auditCritique($pdo, ['category' => 'produit', 'action' => 'produit_modification', 'entity_type' => 'produit',
@@ -173,13 +175,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'suppr
                         $moderation = 'brouillon';
                     }
                     $pdo->prepare(
-                        "INSERT INTO vendeur_produits (vendeur_id, nom_produit, description, image, prix_vente, commission_pct, stock, date_limite, statut, moderation, moderation_note, publication_type, publie_automatiquement_le, created_by, devise)
-                         VALUES (?, ?, ?, ?, ?, 0, ?, ?, 'actif', ?, ?, ?, ?, ?, ?)"
-                    )->execute([$id, $saisie['nom'], $saisie['description'], $image, $prix, $stock, $dateLimite, $moderation,
+                        "INSERT INTO vendeur_produits (vendeur_id, nom_produit, description, image, prix_net, prix_vente, commission_pct, stock, date_limite, statut, moderation, moderation_note, publication_type, publie_automatiquement_le, created_by, devise)
+                         VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, 'actif', ?, ?, ?, ?, ?, ?)"
+                    )->execute([$id, $saisie['nom'], $saisie['description'], $image, $prix, $prix_final, $stock, $dateLimite, $moderation,
                         $motifModeration, $publicationType, $publieAutoLe, $id, deviseIso($marche_commercant)]);
                     $produit_id = (int) $pdo->lastInsertId();
                     auditCritique($pdo, ['category' => 'produit', 'action' => 'produit_creation', 'entity_type' => 'produit', 'entity_id' => $produit_id,
-                        'after' => ['nom_produit' => $saisie['nom'], 'prix_vente' => number_format($prix, 2, '.', ''), 'stock' => $stock,
+                        'after' => ['nom_produit' => $saisie['nom'], 'prix_vente' => number_format($prix_final, 2, '.', ''), 'stock' => $stock,
                             'moderation' => $moderation, 'image' => $image], 'meta' => ['motif' => $motifModeration, 'publication_type' => $publicationType]]);
                     $_SESSION['flash_success'] = $moderation === 'brouillon'
                         ? 'Brouillon enregistré. Envoyez-le pour validation quand il est prêt.'
@@ -203,7 +205,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'suppr
 }
 
 // La suppression est traitee par commercant/produits.php (meme controle de propriete)
-$commission = $saisie['prix'] !== '' ? calculerCommission((float) str_replace([' ', ','], ['', '.'], $saisie['prix'])) : null;
+$apercu = $saisie['prix'] !== '' ? commissionCalculer((float) str_replace([' ', ','], ['', '.'], $saisie['prix']), $cfg_commission) : null;
 $imageActuelle = (string) ($produit['image'] ?? '');
 $srcActuelle = $imageActuelle === '' ? '' : (preg_match('#^(https?:)?//#', $imageActuelle) || str_starts_with($imageActuelle, 'data:') ? $imageActuelle : '/admin/' . ltrim($imageActuelle, '/'));
 $aDesCommandes = false;
@@ -242,13 +244,13 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
 
       <div class="grid gap-4 sm:grid-cols-2">
         <div class="champ">
-          <label class="champ-label" for="prix">Prix de vente</label>
+          <label class="champ-label" for="prix">Prix net (ce que vous recevez)</label>
           <div class="champ-groupe">
             <input class="champ-saisie chiffres" type="number" id="prix" name="prix" min="100" step="1" inputmode="numeric" required
-                   value="<?= e($saisie['prix']) ?>" data-seuil="<?= (int) $regle_commission['seuil'] ?>" data-basse="<?= (int) $regle_commission['basse'] ?>" data-haute="<?= (int) $regle_commission['haute'] ?>">
+                   value="<?= e($saisie['prix']) ?>" data-marche="<?= e($marche_commercant) ?>" data-devise="<?= e(deviseLibelle($marche_commercant)) ?>">
             <span class="champ-prefixe rounded-l-none border-l-0 border-r"><?= e(deviseLibelle($marche_commercant)) ?></span>
           </div>
-          <p class="champ-aide" id="aide-commission">Commission versée à l'affilié : <span id="commission-calculee" data-devise="<?= e(deviseLibelle($marche_commercant)) ?>"><?= $commission !== null ? e(formaterMontant($commission, false, true, $marche_commercant)) : formaterMontant($regle_commission['basse'], false, true, $marche_commercant) . ' ou ' . formaterMontant($regle_commission['haute'], false, true, $marche_commercant) ?></span>. Elle est fixée par MonRevenu et vous est facturée sur chaque vente validée.</p>
+          <p class="champ-aide" id="aide-prix-final">Prix affiché au client : <strong id="prix-final-calcule"><?= $apercu !== null ? e(formaterMontant($apercu['prix_final'], false, true, $marche_commercant)) : '—' ?></strong> (votre prix net + le supplément MonRevenu, qui rémunère la vente).</p>
         </div>
         <div class="champ">
           <label class="champ-label" for="stock">Stock disponible <span class="font-normal text-text-3">(facultatif)</span></label>
