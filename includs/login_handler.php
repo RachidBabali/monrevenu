@@ -4,7 +4,7 @@
  *          LOGIN HANDLER, Mon Revenu                      
  *   Gère : admin vers dashboard_admin / agent vers dashboard_agent
  *           affilie vers dashboard.php                        
- *   Connexion par : numéro de téléphone + code secret       
+ *   Connexion par : numéro de téléphone + mot de passe       
  *   Numéros acceptés : Comores (+269) et Sénégal (+221)     
  * À placer dans : includs/login_handler.php
  *
@@ -116,7 +116,7 @@ try {
     $stmt->execute([$cle_recherche, $cle_recherche]);
     $user = $stmt->fetch();
 
-    //  7. Vérifier le code secret 
+    //  7. Vérifier le mot de passe 
     $hash_reference = $user['password'] ?? '$2y$12$D9m5x1sJZ3yKf6q1r0aFZO7hV1Q6qk4pQnR2eYkD5vXbG8tJmW3Ke';
     $code_valide = password_verify($code, $hash_reference);
 

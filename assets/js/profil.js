@@ -1,10 +1,6 @@
-// Profil : code secret en majuscules et verification de la confirmation.
+// Profil : verification de la confirmation du nouveau mot de passe.
 (function () {
   'use strict';
-  ['mot_de_passe_actuel', 'nouveau_mot_de_passe', 'confirmation_mot_de_passe'].forEach(function (id) {
-    var champ = document.getElementById(id);
-    if (champ) champ.addEventListener('input', function () { champ.value = champ.value.toUpperCase(); });
-  });
   var form = document.getElementById('form-password');
   if (!form) return;
   form.addEventListener('submit', function (e) {

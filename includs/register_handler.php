@@ -11,6 +11,7 @@ session_start();
 require_once __DIR__ . '/../basse_de_donner/monrevenu_bd.php';
 require_once __DIR__ . '/email_sender.php';
 require_once __DIR__ . '/config_marche.php';
+require_once __DIR__ . '/mot_de_passe.php';
 
 
 /* ============================================================
@@ -65,15 +66,8 @@ $phone_country = trim(
     $_POST['phone_country'] ?? 'KM'
 );
 
-$code = strtoupper(
-    trim($_POST['code'] ?? '')
-);
-
-// Mot de passe (8 caractères minimum, comme Google), plus de
-// forçage en majuscules, on garde la casse telle que saisie.
-$code = trim(
-    $_POST['code'] ?? ''
-);
+// Mot de passe : regle unique includs/mot_de_passe.php, casse conservee telle que saisie.
+$code = trim((string) ($_POST['code'] ?? '')); // trim comme la connexion
 
 $confirm_code = trim(
     $_POST['confirm_code'] ?? ''
@@ -207,10 +201,10 @@ $phone_country = marcheDeNumero($phone_normalise) ?? $phone_country_saisi;
 
 
 /* ============================================================
-   MOT DE PASSE, 8 caractères minimum, comme Google
+   MOT DE PASSE, règle includs/mot_de_passe.php
    ============================================================ */
 
-if (mb_strlen($code) < 8) {
+if (erreurMotDePasse($code) !== null) {
 
     header(
         'Location: /index.php?error=code_invalide'

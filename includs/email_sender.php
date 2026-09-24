@@ -185,7 +185,7 @@ function envoyerAlerteTentativesConnexion(string $destinataire, string $nom, str
         $mail->Body    = construireContenuAlerteConnexion($nom, $telephone, $dureeBlocageMinutes);
         $mail->AltBody = "Plusieurs tentatives de connexion incorrectes ont été détectées sur votre compte MonRevenu (numéro $telephone). "
             . "Le compte a été bloqué temporairement pendant $dureeBlocageMinutes minutes par mesure de sécurité. "
-            . "Si ce n'était pas vous, changez votre code secret dès que possible.";
+            . "Si ce n'était pas vous, changez votre mot de passe dès que possible.";
 
         $mail->send();
         auditEnvoi('email', 'envoyerAlerteTentativesConnexion', true, $destinataire);
@@ -209,7 +209,7 @@ function construireContenuAlerteConnexion(string $nom, string $telephone, int $d
         . "<p style='margin:0 0 12px;'>Plusieurs tentatives de connexion avec un mauvais code ont été faites sur votre compte MonRevenu associé au numéro <strong style='color:#141A24;'>{$telephone}</strong>.</p>"
         . "<p style='margin:0 0 12px;'>Par sécurité, le compte est bloqué pendant <strong style='color:#141A24;'>{$dureeBlocageMinutes} minutes</strong>.</p>"
         . "<p style='margin:0 0 4px;'><strong style='color:#141A24;'>C'était vous ?</strong> Réessayez une fois le blocage terminé.</p>"
-        . "<p style='margin:0;'><strong style='color:#141A24;'>Ce n'était pas vous ?</strong> Changez votre code secret dès maintenant.</p>",
-        ['Changer mon code secret', $base . '/mot_de_passe_oublie.php']
+        . "<p style='margin:0;'><strong style='color:#141A24;'>Ce n'était pas vous ?</strong> Changez votre mot de passe dès maintenant.</p>",
+        ['Changer mon mot de passe', $base . '/mot_de_passe_oublie.php']
     );
 }

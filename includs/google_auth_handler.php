@@ -116,7 +116,7 @@ try {
 
     } else {
         //  6. Créer un nouveau compte 
-        // Pas de téléphone, pas de code secret : phone_verified reste à 0
+        // Pas de téléphone, pas de mot de passe : phone_verified reste à 0
         // jusqu'à ce que la personne valide le code WhatsApp affiché en
         // bannière sur le dashboard (webhook_whatsapp.php). Tant que ce
         // n'est pas fait, l'accès aux produits d'affiliation reste bloqué
@@ -134,7 +134,7 @@ try {
             ':pays_code'=> $pays['code'],
             ':pays_nom' => $pays['nom'],
             // Mot de passe factice inutilisable : ce compte ne pourra se
-            // connecter que via Google tant qu'aucun code secret n'est défini.
+            // connecter que via Google tant qu'aucun mot de passe n'est défini.
             ':password' => password_hash(bin2hex(random_bytes(16)), PASSWORD_BCRYPT),
         ]);
 

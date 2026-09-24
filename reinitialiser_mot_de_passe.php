@@ -5,6 +5,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
 require_once __DIR__ . '/includs/audit.php';
 require_once __DIR__ . '/includs/incident.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/email_sender.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/mot_de_passe.php';
 
 $user_id = $_SESSION['reset_password_user_id'] ?? null;
 if (!$user_id) {
@@ -60,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_renvoyer'])) {
 }
 
 /* ============================================================
-   TRAITEMENT : VALIDER LE CODE EMAIL ET DÉFINIR UN NOUVEAU CODE SECRET
+   TRAITEMENT : VALIDER LE CODE EMAIL ET DÉFINIR UN NOUVEAU MOT DE PASSE
    ============================================================ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_reinitialiser'])) {
 
@@ -69,8 +70,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_reinitialiser'
         auditCsrf($pdo, 'reinitialisation');
     } else {
         $code_email_saisi = trim($_POST['code'] ?? '');
-        $nouveau_code      = strtoupper(trim($_POST['nouveau_code'] ?? ''));
-        $confirmation_code = strtoupper(trim($_POST['confirmation_code'] ?? ''));
+        $nouveau_code      = trim((string) ($_POST['nouveau_code'] ?? ''));
+        $confirmation_code = trim((string) ($_POST['confirmation_code'] ?? ''));
 
         if (empty($user['reset_password_code']) || empty($user['reset_password_expires_at'])) {
             $error = "Aucun code actif. Merci de redemander un code.";
@@ -80,16 +81,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_reinitialiser'
             $error = "Code incorrect.";
             auditInfo($pdo, ['category' => 'auth', 'action' => 'reinitialisation_echec', 'result' => 'echec', 'entity_type' => 'utilisateur',
                 'entity_id' => $user_id, 'actor_id' => null, 'actor_role' => null]);
-        } elseif (strlen($nouveau_code) !== 4) {
-            $error = "Le code secret doit contenir exactement 4 caractères.";
+        } elseif (($erreur_mdp = erreurMotDePasse($nouveau_code)) !== null) {
+            $error = $erreur_mdp;
         } else {
-            $nb_chiffres = preg_match_all('/[0-9]/', $nouveau_code);
-            $nb_lettres  = preg_match_all('/[A-Z]/', $nouveau_code);
-
-            if ($nb_chiffres !== 2 || $nb_lettres !== 2) {
-                $error = "Le code secret doit contenir exactement 2 chiffres et 2 lettres.";
-            } elseif ($nouveau_code !== $confirmation_code) {
-                $error = "La confirmation ne correspond pas au nouveau code secret.";
+            if ($nouveau_code !== $confirmation_code) {
+                $error = "La confirmation ne correspond pas au nouveau mot de passe.";
             } else {
                 try {
                     $hash = password_hash($nouveau_code, PASSWORD_BCRYPT, ['cost' => 12]);
@@ -101,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_reinitialiser'
                         'entity_id' => $user_id, 'actor_id' => $user_id, 'actor_role' => null]);
 
                     unset($_SESSION['reset_password_user_id'], $_SESSION['reset_password_email']);
-                    $_SESSION['flash_success'] = "Votre code secret a été réinitialisé avec succès. Vous pouvez vous connecter.";
+                    $_SESSION['flash_success'] = "Votre mot de passe a été réinitialisé avec succès. Vous pouvez vous connecter.";
 
                     header('Location: /index.php');
                     exit();
@@ -124,11 +120,10 @@ function masquerEmailReset(string $email): string
 }
 $email_masque = masquerEmailReset($user['email']);
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/ui.php';
-$titre_page   = 'Nouveau code secret';
-$scripts_page = ['/assets/js/reinitialiser.js'];
+$titre_page   = 'Nouveau mot de passe';
 include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_public_debut.php';
 ?>
-    <h1 class="text-2xl font-semibold">Choisir un nouveau code secret</h1>
+    <h1 class="text-2xl font-semibold">Choisir un nouveau mot de passe</h1>
     <p class="mt-2 text-text-2">Un code à 6 chiffres a été envoyé à <strong class="font-medium text-text"><?= e($email_masque) ?></strong>. Il est valable 10 minutes.</p>
 
     <?php if ($error): ?>
@@ -146,17 +141,17 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_public_debut.php';
                inputmode="numeric" pattern="[0-9]{6}" autocomplete="one-time-code" autofocus placeholder="000000">
       </div>
       <div class="champ">
-        <label class="champ-label" for="nouveau_code">Nouveau code secret</label>
-        <input class="champ-saisie font-mono uppercase tracking-[.3em]" type="text" id="nouveau_code" name="nouveau_code" required maxlength="4" minlength="4"
-               autocomplete="new-password" autocapitalize="characters" placeholder="A1B2" aria-describedby="aide-nouveau-code">
-        <p class="champ-aide" id="aide-nouveau-code">Exactement 2 chiffres et 2 lettres, dans l'ordre de votre choix. Exemple : A1B2.</p>
+        <label class="champ-label" for="nouveau_code">Nouveau mot de passe</label>
+        <input class="champ-saisie" type="password" id="nouveau_code" name="nouveau_code" required minlength="8" maxlength="64"
+               autocomplete="new-password" aria-describedby="aide-nouveau-code">
+        <p class="champ-aide" id="aide-nouveau-code"><?= e(MOT_DE_PASSE_AIDE) ?></p>
       </div>
       <div class="champ">
-        <label class="champ-label" for="confirmation_code">Confirmer le code secret</label>
-        <input class="champ-saisie font-mono uppercase tracking-[.3em]" type="text" id="confirmation_code" name="confirmation_code" required maxlength="4" minlength="4"
-               autocomplete="new-password" autocapitalize="characters" placeholder="A1B2">
+        <label class="champ-label" for="confirmation_code">Confirmer le mot de passe</label>
+        <input class="champ-saisie" type="password" id="confirmation_code" name="confirmation_code" required minlength="8" maxlength="64"
+               autocomplete="new-password">
       </div>
-      <button type="submit" name="action_reinitialiser" class="btn btn-primaire btn-bloc"><?= ico('loader-circle', 'ico-charge') ?><span data-libelle>Enregistrer le code secret</span></button>
+      <button type="submit" name="action_reinitialiser" class="btn btn-primaire btn-bloc"><?= ico('loader-circle', 'ico-charge') ?><span data-libelle>Enregistrer le mot de passe</span></button>
     </form>
 
     <form method="POST" action="" class="mt-3">

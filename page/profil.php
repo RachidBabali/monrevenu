@@ -7,6 +7,7 @@ require_once __DIR__ . '/../includs/audit.php';
 require_once __DIR__ . '/../includs/incident.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/ui.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/geoip.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/mot_de_passe.php';
 
 // Vérification de la sécurité de session
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
@@ -34,17 +35,6 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
  */
 function nom_est_valide(string $nom): bool {
     return (bool) preg_match("/^[\p{L}\p{M}' \-]{2,80}$/u", $nom);
-}
-
-/**
- * Valide le format du code secret : exactement 4 caractères,
- * 2 chiffres et 2 lettres (même règle qu'à l'inscription).
- */
-function code_secret_valide(string $code): bool {
-    if (strlen($code) !== 4) return false;
-    $nb_chiffres = preg_match_all('/[0-9]/', $code);
-    $nb_lettres  = preg_match_all('/[A-Z]/', $code);
-    return $nb_chiffres === 2 && $nb_lettres === 2;
 }
 
 // 2. TRAITEMENT DU FORMULAIRE (POST + redirection pour éviter le renvoi de formulaire)
@@ -101,18 +91,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: profil.php'); exit();
     }
 
-    // --- 2b. Changement du code secret ---
+    // --- 2b. Changement du mot de passe ---
     if (isset($_POST['update_password'])) {
-        $code_actuel  = strtoupper(trim($_POST['mot_de_passe_actuel'] ?? ''));
-        $code_nouveau = strtoupper(trim($_POST['nouveau_mot_de_passe'] ?? ''));
-        $code_confirm = strtoupper(trim($_POST['confirmation_mot_de_passe'] ?? ''));
+        $code_actuel  = trim((string) ($_POST['mot_de_passe_actuel'] ?? ''));
+        $code_nouveau = trim((string) ($_POST['nouveau_mot_de_passe'] ?? ''));
+        $code_confirm = trim((string) ($_POST['confirmation_mot_de_passe'] ?? ''));
 
         if ($code_actuel === '' || $code_nouveau === '' || $code_confirm === '') {
-            $_SESSION['flash_error'] = "Remplissez les trois champs du code secret.";
-        } elseif (!code_secret_valide($code_nouveau)) {
-            $_SESSION['flash_error'] = "Le nouveau code doit contenir exactement 2 chiffres et 2 lettres (ex: A1B2).";
+            $_SESSION['flash_error'] = "Remplissez les trois champs du mot de passe.";
+        } elseif (($erreur_mdp = erreurMotDePasse($code_nouveau)) !== null) {
+            $_SESSION['flash_error'] = $erreur_mdp;
         } elseif ($code_nouveau !== $code_confirm) {
-            $_SESSION['flash_error'] = "La confirmation ne correspond pas au nouveau code.";
+            $_SESSION['flash_error'] = "La confirmation ne correspond pas au nouveau mot de passe.";
         } else {
             try {
                 $stmt = $pdo->prepare("SELECT password FROM users_monrevenu WHERE id = ?");
@@ -120,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $row = $stmt->fetch();
 
                 if (!$row || !password_verify($code_actuel, $row['password'])) {
-                    $_SESSION['flash_error'] = "Le code secret actuel est incorrect.";
+                    $_SESSION['flash_error'] = "Le mot de passe actuel est incorrect.";
                     auditInfo($pdo, ['category' => 'auth', 'action' => 'mot_de_passe_changement_echec', 'result' => 'echec',
                         'entity_type' => 'utilisateur', 'entity_id' => $user_id]);
                 } else {
@@ -128,11 +118,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $upd  = $pdo->prepare("UPDATE users_monrevenu SET password = ? WHERE id = ?");
                     $upd->execute([$hash, $user_id]);
                     auditInfo($pdo, ['category' => 'auth', 'action' => 'mot_de_passe_changement', 'entity_type' => 'utilisateur', 'entity_id' => $user_id]);
-                    $_SESSION['flash_success'] = "Votre code secret est modifié.";
+                    $_SESSION['flash_success'] = "Votre mot de passe est modifié.";
                 }
             } catch (PDOException $e) {
-                $_SESSION['flash_error'] = messageIncident(incidentEnregistrer($pdo, $e, 'profil/code_secret'),
-                    "Le code secret n'a pas pu être modifié. Réessayez dans un instant.");
+                $_SESSION['flash_error'] = messageIncident(incidentEnregistrer($pdo, $e, 'profil/mot_de_passe'),
+                    "Le mot de passe n'a pas pu être modifié. Réessayez dans un instant.");
             }
         }
 
@@ -173,7 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdo->rollBack();
                 $_SESSION['flash_error'] = $est_compte_google
                     ? "Saisissez exactement le mot SUPPRIMER pour confirmer."
-                    : "Code secret incorrect, la suppression a été annulée.";
+                    : "Mot de passe incorrect, la suppression a été annulée.";
                 header('Location: profil.php'); exit();
             }
 
@@ -340,23 +330,23 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
 
       <form action="" method="POST" id="form-password" class="carte self-start">
         <input type="hidden" name="csrf_token" value="<?= e($_SESSION['csrf_token']) ?>">
-        <h2 class="carte-entete carte-titre">Code secret</h2>
+        <h2 class="carte-entete carte-titre">Mot de passe</h2>
         <div class="flex flex-col gap-4 p-4">
           <div class="champ">
-            <label class="champ-label" for="mot_de_passe_actuel">Code secret actuel</label>
-            <input class="champ-saisie font-mono uppercase tracking-[.3em]" type="password" id="mot_de_passe_actuel" name="mot_de_passe_actuel" required maxlength="4" autocomplete="current-password">
+            <label class="champ-label" for="mot_de_passe_actuel">Mot de passe actuel</label>
+            <input class="champ-saisie" type="password" id="mot_de_passe_actuel" name="mot_de_passe_actuel" required maxlength="64" autocomplete="current-password">
           </div>
           <div class="champ">
-            <label class="champ-label" for="nouveau_mot_de_passe">Nouveau code secret</label>
-            <input class="champ-saisie font-mono uppercase tracking-[.3em]" type="text" id="nouveau_mot_de_passe" name="nouveau_mot_de_passe" required maxlength="4" autocomplete="new-password" autocapitalize="characters" placeholder="A1B2" aria-describedby="aide-code-secret">
-            <p class="champ-aide" id="aide-code-secret">Exactement 2 chiffres et 2 lettres. Exemple : A1B2.</p>
+            <label class="champ-label" for="nouveau_mot_de_passe">Nouveau mot de passe</label>
+            <input class="champ-saisie" type="password" id="nouveau_mot_de_passe" name="nouveau_mot_de_passe" required minlength="8" maxlength="64" autocomplete="new-password" aria-describedby="aide-code-secret">
+            <p class="champ-aide" id="aide-code-secret"><?= e(MOT_DE_PASSE_AIDE) ?></p>
           </div>
           <div class="champ">
-            <label class="champ-label" for="confirmation_mot_de_passe">Confirmer le nouveau code</label>
-            <input class="champ-saisie font-mono uppercase tracking-[.3em]" type="text" id="confirmation_mot_de_passe" name="confirmation_mot_de_passe" required maxlength="4" autocomplete="new-password" autocapitalize="characters" placeholder="A1B2" aria-describedby="err-confirmation-code">
-            <p class="champ-erreur" id="err-confirmation-code" hidden><?= ico('circle-alert', 'ico-16 mt-0.5') ?><span>Les deux codes sont différents.</span></p>
+            <label class="champ-label" for="confirmation_mot_de_passe">Confirmer le nouveau mot de passe</label>
+            <input class="champ-saisie" type="password" id="confirmation_mot_de_passe" name="confirmation_mot_de_passe" required minlength="8" maxlength="64" autocomplete="new-password" aria-describedby="err-confirmation-code">
+            <p class="champ-erreur" id="err-confirmation-code" hidden><?= ico('circle-alert', 'ico-16 mt-0.5') ?><span>Les deux mots de passe sont différents.</span></p>
           </div>
-          <button type="submit" name="update_password" class="btn btn-primaire self-start"><?= ico('loader-circle', 'ico-charge') ?><span data-libelle>Modifier le code secret</span></button>
+          <button type="submit" name="update_password" class="btn btn-primaire self-start"><?= ico('loader-circle', 'ico-charge') ?><span data-libelle>Modifier le mot de passe</span></button>
         </div>
       </form>
     </div>
@@ -389,7 +379,7 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
             </div>
           <?php else: ?>
             <div class="champ">
-              <label class="champ-label" for="suppression_mot_de_passe">Votre code secret</label>
+              <label class="champ-label" for="suppression_mot_de_passe">Votre mot de passe</label>
               <input class="champ-saisie" type="password" id="suppression_mot_de_passe" name="confirmation_mot_de_passe" required autocomplete="current-password" autofocus>
             </div>
           <?php endif; ?>

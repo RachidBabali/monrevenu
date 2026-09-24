@@ -14,7 +14,7 @@ $errors = [
     'nom_invalide'       => 'Indiquez votre nom complet (2 à 100 caractères).',
     'email_invalide'     => 'Adresse email invalide. Exemple : nom@exemple.com.',
     'phone_invalide'     => 'Numéro invalide pour le marché choisi. Sénégal : 9 chiffres. Comores : 7 chiffres.',
-    'code_invalide'      => 'Choisissez un mot de passe d\'au moins 8 caractères.',
+    'code_invalide'      => 'Choisissez un mot de passe d\'au moins 8 caractères, avec une lettre, un chiffre et un caractère spécial.',
     'code_different'     => 'Les deux mots de passe sont différents. Saisissez-les à nouveau.',
     'conditions'         => 'Cochez la case pour accepter les conditions générales.',
     'existe_deja'        => 'Cet email ou ce numéro est déjà utilisé. Connectez-vous ou utilisez-en un autre.',
@@ -162,7 +162,7 @@ $pays_tel = $_GET['phone_country'] ?? 'SN';
                  aria-describedby="aide-code err-code"<?= attributErreur('code', $champ_errone) ?>>
           <button class="eye-btn btn btn-icone btn-discret absolute right-0.5 top-1/2 -translate-y-1/2" type="button" data-afficher-mdp="code" aria-label="Afficher le mot de passe" aria-pressed="false"><?= ico('eye') ?></button>
         </div>
-        <p class="champ-aide" id="aide-code">8 caractères minimum.</p>
+        <p class="champ-aide" id="aide-code"><?= e(MOT_DE_PASSE_AIDE) ?></p>
         <p class="champ-erreur field-error" id="err-code" hidden></p>
         <?php afficherErreurChamp('code', $champ_errone, $errors, $error); ?>
       </div>

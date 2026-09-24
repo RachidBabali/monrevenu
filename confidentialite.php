@@ -51,11 +51,11 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/head.php';
   <tr><td>Adresse email</td><td>Vérification du compte, envoi du code de sécurité, communications</td></tr>
   <tr><td>Numéro de téléphone</td><td>Identification et sécurité du compte</td></tr>
   <tr><td>Date de naissance</td><td>Vérification de l'âge minimum requis (18 ans)</td></tr>
-  <tr><td>Code secret (haché)</td><td>Authentification sécurisée</td></tr>
+  <tr><td>Mot de passe (haché)</td><td>Authentification sécurisée</td></tr>
   <tr><td>Historique de transactions</td><td>Suivi de vos revenus, dépôts, retraits et transferts</td></tr>
 </table>
 <h2 id="securite-des-donnees">2. Sécurité des données</h2>
-<p>Votre code secret est stocké de façon chiffrée (hachage bcrypt) et n'est jamais accessible en clair, y compris par notre équipe. Les échanges avec la plateforme sont protégés, et un système de jeton anti-CSRF sécurise vos formulaires.</p>
+<p>Votre mot de passe est stocké de façon chiffrée (hachage bcrypt) et n'est jamais accessible en clair, y compris par notre équipe. Les échanges avec la plateforme sont protégés, et un système de jeton anti-CSRF sécurise vos formulaires.</p>
 <h2 id="utilisation-des-donnees">3. Utilisation des données</h2>
 <p>Vos données sont utilisées exclusivement pour :</p>
 <ul>
