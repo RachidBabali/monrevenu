@@ -1,9 +1,10 @@
 <?php
+require_once __DIR__ . '/../includs/session.php';
 /**
  * commercant/index.php : tableau de bord du commercant.
  * Produits publies, en attente ou refuses, commandes a traiter, commissions dues a la plateforme.
  */
-if (session_status() === PHP_SESSION_NONE) session_start();
+if (session_status() === PHP_SESSION_NONE) demarrerSession();
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/audit.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/commercant.php';

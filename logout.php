@@ -1,7 +1,8 @@
 <?php
+require_once __DIR__ . '/includs/session.php';
 // Tout au début de index.php, avant le HTML
 if (isset($_GET['logout']) && $_GET['logout'] === '1') {
-    session_start();
+    demarrerSession();
     if (!empty($_SESSION['user_id'])) {
         require_once __DIR__ . '/basse_de_donner/monrevenu_bd.php';
         require_once __DIR__ . '/includs/audit.php';

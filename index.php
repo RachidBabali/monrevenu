@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__ . '/includs/session.php';
+demarrerSession();
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/geoip.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/config_marche.php';

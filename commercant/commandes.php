@@ -1,10 +1,11 @@
 <?php
+require_once __DIR__ . '/../includs/session.php';
 /**
  * commercant/commandes.php : commandes passees sur les produits du commercant.
  * Le commercant fait avancer une commande jusqu'a "colis recu" ou l'annule avec un motif.
  * Seul un administrateur valide une vente (ce qui credite la commission de l'affilie).
  */
-if (session_status() === PHP_SESSION_NONE) session_start();
+if (session_status() === PHP_SESSION_NONE) demarrerSession();
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/audit.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/incident.php';

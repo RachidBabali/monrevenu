@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includs/session.php';
 /**
  * verification.php
  *
@@ -12,7 +13,7 @@
  * Le parrainage a été retiré (décision du 18/09/2026).
  */
 
-session_start();
+demarrerSession();
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
 require_once __DIR__ . '/includs/audit.php';
@@ -481,8 +482,8 @@ if (
 
                 $_SESSION['login_time'] = time();
 
-                $_SESSION['ip'] =
-                    $_SERVER['REMOTE_ADDR'] ?? '';
+                require_once __DIR__ . '/includs/ip_client.php';
+                $_SESSION['ip'] = ipClient();
 
                 $_SESSION['csrf_token'] =
                     bin2hex(random_bytes(32));

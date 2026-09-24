@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/session.php';
 
 /**
  *          LOGIN HANDLER, Mon Revenu                      
@@ -12,7 +13,7 @@
  * viennent des migrations : aucune table n'est créée à la connexion.
  * Si l'une manque, l'onglet Santé de l'audit le signale (tables attendues absentes).
  */
-session_start();
+demarrerSession();
 require_once __DIR__ . '/../basse_de_donner/monrevenu_bd.php';
 require_once __DIR__ . '/config_marche.php';
 
@@ -65,7 +66,14 @@ if ($est_email) {
     $cle_recherche = normaliserNumero($identifiant) ?? preg_replace('/[^\d]/', '', $identifiant);
 }
 
-$ip = $_SERVER['REMOTE_ADDR'];
+// Un identifiant sans e-mail ni chiffre (ex. un simple nom) donnerait une cle vide : refus net, sans tentative comptee.
+if ($cle_recherche === '' || $cle_recherche === null) {
+    header('Location: /index.php?error=champs_manquants');
+    exit();
+}
+
+require_once __DIR__ . '/ip_client.php';
+$ip = ipClient();
 
 try {
     //  5. Blocage par IP 

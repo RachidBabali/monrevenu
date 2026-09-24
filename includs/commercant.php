@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/session.php';
 /**
  * includs/commercant.php : regles communes de l'espace commercant.
  *
@@ -39,7 +40,7 @@ function commercantMaxProduits(): int { return max(1, (int) env('COMMERCANT_MAX_
  */
 function exigerCommercant(PDO $pdo): array
 {
-    if (session_status() === PHP_SESSION_NONE) session_start();
+    if (session_status() === PHP_SESSION_NONE) demarrerSession();
     if (empty($_SESSION['logged_in']) || empty($_SESSION['user_id'])) {
         header('Location: /index.php#connexion');
         exit();

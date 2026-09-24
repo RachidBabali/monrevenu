@@ -1,6 +1,7 @@
 <?php
+require_once __DIR__ . '/../includs/session.php';
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+    demarrerSession();
 }
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';

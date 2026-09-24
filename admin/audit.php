@@ -5,6 +5,7 @@
  * La consultation et l'export sont eux-mêmes journalisés. Aucune action ne modifie le journal.
  */
 require_once __DIR__ . '/../basse_de_donner/monrevenu_bd.php';
+require_once __DIR__ . '/../includs/journal_erreurs.php';
 require_once __DIR__ . '/auth_middleware.php';
 require_once __DIR__ . '/../includs/audit.php';
 require_once __DIR__ . '/../includs/sante.php';
@@ -25,6 +26,7 @@ $onglets = [
     'base'         => ['Base de données', 'package'],
     'stockage'     => ['Stockage', 'image'],
     'dependances'  => ['Dépendances', 'settings'],
+    'erreurs'      => ['Erreurs', 'circle-alert'],
 ];
 $onglet = isset($onglets[$_GET['onglet'] ?? '']) ? $_GET['onglet'] : 'vue';
 

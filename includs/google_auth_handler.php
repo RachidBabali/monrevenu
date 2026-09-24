@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/session.php';
 /**
  * google_auth_handler.php
  * Vérifie le jeton d'identité envoyé par le bouton "Se connecter avec Google",
@@ -13,7 +14,7 @@
  */
 
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+    demarrerSession();
 }
 header('Content-Type: application/json; charset=utf-8');
 
@@ -167,7 +168,8 @@ try {
     $_SESSION['user_role']     = $user_role;
     $_SESSION['logged_in']     = true;
     $_SESSION['login_time']    = time();
-    $_SESSION['ip']            = $_SERVER['REMOTE_ADDR'];
+    require_once __DIR__ . '/ip_client.php';
+    $_SESSION['ip']            = ipClient();
     $_SESSION['csrf_token']    = bin2hex(random_bytes(32));
 
     try {

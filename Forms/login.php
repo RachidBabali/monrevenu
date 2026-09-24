@@ -71,7 +71,7 @@ $messages_succes = [
       <div class="champ">
         <label class="champ-label" for="loginPhone">Email ou numéro de téléphone</label>
         <input class="champ-saisie" type="text" id="loginPhone" name="identifiant" autocomplete="username" inputmode="email"
-               maxlength="150" required placeholder="nom@exemple.com ou 77 123 45 67" aria-describedby="err-loginPhone">
+               maxlength="150" required pattern=".*\S.*" title="Indiquez votre e-mail ou votre numéro" placeholder="nom@exemple.com ou 77 123 45 67" aria-describedby="err-loginPhone">
         <p class="champ-erreur field-error" id="err-loginPhone" hidden></p>
       </div>
 

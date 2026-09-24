@@ -4,17 +4,10 @@
  *   Sécurité centralisée : sessions, CSRF, rôles           
  */
 
-//  Configuration sécurisée du cookie de session (avant session_start) 
-if (session_status() === PHP_SESSION_NONE) {
-    session_set_cookie_params([
-        'lifetime' => 0,
-        'path'     => '/',
-        'secure'   => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off', // true en HTTPS, false en local
-        'httponly' => true,      // empêche le JS de lire le cookie (protection XSS)
-        'samesite' => 'Lax',     // empêche l'envoi du cookie depuis un site tiers (protection CSRF)
-    ]);
-    session_start();
-}
+//  Session : reglages poses par includs/session.php (avant session_start)
+require_once __DIR__ . '/../includs/session.php';
+require_once __DIR__ . '/../includs/ip_client.php';
+demarrerSession();
 
 //  En-têtes sécurité 
 header('X-Content-Type-Options: nosniff');
@@ -34,15 +27,29 @@ function requireLogin(string $redirect = '/index.php'): void {
         header("Location: $redirect"); exit();
     }
 
-    // Verrouillage IP
-    if (isset($_SESSION['ip']) && $_SESSION['ip'] !== $_SERVER['REMOTE_ADDR']) {
-        if (isset($GLOBALS['pdo']) && $GLOBALS['pdo'] instanceof PDO) {
-            require_once __DIR__ . '/../includs/audit.php';
-            auditInfo($GLOBALS['pdo'], ['category' => 'auth', 'action' => 'session_ip_changee', 'result' => 'refus',
-                'meta' => ['ip_precedente' => tronquerIp($_SESSION['ip'])]]);
+    // Verrouillage par reseau (/48 IPv6, /24 IPv4) : une IP qui change dans le meme reseau (IPv6 a extensions
+    // temporaires, Wi-Fi vers 4G du meme operateur) est acceptee, un autre reseau est refuse.
+    $ipCourante = ipClient();
+    if (isset($_SESSION['ip'])) {
+        $etat = reseauSessionCompatible((string) $_SESSION['ip'], $ipCourante);
+        if ($etat === 'different') {
+            if (isset($GLOBALS['pdo']) && $GLOBALS['pdo'] instanceof PDO) {
+                require_once __DIR__ . '/../includs/audit.php';
+                auditInfo($GLOBALS['pdo'], ['category' => 'auth', 'action' => 'session_ip_changee', 'result' => 'refus',
+                    'meta' => ['ip_precedente' => prefixeReseau($_SESSION['ip']), 'ip_actuelle' => prefixeReseau($ipCourante)]]);
+            }
+            session_destroy();
+            header("Location: {$redirect}?error=session"); exit();
         }
-        session_destroy();
-        header("Location: {$redirect}?error=session"); exit();
+        if ($etat === 'meme_reseau') {
+            session_regenerate_id(true);
+            $_SESSION['regenerated'] = time();
+            if (isset($GLOBALS['pdo']) && $GLOBALS['pdo'] instanceof PDO) {
+                require_once __DIR__ . '/../includs/audit.php';
+                auditInfo($GLOBALS['pdo'], ['category' => 'auth', 'action' => 'session_ip_meme_reseau', 'result' => 'ok',
+                    'meta' => ['reseau' => prefixeReseau($ipCourante)]]);
+            }
+        }
     }
 
     // Expiration 2h
@@ -58,7 +65,7 @@ function requireLogin(string $redirect = '/index.php'): void {
     }
 
     $_SESSION['login_time'] = time();
-    $_SESSION['ip']         = $_SERVER['REMOTE_ADDR'];
+    $_SESSION['ip']         = $ipCourante;
 }
 
 //  Vérification de rôle 

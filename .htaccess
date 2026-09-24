@@ -29,7 +29,7 @@ RewriteRule ^produit/([a-z0-9\-]+)/([A-Za-z0-9_\-]+)/?$ produit.php?slug=$1&toke
 </IfModule>
 
 # Fichiers internes jamais servis (schemas, notes, dependances, outils locaux)
-<FilesMatch "(\.(sql|md|lock)|^composer\.json|^\.env.*)$">
+<FilesMatch "(\.(sql|md|lock|sh|log|bak|dist|gz|zip)|^composer\.json|^\.env.*|^\.git.*)$">
     Require all denied
 </FilesMatch>
-RedirectMatch 404 ^/(dev|\.kilo|migrations|storage|tools)(/|$)
+RedirectMatch 404 ^/(dev|\.kilo|\.git|migrations|storage|tools|app_logs)(/|$)

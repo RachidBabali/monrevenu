@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/session.php';
 /**
  * Endpoint AJAX : régénère le code de vérification WhatsApp de l'utilisateur connecté.
  * Appelé en POST par sections/banniere_verification_whatsapp.php.
@@ -8,7 +9,7 @@
  */
 
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+    demarrerSession();
 }
 header('Content-Type: application/json');
 

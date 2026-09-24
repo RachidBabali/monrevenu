@@ -4,6 +4,7 @@
  * Les identifiants sont lus depuis .env (jamais codés en dur ici).
  */
 
+require_once __DIR__ . '/../includs/journal_erreurs.php';
 require_once __DIR__ . '/../includs/env_loader.php';
 
 $host     = env('DB_HOST', 'localhost');

@@ -14,6 +14,7 @@ require_once '../includs/ui.php';
 require_once '../includs/audit.php';
 require_once '../includs/incident.php';
 require_once '../includs/argent.php';
+require_once '../includs/tolerance_sql.php';
 
 
 // Sécurité d'accès strict à l'administrateur
@@ -511,24 +512,24 @@ if (isset($_SESSION['flash_message']) || isset($_SESSION['flash_error'])) {
 // --- RÉCUPÉRATION DES DONNÉES DISPONIBLES ---
 // Chaque liste porte le marche de la ligne : un montant n'est jamais affiche sans sa devise,
 // et deux devises ne sont jamais additionnees (voir includs/config_marche.php).
-$produits = $pdo->query(
+$produits = lignesTolerantes($pdo, 'produits',
     "SELECT vp.*, proprio.pays_code, proprio.phone
      FROM vendeur_produits vp LEFT JOIN users_monrevenu proprio ON proprio.id = vp.vendeur_id
      ORDER BY vp.id DESC LIMIT 10"
-)->fetchAll(PDO::FETCH_ASSOC);
+);
 foreach ($produits as &$p) { $p['marche'] = marcheDeDevise($p['devise'] ?? null) ?? marcheDeCompte($p); }
 unset($p);
-$utilisateurs = $pdo->query("SELECT id, fullname, role FROM users_monrevenu ORDER BY fullname ASC")->fetchAll(PDO::FETCH_ASSOC);
+$utilisateurs = lignesTolerantes($pdo, 'utilisateurs', "SELECT id, fullname, role FROM users_monrevenu ORDER BY fullname ASC");
 
-$tous_utilisateurs = $pdo->query(
+$tous_utilisateurs = lignesTolerantes($pdo, 'tous_utilisateurs',
     "SELECT id, fullname, email, phone, pays_code, role, balance, is_active, status, created_at, geo_score, geo_raisons
      FROM users_monrevenu
      ORDER BY created_at DESC"
-)->fetchAll(PDO::FETCH_ASSOC);
+);
 foreach ($tous_utilisateurs as &$u) { $u['marche'] = marcheDeCompte($u); }
 unset($u);
 
-$ventes = $pdo->query(
+$ventes = lignesTolerantes($pdo, 'ventes',
     "SELECT v.id, v.quantite, v.prix_unitaire, v.commission_earn, v.commission_creditee,
             v.nom_client, v.telephone_client, v.adresse_client, v.statut, v.created_at,
             v.devise, p.nom_produit AS produit_nom,
@@ -538,36 +539,36 @@ $ventes = $pdo->query(
      JOIN users_monrevenu u ON u.id = v.vendeur_id
      ORDER BY v.created_at DESC
      LIMIT 30"
-)->fetchAll(PDO::FETCH_ASSOC);
+);
 foreach ($ventes as &$v) { $v['marche'] = marcheDeDevise($v['devise'] ?? null) ?? marcheDeCompte($v); }
 unset($v);
 
-$retraits = $pdo->query(
+$retraits = lignesTolerantes($pdo, 'retraits',
     "SELECT w.id, w.amount, w.status, w.method, w.note, w.created_at, w.devise, w.operateur, w.numero_paiement,
             u.fullname AS utilisateur_nom, u.pays_code, u.phone
      FROM withdrawals w
      JOIN users_monrevenu u ON u.id = w.user_id
      ORDER BY w.created_at DESC
      LIMIT 30"
-)->fetchAll(PDO::FETCH_ASSOC);
+);
 foreach ($retraits as &$r) { $r['marche'] = marcheDeDevise($r['devise'] ?? null) ?? marcheDeCompte($r); }
 unset($r);
 
-$historique = $pdo->query(
+$historique = lignesTolerantes($pdo, 'historique',
     "SELECT t.id, t.type, t.amount, t.reference, t.status, t.description, t.created_at, t.devise,
             u.fullname AS utilisateur_nom, u.pays_code, u.phone
      FROM transactions_monrevenu t
      JOIN users_monrevenu u ON u.id = t.user_id
      ORDER BY t.created_at DESC
      LIMIT 50"
-)->fetchAll(PDO::FETCH_ASSOC);
+);
 foreach ($historique as &$h) { $h['marche'] = marcheDeDevise($h['devise'] ?? null) ?? marcheDeCompte($h); }
 unset($h);
 
 // --- STOCK REVENDEURS ---
-$produits_catalogue_complet = $pdo->query("SELECT id, nom_produit, image, prix_vente, commission_fixe FROM produits_stock ORDER BY nom_produit ASC")->fetchAll(PDO::FETCH_ASSOC);
+$produits_catalogue_complet = lignesTolerantes($pdo, 'produits_catalogue_complet', "SELECT id, nom_produit, image, prix_vente, commission_fixe FROM produits_stock ORDER BY nom_produit ASC");
 
-$stocks_tous_utilisateurs = $pdo->query(
+$stocks_tous_utilisateurs = lignesTolerantes($pdo, 'stocks_tous_utilisateurs',
     "SELECT sr.user_id, sr.produit_id, sr.quantite_disponible,
             u.fullname, vp.nom_produit, vp.image,
             COALESCE((SELECT SUM(vs.quantite) FROM ventes_stock vs WHERE vs.user_id = sr.user_id AND vs.produit_id = sr.produit_id), 0) AS quantite_vendue
@@ -575,9 +576,9 @@ $stocks_tous_utilisateurs = $pdo->query(
      JOIN users_monrevenu u ON u.id = sr.user_id
      JOIN produits_stock vp ON vp.id = sr.produit_id
      ORDER BY u.fullname ASC, vp.nom_produit ASC"
-)->fetchAll(PDO::FETCH_ASSOC);
+);
 
-$ventes_stock_en_attente = $pdo->query(
+$ventes_stock_en_attente = lignesTolerantes($pdo, 'ventes_stock_en_attente',
     "SELECT vs.id, vs.reference, vs.montant_total, vs.commission_montant,
             u.fullname, vp.nom_produit, vp.image
      FROM ventes_stock vs
@@ -585,7 +586,7 @@ $ventes_stock_en_attente = $pdo->query(
      JOIN produits_stock vp ON vp.id = vs.produit_id
      WHERE vs.commission_envoyee = 0
      ORDER BY vs.created_at ASC"
-)->fetchAll(PDO::FETCH_ASSOC);
+);
 
 $libelles_type_tx = [
     'depot'         => 'Dépôt',

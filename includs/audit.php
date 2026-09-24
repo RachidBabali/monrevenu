@@ -55,16 +55,8 @@ if (!function_exists('auditRequestId')) {
 
     function tronquerIp(?string $ip): ?string
     {
-        if (!$ip) return null;
-        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-            $p = explode('.', $ip);
-            return $p[0] . '.' . $p[1] . '.' . $p[2] . '.0/24';
-        }
-        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
-            $bin = inet_pton($ip);
-            return inet_ntop(substr($bin, 0, 6) . str_repeat("\0", 10)) . '/48';
-        }
-        return null;
+        require_once __DIR__ . '/ip_client.php';
+        return prefixeReseau($ip);
     }
 
     /** Retire recursivement les champs interdits et masque telephone et e-mail. */
@@ -127,7 +119,8 @@ if (!function_exists('auditRequestId')) {
             if ($v === null || $v === []) return null;
             return json_encode(auditNettoyer($v), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PARTIAL_OUTPUT_ON_ERROR);
         };
-        $ip = $_SERVER['REMOTE_ADDR'] ?? null;
+        require_once __DIR__ . '/ip_client.php';
+        $ip = ipClient() ?: null;
         $route = PHP_SAPI === 'cli' ? 'cli:' . basename($_SERVER['argv'][0] ?? '') : (parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: null);
         $ligne = [
             'occurred_at' => (new DateTimeImmutable('now'))->format('Y-m-d H:i:s.v'),

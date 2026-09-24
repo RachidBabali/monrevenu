@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__ . '/../includs/session.php';
+demarrerSession();
 
 // 1. Connexion à la base de données (fichier centralisé du projet)
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';

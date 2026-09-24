@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/session.php';
 /**
  * register_handler.php
  * Inscription MonRevenu avec vérification par email
@@ -6,7 +7,7 @@
  * Aucun système de parrainage.
  */
 
-session_start();
+demarrerSession();
 
 require_once __DIR__ . '/../basse_de_donner/monrevenu_bd.php';
 require_once __DIR__ . '/email_sender.php';

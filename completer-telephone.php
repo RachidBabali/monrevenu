@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includs/session.php';
 /**
  * completer-telephone.php
  * Saisie manuelle du numéro pour les comptes créés via Google Sign-In sans téléphone vérifié.
@@ -7,7 +8,7 @@
  * vérification par WhatsApp, qui enregistre aussi le numéro du compte.
  */
 
-session_start();
+demarrerSession();
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
 require_once __DIR__ . '/includs/audit.php';
 require_once __DIR__ . '/includs/incident.php';

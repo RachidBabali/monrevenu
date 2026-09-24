@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__ . '/includs/session.php';
+demarrerSession();
 
 // ============================================================
 // 1. CONNEXION À LA BASE DE DONNÉES

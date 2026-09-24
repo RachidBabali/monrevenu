@@ -1,10 +1,11 @@
 <?php
+require_once __DIR__ . '/../includs/session.php';
 /**
  * commercant/produit.php : creation et modification d'un produit de commercant.
  * Un produit approuve dont le nom, le prix ou l'image change repasse en attente de validation.
  * L'image est controlee et re-encodee par includs/image_produit.php.
  */
-if (session_status() === PHP_SESSION_NONE) session_start();
+if (session_status() === PHP_SESSION_NONE) demarrerSession();
 require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/audit.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/incident.php';
