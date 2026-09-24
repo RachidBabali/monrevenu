@@ -21,7 +21,7 @@
               </td>
               <td data-label="Affilié"><?= e($v['vendeur_nom']) ?></td>
               <td data-label="Qté" class="col-montant chiffres"><?= (int) $v['quantite'] ?></td>
-              <td data-label="Commission" class="col-montant"><?= montant($v['commission_earn']) ?></td>
+              <td data-label="Commission" class="col-montant"><?= montant($v['commission_earn'], false, '', $v['marche']) ?></td>
               <td data-label="Statut"><?= badgeStatut($v['statut'], 'commission') ?></td>
               <td data-label="">
                 <form action="" method="POST" class="flex items-center gap-1.5">
@@ -40,7 +40,7 @@
                     <input type="hidden" name="csrf_token" value="<?= e($csrf_token) ?>">
                     <input type="hidden" name="vente_id" value="<?= (int) $v['id'] ?>">
                     <button type="submit" name="action_envoyer_commission" class="btn btn-sm btn-primaire"
-                            onclick="return confirm('Envoyer la commission de <?= e(formaterMontant($v['commission_earn'])) ?> à <?= e(addslashes($v['vendeur_nom'])) ?> ?');"><?= ico('hand-coins', 'ico-16') ?>Envoyer la commission</button>
+                            onclick="return confirm('Envoyer la commission de <?= e(formaterMontant($v['commission_earn'], false, true, $v['marche'])) ?> à <?= e(addslashes($v['vendeur_nom'])) ?> ?');"><?= ico('hand-coins', 'ico-16') ?>Envoyer la commission</button>
                   </form>
                 <?php endif; ?>
               </td>

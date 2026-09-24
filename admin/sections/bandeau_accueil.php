@@ -22,10 +22,18 @@
       <dd class="indicateur-valeur"><?= (int) $nb_ventes_attente ?></dd>
       <dd class="indicateur-note">à traiter, sur les 30 dernières</dd>
     </div>
+    <?php if (!$total_commissions_par_marche): ?>
     <div class="indicateur">
       <dt class="indicateur-libelle">Commissions validées</dt>
-      <dd class="indicateur-valeur"><?= formaterMontant($total_commissions) ?></dd>
+      <dd class="indicateur-valeur"><?= formaterMontant(0) ?></dd>
       <dd class="indicateur-note">sur les 30 dernières ventes</dd>
     </div>
+    <?php else: foreach ($total_commissions_par_marche as $marcheCommission => $totalCommission): ?>
+    <div class="indicateur">
+      <dt class="indicateur-libelle">Commissions validées (<?= e($marcheCommission) ?>)</dt>
+      <dd class="indicateur-valeur"><?= formaterMontant($totalCommission, false, true, $marcheCommission) ?></dd>
+      <dd class="indicateur-note">sur les 30 dernières ventes</dd>
+    </div>
+    <?php endforeach; endif; ?>
   </dl>
 </section>

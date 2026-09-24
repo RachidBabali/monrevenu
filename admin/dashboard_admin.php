@@ -137,13 +137,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($user_id > 0 && $montant > 0) {
             $executer(function () use ($pdo, $admin, $user_id, $montant, $description, &$message, &$apresCommit) {
-                mouvementSolde($pdo, $user_id, $montant, 'commission', 'COMM-' . bin2hex(random_bytes(8)), 'complete', $description,
+                $mouvement = mouvementSolde($pdo, $user_id, $montant, 'commission', 'COMM-' . bin2hex(random_bytes(8)), 'complete', $description,
                     'credit_manuel_admin', ['motif' => $description], (int) $admin['id']);
+                $marche_cible = marcheDeDevise($mouvement['devise']) ?? MARCHE_DEFAUT;
                 require_once __DIR__ . '/../includs/notifications.php';
-                $texte = "Une commission de " . number_format($montant, 0, ',', ' ') . " FCFA vous a été créditée. Motif : " . $description;
+                $texte = "Une commission de " . formaterMontant($montant, false, true, $marche_cible) . " vous a été créditée. Motif : " . $description;
                 $apresCommit[] = fn() => envoyerNotification($pdo, $user_id, $texte, 'Commission créditée', '/page/portefeuille.php',
                     'MonRevenu', ['type' => 'argent']);
-                $message = "La commission de " . $montant . " FCFA a bien été créditée à l'utilisateur.";
+                $message = "La commission de " . formaterMontant($montant, false, true, $marche_cible) . " a bien été créditée à l'utilisateur.";
             }, "Échec du crédit de commission. Aucune somme n'a été créditée.");
         } else {
             $error = "Choisissez un utilisateur et un montant positif.";
@@ -178,11 +179,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 auditCritique($pdo, ['category' => 'commande', 'action' => 'commande_statut', 'entity_type' => 'commande', 'entity_id' => $vente_id,
                     'before' => ['statut' => $vente['statut']], 'after' => ['statut' => $nouveau_statut]]);
 
+                $marche_vente = marcheDeDevise($vente['devise'] ?? null) ?? MARCHE_DEFAUT;
                 $libelles_notif_statut = [
                     'en_attente' => "Votre vente #" . $vente_id . " est en attente de traitement.",
                     'contacte'   => "Le client de votre vente #" . $vente_id . " a été contacté. En attente de confirmation.",
                     'colis_recu' => "Le client de votre vente #" . $vente_id . " a bien reçu son colis. Le paiement de votre commission suit très vite.",
-                    'validee'    => "Vente #" . $vente_id . " validée. " . number_format((float) $vente['commission_earn'], 0, ',', ' ') . " FCFA ont été crédités sur votre solde.",
+                    'validee'    => "Vente #" . $vente_id . " validée. " . formaterMontant($vente['commission_earn'], false, true, $marche_vente) . " ont été crédités sur votre solde.",
                     'annulee'    => "Votre vente #" . $vente_id . " a été annulée.",
                 ];
                 require_once __DIR__ . '/../includs/notifications.php';
@@ -228,10 +230,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'before' => ['statut' => $vente['statut']], 'after' => ['statut' => 'validee']]);
 
                 require_once __DIR__ . '/../includs/notifications.php';
+                $marche_vente = marcheDeDevise($vente['devise'] ?? null) ?? MARCHE_DEFAUT;
                 $apresCommit[] = fn() => envoyerNotification(
                     $pdo,
                     (int) $vente['vendeur_id'],
-                    "Commission envoyée. " . number_format((float) $vente['commission_earn'], 0, ',', ' ') . " FCFA ont été crédités sur votre solde pour la vente #" . $vente_id . ".",
+                    "Commission envoyée. " . formaterMontant($vente['commission_earn'], false, true, $marche_vente) . " ont été crédités sur votre solde pour la vente #" . $vente_id . ".",
                     'Commission créditée',
                     '/page/historique.php',
                     'MonRevenu',
@@ -263,7 +266,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'meta' => ['user_id' => (int) $w['user_id'], 'montant' => $w['amount'], 'reference' => 'RETRAIT-' . $withdrawal_id]]);
 
                 require_once __DIR__ . '/../includs/notifications.php';
-                $texte = "Votre retrait de " . number_format((float) $w['amount'], 0, ',', ' ') . " FCFA a été envoyé.";
+                $marche_retrait = marcheDeDevise($w['devise'] ?? null) ?? MARCHE_DEFAUT;
+                $texte = "Votre retrait de " . formaterMontant($w['amount'], false, true, $marche_retrait) . " a été envoyé.";
                 $destinataire = (int) $w['user_id'];
                 $apresCommit[] = fn() => envoyerNotification($pdo, $destinataire, $texte, 'Retrait payé', '/page/portefeuille.php',
                     'MonRevenu', ['type' => 'retrait']);
@@ -295,7 +299,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'meta' => ['user_id' => (int) $w['user_id'], 'montant' => $w['amount'], 'reference' => 'RETRAIT-' . $withdrawal_id]]);
 
                 require_once __DIR__ . '/../includs/notifications.php';
-                $texte = "Votre retrait de " . number_format((float) $w['amount'], 0, ',', ' ') . " FCFA a été refusé. Le montant est recrédité sur votre solde.";
+                $marche_retrait = marcheDeDevise($w['devise'] ?? null) ?? MARCHE_DEFAUT;
+                $texte = "Votre retrait de " . formaterMontant($w['amount'], false, true, $marche_retrait) . " a été refusé. Le montant est recrédité sur votre solde.";
                 $destinataire = (int) $w['user_id'];
                 $apresCommit[] = fn() => envoyerNotification($pdo, $destinataire, $texte, 'Retrait refusé', '/page/portefeuille.php',
                     'MonRevenu', ['type' => 'retrait']);
@@ -691,10 +696,12 @@ $couleurs_statut_user = [
 $nb_produits       = count($produits);
 $nb_utilisateurs   = count($utilisateurs);
 $nb_ventes_attente = count(array_filter($ventes, fn($v) => $v['statut'] === 'en_attente'));
-$total_commissions = array_sum(array_map(
-    fn($v) => $v['statut'] === 'validee' ? (float) $v['commission_earn'] : 0,
-    $ventes
-));
+// Jamais un seul total : une commission KMF ne s'additionne pas a une commission XOF.
+$total_commissions_par_marche = [];
+foreach ($ventes as $v) {
+    if ($v['statut'] !== 'validee') continue;
+    $total_commissions_par_marche[$v['marche']] = ($total_commissions_par_marche[$v['marche']] ?? 0) + (float) $v['commission_earn'];
+}
 
 $repartition_roles = array_count_values(array_column($utilisateurs, 'role'));
 $libelles_roles = [

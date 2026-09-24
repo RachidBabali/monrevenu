@@ -18,7 +18,7 @@
               <td data-label="Référence" class="font-mono text-xs text-text-2"><?= e($h['reference'] ?: 'Aucune') ?></td>
               <td data-label="Description" class="max-w-[260px] text-text-2"><?= e(nettoyerPictogrammes($h['description'] ?? '')) ?></td>
               <td data-label="Statut"><?= badgeStatut($h['status'], 'transaction') ?></td>
-              <td data-label="Montant" class="col-montant"><?= montant($h['amount']) ?></td>
+              <td data-label="Montant" class="col-montant"><?= montant($h['amount'], false, '', $h['marche']) ?></td>
             </tr>
           <?php endforeach; endif; ?>
         </tbody>

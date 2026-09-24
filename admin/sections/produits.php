@@ -61,7 +61,7 @@
                   <span class="min-w-0"><span class="block truncate font-medium"><?= e($p['nom_produit']) ?></span><span class="block font-mono text-xs text-text-3">#<?= (int) $p['id'] ?></span></span>
                 </span>
               </td>
-              <td data-label="Prix" class="col-montant"><?= montant($p['prix_vente']) ?></td>
+              <td data-label="Prix" class="col-montant"><?= montant($p['prix_vente'], false, '', $p['marche']) ?></td>
               <td data-label="Commission %" class="col-montant chiffres"><?= e((string) $p['commission_pct']) ?> %</td>
               <td data-label="">
                 <span class="flex justify-end gap-1.5">

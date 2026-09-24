@@ -19,7 +19,7 @@
               <td data-label=""><span class="font-mono font-medium">RETRAIT-<?= (int) $r['id'] ?></span><span class="chiffres block text-xs text-text-3"><?= e(dateFr($r['created_at'], 'heure')) ?></span></td>
               <td data-label="Membre"><?= e($r['utilisateur_nom']) ?></td>
               <td data-label="Paiement vers"><span class="block"><?= e($r['method'] ?: 'Non précisé') ?></span><?php if (!empty($r['note'])): ?><span class="block font-mono text-xs text-text-2"><?= e(nettoyerPictogrammes($r['note'])) ?></span><?php endif; ?></td>
-              <td data-label="Montant" class="col-montant"><?= montant($r['amount']) ?></td>
+              <td data-label="Montant" class="col-montant"><?= montant($r['amount'], false, '', $r['marche']) ?></td>
               <td data-label="Statut"><?= badgeStatut($statut_norme, 'retrait') ?></td>
               <td data-label="">
                 <?php if ($en_attente_r): ?>
@@ -28,7 +28,7 @@
                       <input type="hidden" name="csrf_token" value="<?= e($csrf_token) ?>">
                       <input type="hidden" name="withdrawal_id" value="<?= (int) $r['id'] ?>">
                       <button type="submit" name="action_valider_retrait" class="btn btn-sm btn-primaire"
-                              onclick="return confirm('Confirmez-vous avoir envoyé <?= e(formaterMontant($r['amount'])) ?> à <?= e(addslashes($r['utilisateur_nom'])) ?> via <?= e(addslashes((string) $r['method'])) ?> ?');">Marquer payé</button>
+                              onclick="return confirm('Confirmez-vous avoir envoyé <?= e(formaterMontant($r['amount'], false, true, $r['marche'])) ?> à <?= e(addslashes($r['utilisateur_nom'])) ?> via <?= e(addslashes((string) $r['method'])) ?> ?');">Marquer payé</button>
                     </form>
                     <form action="" method="POST">
                       <input type="hidden" name="csrf_token" value="<?= e($csrf_token) ?>">
