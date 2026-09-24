@@ -75,13 +75,13 @@ function commercantPeutPublier(array $profil): bool
 }
 
 /**
- * Dette de commission : commissions des ventes validees et creditees sur les produits du commercant,
+ * Dette envers la plateforme : supplement complet (part affilie + part plateforme, lu dans le snapshot ; commission de l'affilie pour les commandes anterieures) des ventes validees et creditees sur les produits du commercant,
  * moins les reglements enregistres. Montants en chaines decimales.
  */
 function detteCommercant(PDO $pdo, int $commercantId): array
 {
     $st = $pdo->prepare(
-        "SELECT COALESCE(SUM(v.commission_earn), 0) FROM vendeur_ventes v
+        "SELECT COALESCE(SUM(COALESCE(CAST(JSON_UNQUOTE(JSON_EXTRACT(v.calcul_snapshot, '$.resultat.supplement')) AS DECIMAL(15,2)) * v.quantite, v.commission_earn)), 0) FROM vendeur_ventes v
          JOIN vendeur_produits p ON p.id = v.produit_id
          WHERE p.vendeur_id = ? AND v.statut = 'validee' AND v.commission_creditee = 1"
     );
