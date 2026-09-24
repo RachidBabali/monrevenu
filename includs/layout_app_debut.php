@@ -105,6 +105,15 @@ include __DIR__ . '/head.php';
   </header>
 
   <main id="contenu" class="conteneur flex flex-col gap-6 py-4 lg:py-6">
+    <?php // Invitation a activer les notifications : affichee par assets/js/notifications.js seulement si l'appareil le permet ?>
+    <section class="alerte alerte-info hidden flex-wrap items-center gap-3" data-invite-push aria-label="Activer les notifications">
+      <?= ico('bell') ?>
+      <span class="min-w-0 flex-1 text-sm">Activez les notifications pour être prévenu tout de suite d'une commande, d'une commission ou d'un retrait.</span>
+      <span class="flex gap-2">
+        <button type="button" class="btn btn-sm btn-primaire" data-invite-activer>Activer</button>
+        <button type="button" class="btn btn-sm btn-discret" data-invite-plus-tard>Plus tard</button>
+      </span>
+    </section>
     <?php if (!empty($message_success)): ?>
       <p class="alerte alerte-succes" role="status"><?= ico('circle-check') ?><span><?= e($message_success) ?></span></p>
     <?php endif; ?>

@@ -53,6 +53,12 @@ self.addEventListener('push', (event) => {
         : self.navigator.clearAppBadge().catch(() => {})
     );
   }
+  // Les onglets ouverts rafraichissent la cloche tout de suite, sans attendre leur prochain cycle
+  travaux.push(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((liste) => {
+      liste.forEach((client) => client.postMessage({ type: 'push-recu' }));
+    })
+  );
   event.waitUntil(Promise.all(travaux));
 });
 

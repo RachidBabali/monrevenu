@@ -61,7 +61,10 @@ if (!function_exists('envoyerNotificationPush')) {
                     'publicKey'  => $publicKey,
                     'privateKey' => $privateKey,
                 ],
-            ]);
+            // Temps reel : urgence haute (le service de push reveille l'appareil sans attendre), duree de vie
+            // courte (une alerte vieille d'une heure n'a plus d'interet) et delai maximal court pour ne pas
+            // retenir la requete de l'utilisateur si le service de push repond lentement.
+            ], ['TTL' => 3600, 'urgency' => 'high'], 8);
         } catch (\Throwable $e) {
             error_log('envoyerNotificationPush (init WebPush, clés VAPID invalides ?) : ' . $e->getMessage());
             return;

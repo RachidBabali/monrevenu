@@ -200,11 +200,55 @@
 
     rafraichir(cloche);
     proposerPush(cloche);
-    setInterval(function () { rafraichir(cloche); }, 30000);
+    // Cloche a jour meme sans push : cycle de 20 s tant que l'onglet est visible, et des le retour dessus
+    setInterval(function () { if (!document.hidden) rafraichir(cloche); }, 20000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) rafraichir(cloche); });
+    // Le service worker previent l'onglet a chaque push recu : mise a jour immediate
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', function (e) {
+        if (e.data && e.data.type === 'push-recu') rafraichir(cloche);
+      });
+    }
   });
 
   document.addEventListener('click', fermerTout);
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') fermerTout(); });
+
+  // ---------------------------------------------------------------- Invitation visible a activer les notifications
+  // Bandeau en haut de chaque page connectee, seulement si l'appareil peut recevoir des notifications, ne les a
+  // pas encore refusees ni activees. Ecarte pour 7 jours par l'utilisateur ; l'abonnement part d'un clic.
+  (function () {
+    var invite = document.querySelector('[data-invite-push]');
+    if (!invite || !vapidPublicKey) return;
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
+    if (Notification.permission !== 'default') return;
+    var CLE = 'mr_push_invite_ecartee';
+    try { if (Date.now() - Number(localStorage.getItem(CLE) || 0) < 7 * 86400000) return; } catch (e) {}
+    navigator.serviceWorker.ready.then(function (reg) { return reg.pushManager.getSubscription(); }).then(function (abo) {
+      if (!abo) invite.classList.remove('hidden');
+    }).catch(function () {});
+    invite.querySelector('[data-invite-activer]').addEventListener('click', function () {
+      Notification.requestPermission().then(function (permission) {
+        if (permission !== 'granted') { invite.classList.add('hidden'); return; }
+        return navigator.serviceWorker.ready.then(function (reg) {
+          return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) });
+        }).then(function (abo) {
+          var corps = abo.toJSON(); corps.action = 'subscribe'; corps.csrf_token = csrfToken;
+          return fetch('/includs/push_subscribe.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corps) });
+        }).then(function (r) {
+          if (!r.ok) throw new Error();
+          invite.classList.add('hidden');
+          if (window.MR) window.MR.toast('Notifications activées sur cet appareil.');
+        });
+      }).catch(function () {
+        if (window.MR) window.MR.toast("Les notifications n'ont pas pu être activées. Vérifiez les autorisations du navigateur.");
+      });
+    });
+    invite.querySelector('[data-invite-plus-tard]').addEventListener('click', function () {
+      invite.classList.add('hidden');
+      try { localStorage.setItem(CLE, String(Date.now())); } catch (e) {}
+    });
+  })();
 
   // ---------------------------------------------------------------- Bloc d'activation des notifications
   // Etats : non pris en charge, indisponible (pas de cle serveur), non demande, autorise, refuse.
