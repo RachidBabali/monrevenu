@@ -24,6 +24,15 @@ RewriteRule ^produit/([a-z0-9\-]+)/([A-Za-z0-9_\-]+)/?$ produit.php?slug=$1&toke
     # geolocalisation ni paiement demande cote client).
     Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
 
+    # HSTS : force le navigateur a n'utiliser que HTTPS pour ce domaine.
+    # Valeur prudente : 6 mois, sans includeSubDomains (pour ne pas imposer HTTPS a un
+    # sous-domaine qui ne serait pas pret) ni preload (irreversible). Une fois valide en
+    # production, on peut monter a max-age=31536000 (1 an), puis ajouter includeSubDomains
+    # si TOUS les sous-domaines (dont cdn.monrevenu.xyz) sont bien en HTTPS.
+    # A ne PAS activer aussi cote Cloudflare (SSL/TLS > Edge Certificates > HSTS) pour eviter
+    # un doublon : une seule source suffit.
+    Header always set Strict-Transport-Security "max-age=15768000"
+
     # Masquage signature PHP
     Header unset X-Powered-By
 </IfModule>
