@@ -53,13 +53,15 @@ if (!function_exists('pageErreur500')) {
             header('Content-Type: text/html; charset=UTF-8');
             header('Cache-Control: no-store');
         }
+        // Repart d'une page vide quand un tampon de sortie est actif : sinon le message s'insere dans une page a moitie affichee.
+        while (ob_get_level() > 0) @ob_end_clean();
         echo '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
             . '<title>Erreur temporaire</title>'
-            . '<style>:root{color-scheme:light dark}body{font-family:system-ui,sans-serif;max-width:32rem;margin:15vh auto;padding:0 1rem;background:#fff;color:#1f2937}a{color:#1e3a8a}'
-            . '@media(prefers-color-scheme:dark){body{background:#0f141c;color:#e6eaf0}a{color:#8fb0f0}}</style></head><body>'
-            . '<h1 style="font-size:1.25rem">Une erreur est survenue</h1>'
+            . '<style>.e500{font-family:system-ui,sans-serif;max-width:32rem;margin:15vh auto;padding:1rem;background:#fff;color:#1f2937}.e500 a{color:#1e3a8a}'
+            . '@media(prefers-color-scheme:dark){.e500{background:#0f141c;color:#e6eaf0}.e500 a{color:#8fb0f0}}</style></head><body>'
+            . '<div class="e500"><h1 style="font-size:1.25rem">Une erreur est survenue</h1>'
             . '<p>Nous n\'avons pas pu afficher cette page. Réessayez dans un instant ; si le problème continue, contactez le support.</p>'
-            . '<p><a href="/">Retour à l\'accueil</a></p></body></html>';
+            . '<p><a href="/">Retour à l\'accueil</a></p></div></body></html>';
     }
 }
 
