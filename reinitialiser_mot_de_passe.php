@@ -7,6 +7,8 @@ require_once __DIR__ . '/includs/audit.php';
 require_once __DIR__ . '/includs/incident.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/email_sender.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/mot_de_passe.php';
+require_once __DIR__ . '/includs/ip_client.php';
+require_once __DIR__ . '/includs/reset_throttle.php';
 
 $user_id = $_SESSION['reset_password_user_id'] ?? null;
 if (!$user_id) {
@@ -38,6 +40,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_renvoyer'])) {
         $error = 'Votre session a expiré. Rechargez la page puis recommencez.';
         auditCsrf($pdo, 'reinitialisation_renvoi');
     } else {
+        // Anti-abus : meme compteur d'envois par IP que la demande initiale (includs/reset_throttle.php),
+        // pour qu'un attaquant ne puisse pas contourner le plafond en alternant les deux pages.
+        $ip_reset = ipClient();
+        $throttle_reset = resetThrottleEtat($pdo, $ip_reset);
+        if ($throttle_reset['bloque']) {
+            $error = "Trop de demandes de code depuis votre connexion. Réessayez dans " . $throttle_reset['reste_min'] . " minute(s).";
+            auditInfo($pdo, ['category' => 'auth', 'action' => 'reinitialisation_renvoi_bloque', 'result' => 'refus', 'actor_id' => null, 'actor_role' => null]);
+        } else {
+        resetThrottleEnregistrer($pdo, $ip_reset);
         $nouveau_code_email = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         $nouveau_hash = password_hash($nouveau_code_email, PASSWORD_BCRYPT);
         $nouvelle_expiration = date('Y-m-d H:i:s', strtotime('+10 minutes'));
@@ -58,6 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_renvoyer'])) {
             error_log('Erreur renvoi code reset pour ' . journalMasquerEmail($user['email']) . ' : ' . ($resultat['error'] ?? 'Erreur inconnue'));
             $error = "Impossible d'envoyer le code par email. Veuillez réessayer.";
         }
+        } // fin du bloc "non plafonne"
     }
 }
 

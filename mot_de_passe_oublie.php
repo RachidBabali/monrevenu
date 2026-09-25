@@ -6,6 +6,8 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/basse_de_donner/monrevenu_bd.php';
 require_once __DIR__ . '/includs/audit.php';
 require_once __DIR__ . '/includs/incident.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includs/email_sender.php';
+require_once __DIR__ . '/includs/ip_client.php';
+require_once __DIR__ . '/includs/reset_throttle.php';
 
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -25,6 +27,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_demander_reset
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $error = "Adresse email invalide. Exemple : nom@exemple.com.";
         } else {
+            // Anti-abus : plafonne les envois de code par IP (voir includs/reset_throttle.php).
+            // Le compteur s'incremente pour toute demande valide, que le compte existe ou non,
+            // afin de ne rien reveler sur l'existence de l'adresse.
+            $ip_reset = ipClient();
+            $throttle_reset = resetThrottleEtat($pdo, $ip_reset);
+            if ($throttle_reset['bloque']) {
+                $error = "Trop de demandes de code depuis votre connexion. Réessayez dans " . $throttle_reset['reste_min'] . " minute(s).";
+                auditInfo($pdo, ['category' => 'auth', 'action' => 'reinitialisation_demande_bloquee', 'result' => 'refus', 'actor_id' => null, 'actor_role' => null]);
+            } else {
+            resetThrottleEnregistrer($pdo, $ip_reset);
             try {
                 $stmt = $pdo->prepare("SELECT id, fullname, email, is_active, status FROM users_monrevenu WHERE email = ? LIMIT 1");
                 $stmt->execute([$email]);
@@ -63,6 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_demander_reset
                 $error = messageIncident(incidentEnregistrer($pdo, $e, 'mot_de_passe_oublie'),
                     "La demande a échoué pour une raison technique. Réessayez dans un instant.");
             }
+            } // fin du bloc "non plafonne"
         }
     }
 }
