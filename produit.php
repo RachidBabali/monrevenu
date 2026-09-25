@@ -229,7 +229,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_commander'])) 
                 }
 
                 $_SESSION['flash_message_commande'] = "Merci {$nom_client}, votre commande est enregistrée. Vous serez contacté sur WhatsApp au {$telephone_client} pour confirmer la livraison. Le paiement se fait à la livraison.";
-                header('Location: ' . $_SERVER['REQUEST_URI']);
+                // Recharger la meme page (Post/Redirect/Get) sans faire confiance a l'URI brute :
+                // une URI non interne (protocol-relative, anti-slash) retombe sur l'accueil.
+                $uriRetour = $_SERVER['REQUEST_URI'] ?? '';
+                if (!preg_match('#^/[^/\\\\]#', $uriRetour)) {
+                    $uriRetour = '/';
+                }
+                header('Location: ' . $uriRetour);
                 exit();
             } catch (PDOException $e) {
                 $error = messageIncident(incidentEnregistrer($pdo, $e, 'commande'),

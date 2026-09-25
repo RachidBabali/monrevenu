@@ -11,8 +11,13 @@ enregistrerVisitePays($pdo, $_SESSION['user_id'] ?? null);
 $marche_demandee = marcheValide($_GET['marche'] ?? null);
 if ($marche_demandee !== null) {
     setcookie('marche', $marche_demandee, ['expires' => time() + 31536000, 'path' => '/', 'samesite' => 'Lax']);
-    $sansParametre = preg_replace('/[?&]marche=[^&]*/', '', $_SERVER['REQUEST_URI']);
-    header('Location: ' . ($sansParametre !== '' ? $sansParametre : '/'));
+    $sansParametre = preg_replace('/[?&]marche=[^&]*/', '', $_SERVER['REQUEST_URI'] ?? '');
+    // Ne rediriger que vers un chemin interne : une URI qui ne commence pas par un seul "/"
+    // (protocol-relative //hote, anti-slash) retombe sur l'accueil.
+    if (!preg_match('#^/[^/\\\\]#', $sansParametre)) {
+        $sansParametre = '/';
+    }
+    header('Location: ' . $sansParametre);
     exit();
 }
 
