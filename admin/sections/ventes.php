@@ -40,7 +40,7 @@
                     <input type="hidden" name="csrf_token" value="<?= e($csrf_token) ?>">
                     <input type="hidden" name="vente_id" value="<?= (int) $v['id'] ?>">
                     <button type="submit" name="action_envoyer_commission" class="btn btn-sm btn-primaire"
-                            onclick="return confirm('Envoyer la commission de <?= e(formaterMontant($v['commission_earn'], false, true, $v['marche'])) ?> à <?= e(addslashes($v['vendeur_nom'])) ?> ?');"><?= ico('hand-coins', 'ico-16') ?>Envoyer la commission</button>
+                            data-confirm="Envoyer la commission de <?= e(formaterMontant($v['commission_earn'], false, true, $v['marche'])) ?> à <?= e($v['vendeur_nom']) ?> ?"><?= ico('hand-coins', 'ico-16') ?>Envoyer la commission</button>
                   </form>
                 <?php endif; ?>
               </td>

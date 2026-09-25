@@ -52,14 +52,14 @@
                       <input type="hidden" name="csrf_token" value="<?= e($csrf_token) ?>">
                       <input type="hidden" name="target_user_id" value="<?= (int) $u['id'] ?>">
                       <button type="submit" name="action_toggle_user_status" class="btn btn-sm btn-secondaire"
-                              onclick="return confirm('<?= $statut_u === 'suspended' ? 'Débloquer' : 'Bloquer' ?> le compte de <?= e(addslashes($u['fullname'])) ?> ?');"
+                              data-confirm="<?= $statut_u === 'suspended' ? 'Débloquer' : 'Bloquer' ?> le compte de <?= e($u['fullname']) ?> ?"
                               aria-label="<?= $statut_u === 'suspended' ? 'Débloquer' : 'Bloquer' ?> <?= e($u['fullname']) ?>"><?= $statut_u === 'suspended' ? 'Débloquer' : 'Bloquer' ?></button>
                     </form>
                     <form action="" method="POST">
                       <input type="hidden" name="csrf_token" value="<?= e($csrf_token) ?>">
                       <input type="hidden" name="target_user_id" value="<?= (int) $u['id'] ?>">
                       <button type="submit" name="action_delete_user" class="btn btn-sm btn-discret text-danger hover:bg-danger-soft"
-                              onclick="return confirm('Supprimer définitivement le compte de <?= e(addslashes($u['fullname'])) ?> ? Le compte ne pourra plus se connecter.');"
+                              data-confirm="Supprimer définitivement le compte de <?= e($u['fullname']) ?> ? Le compte ne pourra plus se connecter."
                               aria-label="Supprimer <?= e($u['fullname']) ?>">Supprimer</button>
                     </form>
                   </span>

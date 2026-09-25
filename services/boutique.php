@@ -231,7 +231,7 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
                 <input type="hidden" name="csrf_token" value="<?= e($_SESSION['csrf_token']) ?>">
                 <input type="hidden" name="produit_id" value="<?= $produit_id ?>">
                 <input type="hidden" name="action" value="signaler">
-                <button type="submit" class="lien text-text-3" onclick="return confirm('Signaler ce produit à l\'équipe MonRevenu ?');"><?= ico('circle-alert', 'ico-16') ?>Signaler ce produit</button>
+                <button type="submit" class="lien text-text-3" data-confirm="Signaler ce produit à l'équipe MonRevenu ?"><?= ico('circle-alert', 'ico-16') ?>Signaler ce produit</button>
               </form>
             </details>
             <?php else: ?>

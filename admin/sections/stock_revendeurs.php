@@ -24,7 +24,7 @@
                   <input type="hidden" name="csrf_token" value="<?= e($csrf_token) ?>">
                   <input type="hidden" name="vente_stock_id" value="<?= (int) $vs['id'] ?>">
                   <button type="submit" name="action_envoyer_commission_stock" class="btn btn-sm btn-primaire"
-                          onclick="return confirm('Envoyer <?= e(formaterMontant($vs['commission_montant'])) ?> à <?= e(addslashes($vs['fullname'])) ?> ?');"><?= ico('hand-coins', 'ico-16') ?>Envoyer</button>
+                          data-confirm="Envoyer <?= e(formaterMontant($vs['commission_montant'])) ?> à <?= e($vs['fullname']) ?> ?"><?= ico('hand-coins', 'ico-16') ?>Envoyer</button>
                 </form>
               </td>
             </tr>

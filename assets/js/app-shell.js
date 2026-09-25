@@ -128,10 +128,14 @@
   // Formulaires : etat "Envoi en cours" sans desactiver le bouton (son name doit partir dans le POST)
   document.addEventListener('submit', function (ev) {
     var form = ev.target;
+    var bouton = ev.submitter || form.querySelector('button[type="submit"],button:not([type])');
+    // Confirmation avant envoi (remplace les onclick="return confirm(...)", incompatibles avec une CSP sans 'unsafe-inline').
+    // Le message est porte par data-confirm sur le bouton (ou le formulaire).
+    var msgConfirm = (bouton && bouton.getAttribute('data-confirm')) || form.getAttribute('data-confirm');
+    if (msgConfirm && !window.confirm(msgConfirm)) { ev.preventDefault(); return; }
     if (form.dataset.envoye === '1') { ev.preventDefault(); return; }
     if (ev.defaultPrevented) return;
     form.dataset.envoye = '1';
-    var bouton = ev.submitter || form.querySelector('button[type="submit"],button:not([type])');
     if (bouton && bouton.classList.contains('btn')) {
       bouton.setAttribute('aria-busy', 'true');
       var libelle = bouton.querySelector('[data-libelle]');

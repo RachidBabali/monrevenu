@@ -11,7 +11,7 @@
         // sidebar et barre mobile peuvent être dans un ordre différent (regroupement
         // par thème sur desktop), un matching positionnel se déréglerait silencieusement.
         document.querySelectorAll('.nav-btn, .mobile-tab-btn').forEach(btn => {
-            const estCetOnglet = btn.getAttribute('onclick') && btn.getAttribute('onclick').includes("'" + tabId + "'");
+            const estCetOnglet = btn.getAttribute('data-tab') === tabId;
             btn.classList.toggle('is-active', estCetOnglet);
             if (estCetOnglet) {
                 btn.setAttribute('aria-current', 'page');
@@ -51,6 +51,26 @@
         if (libelleDevise && devise) { libelleDevise.textContent = devise; }
         document.getElementById('modal-edition-produit').showModal();
     }
+
+    // --- Navigation par onglets (remplace onclick="switchTab(...)", incompatible CSP sans 'unsafe-inline') ---
+    document.addEventListener('click', function (e) {
+        const btnTab = e.target.closest('[data-tab]');
+        if (btnTab) { switchTab(btnTab.getAttribute('data-tab'), btnTab); }
+    });
+
+    // --- Bouton "modifier" d'un produit (remplace onclick="ouvrirEditionProduit(...)") ---
+    document.addEventListener('click', function (e) {
+        const btnEdit = e.target.closest('[data-edition-produit]');
+        if (!btnEdit) return;
+        ouvrirEditionProduit(
+            btnEdit.getAttribute('data-id'),
+            btnEdit.getAttribute('data-nom'),
+            btnEdit.getAttribute('data-description'),
+            btnEdit.getAttribute('data-prix'),
+            btnEdit.getAttribute('data-commission'),
+            btnEdit.getAttribute('data-devise')
+        );
+    });
 
     // --- Recherche en direct dans le tableau des utilisateurs (filtrage côté client) ---
     const champRechercheUtilisateurs = document.getElementById('recherche-utilisateurs');

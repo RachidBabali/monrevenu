@@ -66,13 +66,13 @@
               <td data-label="">
                 <span class="flex justify-end gap-1.5">
                   <button type="button" class="btn btn-sm btn-icone btn-secondaire" title="Modifier"
-                          onclick="ouvrirEditionProduit(<?= (int) $p['id'] ?>, '<?= e(addslashes($p['nom_produit'])) ?>', '<?= e(addslashes((string) $p['description'])) ?>', <?= (float) $p['prix_vente'] ?>, <?= (int) $p['commission_pct'] ?>, '<?= e(deviseLibelle($p['marche'])) ?>')"
+                          data-edition-produit data-id="<?= (int) $p['id'] ?>" data-nom="<?= e($p['nom_produit']) ?>" data-description="<?= e((string) $p['description']) ?>" data-prix="<?= (float) $p['prix_vente'] ?>" data-commission="<?= (int) $p['commission_pct'] ?>" data-devise="<?= e(deviseLibelle($p['marche'])) ?>"
                           aria-label="Modifier <?= e($p['nom_produit']) ?>"><?= ico('pencil', 'ico-16') ?></button>
                   <form action="" method="POST">
                     <input type="hidden" name="csrf_token" value="<?= e($csrf_token) ?>">
                     <input type="hidden" name="produit_id" value="<?= (int) $p['id'] ?>">
                     <button type="submit" name="action_delete_produit" class="btn btn-sm btn-icone btn-discret text-danger hover:bg-danger-soft" title="Supprimer"
-                            onclick="return confirm('Supprimer le produit <?= e(addslashes($p['nom_produit'])) ?> ?');"
+                            data-confirm="Supprimer le produit <?= e($p['nom_produit']) ?> ?"
                             aria-label="Supprimer <?= e($p['nom_produit']) ?>"><?= ico('trash-2', 'ico-16') ?></button>
                   </form>
                 </span>

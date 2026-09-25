@@ -26,7 +26,7 @@ $onglets_admin = [
     <?php foreach ($onglets_admin as $groupe => $liens): ?>
       <p class="nav-groupe"><?= e($groupe) ?></p>
       <?php foreach ($liens as [$tab, $libelle, $icone, $compteur]): ?>
-        <button type="button" onclick="switchTab('<?= e($tab) ?>', this)" class="nav-btn nav-lien w-full text-left"<?= $tab === 'tab-produits' ? ' aria-current="page"' : '' ?>>
+        <button type="button" data-tab="<?= e($tab) ?>" class="nav-btn nav-lien w-full text-left"<?= $tab === 'tab-produits' ? ' aria-current="page"' : '' ?>>
           <?= ico($icone) ?><span class="flex-1 truncate"><?= e($libelle) ?></span>
           <?php if ($compteur !== null): ?><span class="chiffres rounded-full bg-surface-2 px-1.5 text-xs text-text-2"><?= (int) $compteur ?></span><?php endif; ?>
         </button>
