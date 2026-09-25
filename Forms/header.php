@@ -10,14 +10,14 @@
       <a class="btn btn-sm btn-discret text-text-2 hover:text-primary-ink" href="#retraits">Retraits</a>
       <a class="btn btn-sm btn-discret text-text-2 hover:text-primary-ink" href="#questions">Questions</a>
     </nav>
-    <div class="flex items-center gap-2">
+    <div class="flex min-w-0 items-center gap-1 min-[400px]:gap-2">
       <nav class="segments" aria-label="Marché">
         <?php foreach (marches() as $codeMarcheEntete => $configMarcheEntete): ?>
           <a class="segment" href="?marche=<?= e($codeMarcheEntete) ?>"<?= ($marche_visiteur ?? MARCHE_DEFAUT) === $codeMarcheEntete ? ' aria-current="true"' : '' ?>><?= e($codeMarcheEntete) ?></a>
         <?php endforeach; ?>
       </nav>
       <button type="button" class="btn btn-sm btn-discret" data-ouvrir="modal-login">Connexion</button>
-      <button type="button" class="btn btn-sm btn-secondaire lg:btn-primaire lg:border-transparent" data-ouvrir="modal-register">Créer un compte</button>
+      <button type="button" class="btn btn-sm btn-secondaire lg:btn-primaire lg:border-transparent" data-ouvrir="modal-register"><span class="min-[400px]:hidden">S'inscrire</span><span class="hidden min-[400px]:inline">Créer un compte</span></button>
     </div>
   </div>
 </header>
