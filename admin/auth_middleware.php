@@ -12,7 +12,10 @@ demarrerSession();
 //  En-têtes sécurité 
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
-header('X-XSS-Protection: 1; mode=block');
+// Filtre XSS legacy des navigateurs : desactive explicitement (valeur 0) suivant la
+// recommandation OWASP actuelle ; "1; mode=block" est deprecie et peut introduire des
+// failles. La vraie protection est la CSP + l'echappement de sortie.
+header('X-XSS-Protection: 0');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 header('X-Permitted-Cross-Domain-Policies: none');
 
