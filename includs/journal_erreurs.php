@@ -53,8 +53,11 @@ if (!function_exists('pageErreur500')) {
             header('Content-Type: text/html; charset=UTF-8');
             header('Cache-Control: no-store');
         }
-        // Repart d'une page vide quand un tampon de sortie est actif : sinon le message s'insere dans une page a moitie affichee.
-        while (ob_get_level() > 0) @ob_end_clean();
+        // Repart d'une page vide quand un tampon de sortie est actif : sinon le message s'insere dans une page
+        // a moitie affichee. Nombre d'essais borne : un tampon que PHP refuse de fermer ne doit pas boucler.
+        for ($essais = ob_get_level(); $essais > 0 && ob_get_level() > 0; $essais--) {
+            if (!@ob_end_clean()) break;
+        }
         echo '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
             . '<title>Erreur temporaire</title>'
             . '<style>.e500{font-family:system-ui,sans-serif;max-width:32rem;margin:15vh auto;padding:1rem;background:#fff;color:#1f2937}.e500 a{color:#1e3a8a}'
