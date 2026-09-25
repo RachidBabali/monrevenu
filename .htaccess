@@ -15,9 +15,11 @@ RewriteRule ^produit/([a-z0-9\-]+)/([A-Za-z0-9_\-]+)/?$ produit.php?slug=$1&toke
     # par defaut) puis on autorise explicitement chaque type de ressource utilise.
     # worker-src et manifest-src sont indispensables (service worker des notifications
     # push + manifest PWA) : sans eux, default-src 'none' les bloquerait.
-    # style-src conserve 'unsafe-inline' pour l'instant (page d'erreur 500 auto-suffisante
-    # + styles injectes par Google Sign-In) : retrait a valider en environnement de test.
-    Header always set Content-Security-Policy "default-src 'none'; script-src 'self' https://static.cloudflareinsights.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; img-src 'self' data: https://cdn.monrevenu.xyz; font-src 'self'; connect-src 'self' https://cloudflareinsights.com https://accounts.google.com; frame-src https://accounts.google.com; manifest-src 'self'; worker-src 'self'; form-action 'self'; base-uri 'self'; frame-ancestors 'self'; object-src 'none'"
+    # style-src sans 'unsafe-inline' : le seul style inline du site (bloc <style> de la
+    # page d'erreur 500, includs/journal_erreurs.php) est autorise par son hash SHA-256.
+    # Si ce bloc change, recalculer le hash. A VALIDER EN ENV DE TEST : verifier que le
+    # bouton Google Sign-In s'affiche toujours (GSI peut injecter du style inline).
+    Header always set Content-Security-Policy "default-src 'none'; script-src 'self' https://static.cloudflareinsights.com https://accounts.google.com; style-src 'self' 'sha256-+wyuPNeT0TuCrimoblMGD96rbY8x5GAFTVoCX7hT+tM=' https://accounts.google.com/gsi/style; img-src 'self' data: https://cdn.monrevenu.xyz; font-src 'self'; connect-src 'self' https://cloudflareinsights.com https://accounts.google.com; frame-src https://accounts.google.com; manifest-src 'self'; worker-src 'self'; form-action 'self'; base-uri 'self'; frame-ancestors 'self'; object-src 'none'"
     # Protection MIME sniffing
     Header always set X-Content-Type-Options "nosniff"
 

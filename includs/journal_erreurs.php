@@ -60,9 +60,9 @@ if (!function_exists('pageErreur500')) {
         }
         echo '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
             . '<title>Erreur temporaire</title>'
-            . '<style>.e500{font-family:system-ui,sans-serif;max-width:32rem;margin:15vh auto;padding:1rem;background:#fff;color:#1f2937}.e500 a{color:#1e3a8a}'
+            . '<style>.e500{font-family:system-ui,sans-serif;max-width:32rem;margin:15vh auto;padding:1rem;background:#fff;color:#1f2937}.e500 a{color:#1e3a8a}.e500 h1{font-size:1.25rem}'
             . '@media(prefers-color-scheme:dark){.e500{background:#0f141c;color:#e6eaf0}.e500 a{color:#8fb0f0}}</style></head><body>'
-            . '<div class="e500"><h1 style="font-size:1.25rem">Une erreur est survenue</h1>'
+            . '<div class="e500"><h1>Une erreur est survenue</h1>'
             . '<p>Nous n\'avons pas pu afficher cette page. Réessayez dans un instant ; si le problème continue, contactez le support.</p>'
             . '<p><a href="/">Retour à l\'accueil</a></p></div></body></html>';
     }
