@@ -10,6 +10,29 @@
  */
 require_once __DIR__ . '/journal_erreurs.php';
 
+if (!function_exists('colonneExiste')) {
+    /**
+     * La colonne existe-t-elle sur cette table ? Sert a degrader une requete quand une migration
+     * n'est pas encore appliquee (cas de `devise`, migration 010), au lieu de tomber sur une
+     * erreur #1054. Resultat mis en cache pour la duree de la requete HTTP. En cas d'erreur de
+     * lecture du schema : false, c'est-a-dire la variante la plus prudente.
+     */
+    function colonneExiste(PDO $pdo, string $table, string $colonne): bool
+    {
+        static $cache = [];
+        $cle = $table . '.' . $colonne;
+        if (isset($cache[$cle])) return $cache[$cle];
+        try {
+            $st = $pdo->prepare('SELECT COUNT(*) FROM information_schema.columns
+                WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?');
+            $st->execute([$table, $colonne]);
+            return $cache[$cle] = ((int) $st->fetchColumn() === 1);
+        } catch (Throwable $e) {
+            return $cache[$cle] = false;
+        }
+    }
+}
+
 if (!function_exists('lignesTolerantes')) {
     /** @return list<array<string,mixed>> */
     function lignesTolerantes(PDO $pdo, string $etiquette, string $sql, array $params = []): array

@@ -217,11 +217,20 @@ if (!function_exists('marches')) {
      * jamais additionner XOF et KMF. $aliasLigne porte la colonne devise, $aliasProprietaire
      * la colonne pays_code de users_monrevenu (peut etre le meme alias si la ligne est deja
      * un compte). Deux valeurs possibles seulement (XOF/KMF) : aucun risque d'injection.
+     * $pdo et $table (facultatifs) permettent de degrader si la colonne devise n'existe pas encore :
+     * le resultat est alors identique a celui d'une colonne entierement a NULL.
      */
-    function deviseEffectiveSql(string $aliasLigne, string $aliasProprietaire): string
+    function deviseEffectiveSql(string $aliasLigne, string $aliasProprietaire, ?PDO $pdo = null, ?string $table = null): string
     {
         $devise_defaut = deviseIso(MARCHE_DEFAUT);
         $devise_km = deviseIso('KM');
-        return "COALESCE({$aliasLigne}.devise, IF({$aliasProprietaire}.pays_code = 'KM', '{$devise_km}', '{$devise_defaut}'))";
+        $marcheDuProprietaire = "IF({$aliasProprietaire}.pays_code = 'KM', '{$devise_km}', '{$devise_defaut}')";
+        // Colonne devise pas encore ajoutee (migration 010 non appliquee sur cette table) : toutes les
+        // lignes sont lues avec le marche de leur proprietaire, exactement comme une colonne a NULL.
+        if ($pdo !== null && $table !== null) {
+            require_once __DIR__ . '/tolerance_sql.php';
+            if (!colonneExiste($pdo, $table, 'devise')) return $marcheDuProprietaire;
+        }
+        return "COALESCE({$aliasLigne}.devise, {$marcheDuProprietaire})";
     }
 }

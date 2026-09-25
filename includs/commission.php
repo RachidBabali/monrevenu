@@ -127,7 +127,7 @@ if (!function_exists('commissionRecalculerProduits')) {
         $iso = marche($marche)['devise'];
         $st = $pdo->prepare("SELECT vp.id, vp.prix_vente, vp.prix_net FROM vendeur_produits vp
             LEFT JOIN users_monrevenu u ON u.id = vp.vendeur_id
-            WHERE " . deviseEffectiveSql('vp', 'u') . " = ?");
+            WHERE " . deviseEffectiveSql('vp', 'u', $pdo, 'vendeur_produits') . " = ?");
         $st->execute([$iso]);
         $maj = $pdo->prepare("UPDATE vendeur_produits SET prix_net = ?, prix_vente = ? WHERE id = ?");
         $n = 0;
