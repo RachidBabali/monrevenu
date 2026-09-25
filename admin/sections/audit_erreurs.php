@@ -11,7 +11,7 @@ $lignes_log = array_reverse($lignes_log);
 ?>
     <section class="flex flex-col gap-3">
       <h2 class="section-titre">Dernières erreurs PHP</h2>
-      <p class="meta">50 dernières lignes, la plus récente en haut. Fichier : <span class="chiffres"><?= e($fichier_log !== '' ? $fichier_log : 'aucun dossier de journal accessible') ?></span></p>
+      <p class="meta">50 dernières lignes, la plus récente en haut. Fichier : <span class="chiffres break-all"><?= e($fichier_log !== '' ? $fichier_log : 'aucun dossier de journal accessible') ?></span></p>
       <?php if (!$lignes_log): ?>
         <div class="carte p-4"><p class="meta">Aucune erreur enregistrée.</p></div>
       <?php else: ?>

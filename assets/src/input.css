@@ -205,7 +205,7 @@
   .btn-danger {
     @apply bg-danger text-on-primary hover:opacity-90;
   }
-  .dark .btn-danger {
+  .dark .btn-danger, .dark .notif-badge {
     @apply text-bg;
   }
   .btn-icone {
@@ -213,6 +213,11 @@
   }
   .btn-sm.btn-icone {
     @apply w-9;
+  }
+  /* Cibles tactiles d'au moins 44 px sur mobile et tablette (les boutons compacts restent compacts au bureau). */
+  @media (max-width: 1023px), (pointer: coarse) {
+    .btn-sm { @apply h-11; }
+    .btn-sm.btn-icone { @apply w-11; }
   }
   .btn:disabled, .btn[aria-disabled='true'] {
     @apply cursor-not-allowed opacity-50;
@@ -555,10 +560,11 @@
     @apply absolute inset-x-3 -bottom-px h-0.5 bg-primary-ink;
   }
   .segments {
-    @apply inline-flex rounded border border-line-strong bg-surface p-0.5;
+    @apply inline-flex max-w-full overflow-x-auto rounded border border-line-strong bg-surface p-0.5;
+    scrollbar-width: none;
   }
   .segment {
-    @apply inline-flex h-10 min-w-[44px] items-center justify-center rounded-sm px-3 text-sm font-medium text-text-2 transition-colors hover:text-text lg:h-9;
+    @apply inline-flex h-11 min-w-[44px] shrink-0 items-center justify-center rounded-sm px-3 text-sm font-medium text-text-2 transition-colors hover:text-text lg:h-9;
   }
   .segment[aria-pressed='true'], .segment[aria-current='true'] {
     @apply bg-primary-soft text-primary-ink;

@@ -54,10 +54,12 @@ if (!function_exists('pageErreur500')) {
             header('Cache-Control: no-store');
         }
         echo '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-            . '<title>Erreur temporaire</title></head><body style="font-family:system-ui,sans-serif;max-width:32rem;margin:15vh auto;padding:0 1rem;color:#1f2937">'
+            . '<title>Erreur temporaire</title>'
+            . '<style>:root{color-scheme:light dark}body{font-family:system-ui,sans-serif;max-width:32rem;margin:15vh auto;padding:0 1rem;background:#fff;color:#1f2937}a{color:#1e3a8a}'
+            . '@media(prefers-color-scheme:dark){body{background:#0f141c;color:#e6eaf0}a{color:#8fb0f0}}</style></head><body>'
             . '<h1 style="font-size:1.25rem">Une erreur est survenue</h1>'
             . '<p>Nous n\'avons pas pu afficher cette page. Réessayez dans un instant ; si le problème continue, contactez le support.</p>'
-            . '<p><a href="/" style="color:#1e3a8a">Retour à l\'accueil</a></p></body></html>';
+            . '<p><a href="/">Retour à l\'accueil</a></p></body></html>';
     }
 }
 

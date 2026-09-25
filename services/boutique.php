@@ -224,9 +224,9 @@ include $_SERVER['DOCUMENT_ROOT'] . '/includs/layout_app_debut.php';
               <button type="button" class="btn btn-sm btn-secondaire sm:w-9 sm:px-0" data-partager="<?= e($lien_affiliation) ?>" data-texte="<?= e($produit_nom . ' : ' . formaterMontant($produit_prix_brut)) ?>" title="Partager"><?= ico('share-2', 'ico-16') ?><span class="sm:sr-only">Partager<span class="sr-only"> <?= e($produit_nom) ?></span></span></button>
             </div>
             <details class="border-t border-line px-3 text-xs">
-              <summary class="flex h-9 cursor-pointer list-none items-center text-text-2 hover:text-text">Voir le lien</summary>
+              <summary class="flex h-11 cursor-pointer list-none items-center text-text-2 hover:text-text">Voir le lien</summary>
               <label class="sr-only" for="lien-input-<?= $produit_id ?>">Lien d'affiliation pour <?= e($produit_nom) ?></label>
-              <input type="text" readonly id="lien-input-<?= $produit_id ?>" value="<?= e($lien_affiliation) ?>" class="mb-3 w-full rounded border border-line bg-surface-2 px-2 py-2 font-mono text-xs text-text-2">
+              <input type="text" readonly id="lien-input-<?= $produit_id ?>" value="<?= e($lien_affiliation) ?>" class="mb-3 w-full rounded border border-line bg-surface-2 px-2 py-3 font-mono text-base text-text-2 lg:text-xs">
               <form method="POST" action="/services/boutique.php" class="mb-3">
                 <input type="hidden" name="csrf_token" value="<?= e($_SESSION['csrf_token']) ?>">
                 <input type="hidden" name="produit_id" value="<?= $produit_id ?>">
