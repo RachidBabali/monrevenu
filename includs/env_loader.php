@@ -64,5 +64,13 @@ if (!function_exists('env')) {
     }
 }
 
-// Charge automatiquement le .env situé à la racine du projet
-chargerEnv($_SERVER['DOCUMENT_ROOT'] . '/.env');
+// Charge automatiquement le .env. Ordre de priorite :
+//   1. UN NIVEAU AU-DESSUS de la racine web (emplacement recommande : non servi par le serveur
+//      web, donc jamais telechargeable meme si la regle .htaccess venait a sauter) ;
+//   2. repli sur la racine web (compatibilite avec l'installation actuelle).
+// chargerEnv n'ecrase jamais une variable deja definie : le premier fichier trouve fait foi.
+$racineWeb = $_SERVER['DOCUMENT_ROOT'] ?? '';
+if ($racineWeb !== '') {
+    chargerEnv(dirname($racineWeb) . '/.env');
+    chargerEnv($racineWeb . '/.env');
+}
