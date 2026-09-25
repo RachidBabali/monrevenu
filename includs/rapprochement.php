@@ -13,6 +13,7 @@
 
 if (!function_exists('rapprochementSoldes')) {
     require_once __DIR__ . '/config_marche.php';
+    require_once __DIR__ . '/tolerance_sql.php';
     function centimes($valeur): int { return (int) round(((float) $valeur) * 100); }
     function enFrancs(int $centimes): string { return number_format($centimes / 100, 2, '.', ''); }
 
@@ -129,6 +130,9 @@ if (!function_exists('rapprochementSoldes')) {
             'transactions_monrevenu' => ['user_id', 'reference'],
             'withdrawals'            => ['user_id', 'method'],
         ] as $table => [$colonneProprietaire, $colonneLibelle]) {
+            // Colonne pas encore ajoutee (migration 010) : aucune ligne ne porte de devise,
+            // donc aucune incoherence possible sur cette table.
+            if (!colonneExiste($pdo, $table, 'devise')) continue;
             $lignes = $pdo->query(
                 "SELECT l.id, l.devise, l.{$colonneLibelle} AS libelle, u.id AS proprietaire_id, u.fullname, u.pays_code
                  FROM {$table} l JOIN users_monrevenu u ON u.id = l.{$colonneProprietaire}
@@ -150,8 +154,9 @@ if (!function_exists('rapprochementSoldes')) {
     function totauxArgent(PDO $pdo, int $jours = 30): array
     {
         require_once __DIR__ . '/config_marche.php';
+        require_once __DIR__ . '/tolerance_sql.php';
         $st = $pdo->prepare(
-            "SELECT DATE(t.created_at) AS jour, t.type, " . deviseEffectiveSql('t', 'u') . " AS devise,
+            "SELECT DATE(t.created_at) AS jour, t.type, " . deviseEffectiveSql('t', 'u', $pdo, 'transactions_monrevenu') . " AS devise,
                     COUNT(*) AS n, SUM(t.amount) AS total
              FROM transactions_monrevenu t JOIN users_monrevenu u ON u.id = t.user_id
              WHERE t.created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
